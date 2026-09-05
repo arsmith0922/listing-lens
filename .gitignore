@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / Next.js (optional demo UI later)
+node_modules/
+.next/
+dist/
+build/
+
+# Secrets and env (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+tokens/
+!tokens/.gitkeep
+
+# Databases and local data
+*.db
+*.sqlite
+*.sqlite3
+data/*.db*
+*.bak
+*.backup-*
+
+# Logs, caches, OS
+*.log
+.cache/
+.DS_Store
+
+# Private planning docs (never publish)
+private/
+SCOPING-BRIEF.md
+project-landscape.md
+career-paths.md
