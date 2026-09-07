@@ -1,0 +1,48 @@
+[project]
+name = "listinglens"
+version = "0.1.0"
+description = "MCP server and evaluated agent assessing US-listed companies for integrity and delisting risk"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "MIT" }
+dependencies = [
+    "httpx==0.28.1",
+    "pydantic==2.13.5",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/listinglens"]
+
+[tool.uv]
+required-version = "==0.12.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+xfail_strict = true
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "src"
+strict = true
+disallow_any_explicit = true
+warn_unreachable = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[dependency-groups]
+dev = [
+    "mypy==2.3.1",
+    "pytest==9.1.1",
+    "ruff==0.16.6",
+    "uv==0.12.10",
+]

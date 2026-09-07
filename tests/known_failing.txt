@@ -1,0 +1,9 @@
+# Recorded known-failing baseline (D15). One pytest node id per line.
+# Compared against the live set of strict-xfailed tests at session end,
+# on a full-suite run only. Blank lines and lines starting with # are ignored.
+#
+# Empty as of Phase 1 chunk 1: no ingestion code exists yet, so there is
+# nothing genuinely unhandled to record. Populated in chunk 9 with three
+# entries: legacy non-UTF-8 document decoding, name-to-CIK resolution for
+# issuers absent from company_tickers.json, and EFTS search_after deep
+# pagination beyond the result cap.
