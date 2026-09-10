@@ -15,6 +15,13 @@ A running log of architecture and design decisions: what was chosen, why, and wh
 
 Decided during the Phase 1 ingestion-client investigation, after probing the live SEC EDGAR APIs rather than trusting the Phase 0 brief's literal wording.
 
+### D18: pydantic mypy plugin adopted; typed models expose a strict constructor plus a parse() classmethod for untrusted input
+- Date: 2026-09-10
+- Decision: The pydantic mypy plugin is enabled project-wide (plugins = ["pydantic.mypy"]) with init_typed = true and init_forbid_extra = true. Typed value models (the identifiers) therefore expose two entry points: the plain field constructor for already-clean typed values, and a parse(raw: object) -> Self classmethod that validates arbitrary external input and raises a typed InputValidationError. Untrusted or external input goes through parse(); internal typed code uses the constructor.
+- Options considered: Widen field types (for example Cik.value: int | str) or scatter per-call type ignores to keep one flexible constructor (rejected: reintroduces the coercion and the untyped surface the plugin exists to remove); adopt the plugin and split the API (chosen).
+- Why: disallow_any_explicit flags every BaseModel subclass because pydantic's own BaseModel.__init__ is typed with an explicit Any; the plugin's synthesized per-model __init__ removes that. init_typed then makes the constructor reject loose input at type-check time, which is the reject-not-coerce rule enforced statically. The parse() split gives untrusted input one explicit validating doorway. Chunks 6 and 7 must follow this convention for any new typed model that ingests external data.
+- Revisit if: A model needs a genuinely open or polymorphic input shape that the two-entry-point pattern cannot express cleanly.
+
 ### D17: No FastAPI dependency in Phase 1
 - Date: 2026-09-06
 - Decision: Phase 1 adds no FastAPI application or HTTP framework, even though FastAPI is listed in the project stack.
