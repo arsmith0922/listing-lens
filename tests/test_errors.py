@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from listinglens.core.errors import (
+    AllowlistReason,
     AllowlistViolation,
     ExtractionError,
     FilingNotFound,
@@ -19,11 +20,12 @@ from listinglens.core.errors import (
 
 
 def test_allowlist_violation_carries_typed_context() -> None:
-    err = AllowlistViolation(host="evil.com", url="https://evil.com/x")
+    err = AllowlistViolation(host="evil.com", url="https://evil.com/x", reason=AllowlistReason.HOST)
     assert isinstance(err, IngestionError)
     assert isinstance(err, ListingLensError)
     assert err.host == "evil.com"
     assert err.url == "https://evil.com/x"
+    assert err.reason == AllowlistReason.HOST
     assert "evil.com" in str(err)
 
 
@@ -82,4 +84,6 @@ def test_input_validation_error_carries_typed_context() -> None:
 
 def test_all_leaves_are_raisable_and_catchable_as_base() -> None:
     with pytest.raises(ListingLensError):
-        raise AllowlistViolation(host="evil.com", url="https://evil.com/x")
+        raise AllowlistViolation(
+            host="evil.com", url="https://evil.com/x", reason=AllowlistReason.HOST
+        )

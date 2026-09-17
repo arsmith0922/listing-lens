@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from enum import StrEnum
+
 
 class ListingLensError(Exception):
     """Base class for all typed ListingLens errors."""
@@ -13,11 +15,21 @@ class IngestionError(ListingLensError):
     """Base class for errors raised by the ingestion layer."""
 
 
+class AllowlistReason(StrEnum):
+    SCHEME = "scheme"
+    TRAILING_DOT = "trailing_dot"
+    PORT = "port"
+    HOST = "host"
+
+
 class AllowlistViolation(IngestionError):
-    def __init__(self, host: str, url: str) -> None:
+    def __init__(self, host: str, url: str, reason: AllowlistReason) -> None:
         self.host = host
         self.url = url
-        super().__init__(f"Host is not in the ingestion allowlist: {host} (url={url})")
+        self.reason = reason
+        super().__init__(
+            f"Host is not in the ingestion allowlist ({reason.value}): {host} (url={url})"
+        )
 
 
 class FilingNotFound(IngestionError):
