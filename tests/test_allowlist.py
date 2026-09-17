@@ -38,6 +38,13 @@ def test_non_443_port_is_rejected() -> None:
     assert exc_info.value.reason == AllowlistReason.PORT
 
 
+def test_malformed_port_is_rejected_not_crashed() -> None:
+    with pytest.raises(AllowlistViolation) as exc_info:
+        assert_allowed("https://www.sec.gov:abc/x")
+    assert exc_info.value.host == "www.sec.gov"
+    assert exc_info.value.reason == AllowlistReason.PORT
+
+
 def test_explicit_443_port_is_allowed() -> None:
     assert_allowed("https://data.sec.gov:443/x")
 
