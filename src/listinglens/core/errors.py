@@ -39,7 +39,7 @@ class MissingUserAgent(IngestionError):
         self.env_var = env_var
         super().__init__(
             f"{env_var} is not set to a real value. Copy .env.example to .env and set a "
-            "descriptive User-Agent with contact info before making EDGAR requests."
+            "real contact email; ListingLens builds the SEC User-Agent from that."
         )
 
 

@@ -11,7 +11,7 @@ import pytest
 ENV_PREFIXES_TO_SCRUB = ("SEC_", "ANTHROPIC_", "LANGFUSE_", "LISTINGLENS_")
 
 DETERMINISTIC_TEST_ENV = {
-    "SEC_EDGAR_USER_AGENT": "ListingLens/test (test@example.com)",
+    "SEC_EDGAR_CONTACT": "test@example.com",
 }
 
 KNOWN_FAILING_PATH = Path(__file__).parent / "known_failing.txt"

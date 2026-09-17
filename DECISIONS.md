@@ -15,6 +15,13 @@ A running log of architecture and design decisions: what was chosen, why, and wh
 
 Decided during the Phase 1 ingestion-client investigation, after probing the live SEC EDGAR APIs rather than trusting the Phase 0 brief's literal wording.
 
+### D19: Product name and version live in branding; environment supplies contact only
+- Date: 2026-09-17
+- Decision: `core/branding.py` holds `PRODUCT_NAME`, `VERSION`, and `user_agent(contact)`, the single source for the outgoing SEC User-Agent string. The environment supplies only a contact address, via `SEC_EDGAR_CONTACT` (`core/config.py`'s `Settings.sec_edgar_contact`), not the full User-Agent. Chunk 4's transport calls `branding.user_agent(settings.sec_edgar_contact)` to build the real header.
+- Options considered: Keep the full composed User-Agent string in the environment (`SEC_EDGAR_USER_AGENT`), with `core/config.py` validating it against a full placeholder (the shape built in the branding refactor's first draft); supply contact only and compose the header from branding (chosen).
+- Why: Carrying the full UA string in the env var would make `branding.user_agent()` dead code with no real caller, source the product name in every outgoing request from user-typed `.env` text rather than from the one authoritative constant, and reintroduce a product/version string in `.env.example` that can silently drift from `core/branding.py`. Supplying contact only means the operator can never mistype or go stale on the product identity half of the header; only `core/branding.py` can change it.
+- Revisit if: A future deployment needs the operator to override the full User-Agent string outright (unlikely under SEC's fair-access policy, which asks for identifying contact info, not a specific product string).
+
 ### D18: pydantic mypy plugin adopted; typed models expose a strict constructor plus a parse() classmethod for untrusted input
 - Date: 2026-09-10
 - Decision: The pydantic mypy plugin is enabled project-wide (plugins = ["pydantic.mypy"]) with init_typed = true and init_forbid_extra = true. Typed value models (the identifiers) therefore expose two entry points: the plain field constructor for already-clean typed values, and a parse(raw: object) -> Self classmethod that validates arbitrary external input and raises a typed InputValidationError. Untrusted or external input goes through parse(); internal typed code uses the constructor.
