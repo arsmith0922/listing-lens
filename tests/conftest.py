@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import os
 import socket
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
 
+import httpx
 import pluggy
 import pytest
 
@@ -42,6 +43,57 @@ def _scrub_env(monkeypatch: pytest.MonkeyPatch) -> None:
             monkeypatch.delenv(key, raising=False)
     for key, value in DETERMINISTIC_TEST_ENV.items():
         monkeypatch.setenv(key, value)
+
+
+class FakeClock:
+    """A Clock whose time only advances when sleep() is called; never really sleeps."""
+
+    def __init__(self, start: float = 0.0) -> None:
+        self.now = start
+        self.slept: list[float] = []
+
+    def monotonic(self) -> float:
+        return self.now
+
+    def sleep(self, seconds: float) -> None:
+        self.slept.append(seconds)
+        self.now += seconds
+
+
+@pytest.fixture
+def fake_clock() -> FakeClock:
+    return FakeClock()
+
+
+class SequencedTransport:
+    """Records every request and replays responses (or raises) in order, clamped to the last."""
+
+    def __init__(self, responses: list[httpx.Response | Exception]) -> None:
+        self.responses = responses
+        self.requests: list[httpx.Request] = []
+
+    def handler(self, request: httpx.Request) -> httpx.Response:
+        self.requests.append(request)
+        index = min(len(self.requests) - 1, len(self.responses) - 1)
+        item = self.responses[index]
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+    @property
+    def transport(self) -> httpx.MockTransport:
+        return httpx.MockTransport(self.handler)
+
+    @property
+    def call_count(self) -> int:
+        return len(self.requests)
+
+
+@pytest.fixture
+def sequenced_transport_factory() -> Callable[
+    [list[httpx.Response | Exception]], SequencedTransport
+]:
+    return SequencedTransport
 
 
 def read_baseline(path: Path) -> set[str]:

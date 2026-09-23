@@ -12,9 +12,12 @@ from listinglens.core.errors import (
     ListingLensError,
     MissingUserAgent,
     RateLimited,
+    ResponseTooLarge,
     RuleNotFound,
     SectionNotFound,
     StandardsError,
+    TooManyRedirects,
+    UpstreamError,
     XbrlConceptMissing,
 )
 
@@ -37,14 +40,35 @@ def test_filing_not_found_carries_typed_context() -> None:
 
 
 def test_rate_limited_carries_typed_context() -> None:
-    err = RateLimited(host="data.sec.gov", retry_after_seconds=1.5)
+    err = RateLimited(
+        host="data.sec.gov",
+        url="https://data.sec.gov/x",
+        attempts=3,
+        content_type="text/html",
+        undeclared_tool_fingerprint=True,
+        retry_after_seen=True,
+        retry_after_seconds=1.5,
+    )
     assert isinstance(err, IngestionError)
     assert err.host == "data.sec.gov"
+    assert err.url == "https://data.sec.gov/x"
+    assert err.attempts == 3
+    assert err.content_type == "text/html"
+    assert err.undeclared_tool_fingerprint is True
+    assert err.retry_after_seen is True
     assert err.retry_after_seconds == 1.5
+    assert "rejected User-Agent" in str(err)
 
 
 def test_rate_limited_retry_after_defaults_to_none() -> None:
-    err = RateLimited(host="data.sec.gov")
+    err = RateLimited(
+        host="data.sec.gov",
+        url="https://data.sec.gov/x",
+        attempts=1,
+        content_type=None,
+        undeclared_tool_fingerprint=False,
+        retry_after_seen=False,
+    )
     assert err.retry_after_seconds is None
 
 
@@ -52,6 +76,44 @@ def test_missing_user_agent_carries_typed_context() -> None:
     err = MissingUserAgent(env_var="SEC_EDGAR_USER_AGENT")
     assert isinstance(err, IngestionError)
     assert err.env_var == "SEC_EDGAR_USER_AGENT"
+
+
+def test_response_too_large_carries_typed_context() -> None:
+    err = ResponseTooLarge(host="www.sec.gov", url="https://www.sec.gov/x", limit_bytes=1024)
+    assert isinstance(err, IngestionError)
+    assert err.host == "www.sec.gov"
+    assert err.url == "https://www.sec.gov/x"
+    assert err.limit_bytes == 1024
+
+
+def test_too_many_redirects_carries_typed_context() -> None:
+    err = TooManyRedirects(host="www.sec.gov", url="https://www.sec.gov/x", max_redirects=5)
+    assert isinstance(err, IngestionError)
+    assert err.host == "www.sec.gov"
+    assert err.url == "https://www.sec.gov/x"
+    assert err.max_redirects == 5
+
+
+def test_upstream_error_carries_status_code_for_http_failure() -> None:
+    err = UpstreamError(
+        host="data.sec.gov", url="https://data.sec.gov/x", status_code=503, attempts=3
+    )
+    assert isinstance(err, IngestionError)
+    assert err.status_code == 503
+    assert err.attempts == 3
+    assert err.detail is None
+
+
+def test_upstream_error_carries_detail_for_transport_failure() -> None:
+    err = UpstreamError(
+        host="data.sec.gov",
+        url="https://data.sec.gov/x",
+        status_code=None,
+        attempts=3,
+        detail="ConnectTimeout",
+    )
+    assert err.status_code is None
+    assert err.detail == "ConnectTimeout"
 
 
 def test_xbrl_concept_missing_carries_typed_context() -> None:

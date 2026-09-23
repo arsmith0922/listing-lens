@@ -40,10 +40,30 @@ class FilingNotFound(IngestionError):
 
 
 class RateLimited(IngestionError):
-    def __init__(self, host: str, retry_after_seconds: float | None = None) -> None:
+    def __init__(
+        self,
+        host: str,
+        url: str,
+        attempts: int,
+        content_type: str | None,
+        undeclared_tool_fingerprint: bool,
+        retry_after_seen: bool,
+        retry_after_seconds: float | None = None,
+    ) -> None:
         self.host = host
+        self.url = url
+        self.attempts = attempts
+        self.content_type = content_type
+        self.undeclared_tool_fingerprint = undeclared_tool_fingerprint
+        self.retry_after_seen = retry_after_seen
         self.retry_after_seconds = retry_after_seconds
-        super().__init__(f"Rate limited by {host} (retry_after_seconds={retry_after_seconds})")
+        super().__init__(
+            f"Rate limited by {host} after {attempts} attempts (url={url}). This response "
+            "shape can also indicate a rejected User-Agent rather than true rate limiting; "
+            f"evidence: content_type={content_type!r}, "
+            f"undeclared_tool_fingerprint={undeclared_tool_fingerprint}, "
+            f"retry_after_seen={retry_after_seen}, retry_after_seconds={retry_after_seconds}"
+        )
 
 
 class MissingUserAgent(IngestionError):
@@ -52,6 +72,42 @@ class MissingUserAgent(IngestionError):
         super().__init__(
             f"{env_var} is not set to a real value. Copy .env.example to .env and set a "
             "real contact email; ListingLens builds the SEC User-Agent from that."
+        )
+
+
+class ResponseTooLarge(IngestionError):
+    def __init__(self, host: str, url: str, limit_bytes: int) -> None:
+        self.host = host
+        self.url = url
+        self.limit_bytes = limit_bytes
+        super().__init__(f"Response from {host} exceeded the {limit_bytes} byte cap (url={url})")
+
+
+class TooManyRedirects(IngestionError):
+    def __init__(self, host: str, url: str, max_redirects: int) -> None:
+        self.host = host
+        self.url = url
+        self.max_redirects = max_redirects
+        super().__init__(f"Exceeded {max_redirects} redirects starting from {host} (url={url})")
+
+
+class UpstreamError(IngestionError):
+    def __init__(
+        self,
+        host: str,
+        url: str,
+        status_code: int | None,
+        attempts: int,
+        detail: str | None = None,
+    ) -> None:
+        self.host = host
+        self.url = url
+        self.status_code = status_code
+        self.attempts = attempts
+        self.detail = detail
+        super().__init__(
+            f"Upstream failure from {host} after {attempts} attempts "
+            f"(url={url}, status_code={status_code}, detail={detail!r})"
         )
 
 
