@@ -111,6 +111,14 @@ class UpstreamError(IngestionError):
         )
 
 
+class MalformedPayload(IngestionError):
+    def __init__(self, url: str, field: str, detail: str) -> None:
+        self.url = url
+        self.field = field
+        self.detail = detail
+        super().__init__(f"Malformed payload from {url}: field {field!r} - {detail}")
+
+
 class ExtractionError(ListingLensError):
     """Base class for errors raised by the extraction layer."""
 

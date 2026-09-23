@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import socket
 from collections.abc import Callable, Generator
@@ -8,6 +9,8 @@ from pathlib import Path
 import httpx
 import pluggy
 import pytest
+
+EDGAR_FIXTURES_DIR = Path(__file__).parent / "fixtures" / "edgar"
 
 ENV_PREFIXES_TO_SCRUB = ("SEC_", "ANTHROPIC_", "LANGFUSE_", "LISTINGLENS_")
 
@@ -97,6 +100,18 @@ def sequenced_transport_factory() -> Callable[
     [list[httpx.Response | Exception]], SequencedTransport
 ]:
     return SequencedTransport
+
+
+@pytest.fixture
+def load_edgar_fixture() -> Callable[[str], object]:
+    """Loads a recorded EDGAR fixture from tests/fixtures/edgar/<name> as raw JSON."""
+
+    def _load(name: str) -> object:
+        text = (EDGAR_FIXTURES_DIR / name).read_text(encoding="utf-8")
+        data: object = json.loads(text)
+        return data
+
+    return _load
 
 
 def read_baseline(path: Path) -> set[str]:

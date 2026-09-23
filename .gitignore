@@ -33,6 +33,7 @@ data/*.db*
 # Logs, caches, OS
 *.log
 .cache/
+.scratch/
 .DS_Store
 
 # Private planning docs (never publish)

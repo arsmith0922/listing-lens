@@ -1,0 +1,64 @@
+[
+  {
+    "fetched_at": "2026-09-23T02:35:58.932801+00:00",
+    "file": "submissions_trans_american.json",
+    "sha256": "ffd69ba27ec5f5a948629bb0a96d8e9c87bcbf5f198a20c174d480f02db681f9",
+    "url": "https://data.sec.gov/submissions/CIK0001990446.json"
+  },
+  {
+    "fetched_at": "2026-09-23T02:35:59.084223+00:00",
+    "file": "submissions_luckin.json",
+    "sha256": "f3274e662812e0dae7dec4335df500766cb49bee3a47c966210b3c1b6ccb345d",
+    "url": "https://data.sec.gov/submissions/CIK0001767582.json"
+  },
+  {
+    "fetched_at": "2026-09-23T02:35:59.168511+00:00",
+    "file": "submissions_ge.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "52e99de12921188f9d170014f80081b6ccdeae03fdb0151804fda9ad109ab77a",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0000040545.json"
+  },
+  {
+    "fetched_at": "2026-09-23T02:35:59.353901+00:00",
+    "file": "CIK0000040545-submissions-001.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "3294bc8efda179cab28458e07824928075d1920723d765251c9aeb7388c1bc1e",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0000040545-submissions-001.json"
+  },
+  {
+    "fetched_at": "2026-09-23T02:35:59.505260+00:00",
+    "file": "CIK0000040545-submissions-002.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "93c475bd91d18bc4e16310e30491ac3783f2e4390ee79f7616f987851d5dcf9e",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0000040545-submissions-002.json"
+  },
+  {
+    "fetched_at": "2026-09-23T02:35:59.778678+00:00",
+    "file": "company_tickers.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "e9d7fbfd26db0813e76be18c887897f7d0c7925add72b66831423bdebf4f6408",
+    "trimmed": true,
+    "url": "https://www.sec.gov/files/company_tickers.json"
+  },
+  {
+    "fetched_at": "2026-09-23T02:35:59.833818+00:00",
+    "file": "archives_index_aapl.json",
+    "sha256": "bd294fdb8716eef780c61793516929fde2cfcdd3f6ed14296dc67d0081a8e4b2",
+    "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019323000106/index.json"
+  },
+  {
+    "fetched_at": "2026-09-23T02:36:01.485455+00:00",
+    "file": "efts_search_normal.json",
+    "sha256": "b663e194a1bb2098bf6035d1657f1ecdc3c8bb0ea72521376f7be3003660bee0",
+    "url": "https://efts.sec.gov/LATEST/search-index?q=%22the%22&forms=10-K&from=9900"
+  },
+  {
+    "fetched_at": "2026-09-23T02:36:01.843398+00:00",
+    "file": "efts_search_boundary_error.json",
+    "sha256": "695b25d6138cb3eaa42b46e91e4d65039c7f1219428485a2c80c32487c30da03",
+    "url": "https://efts.sec.gov/LATEST/search-index?q=%22the%22&forms=10-K&from=9901"
+  }
+]
