@@ -9,6 +9,8 @@ class Clock(Protocol):
 
     def sleep(self, seconds: float) -> None: ...
 
+    def time(self) -> float: ...
+
 
 class RealClock:
     def monotonic(self) -> float:
@@ -16,6 +18,9 @@ class RealClock:
 
     def sleep(self, seconds: float) -> None:
         time.sleep(seconds)
+
+    def time(self) -> float:
+        return time.time()
 
 
 class TokenBucketThrottle:

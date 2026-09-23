@@ -59,6 +59,9 @@ class FakeClock:
         self.slept.append(seconds)
         self.now += seconds
 
+    def time(self) -> float:
+        return self.now
+
 
 @pytest.fixture
 def fake_clock() -> FakeClock:
