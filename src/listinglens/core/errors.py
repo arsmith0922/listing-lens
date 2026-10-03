@@ -119,6 +119,35 @@ class MalformedPayload(IngestionError):
         super().__init__(f"Malformed payload from {url}: field {field!r} - {detail}")
 
 
+class UndecodableDocument(IngestionError):
+    """The body arrived intact; only the UTF-8 decode failed (legacy-encoding filings)."""
+
+    def __init__(self, url: str, detail: str) -> None:
+        self.url = url
+        self.detail = detail
+        super().__init__(
+            f"Document from {url} was retrieved whole but is not valid UTF-8: {detail}"
+        )
+
+
+class CompanyNotFound(IngestionError):
+    def __init__(self, identifier: str, identifier_kind: str) -> None:
+        self.identifier = identifier
+        self.identifier_kind = identifier_kind
+        super().__init__(f"Company not found for {identifier_kind}={identifier}")
+
+
+class AmbiguousCompany(IngestionError):
+    def __init__(
+        self, query: str, query_kind: str, candidates: tuple[tuple[str, str], ...]
+    ) -> None:
+        self.query = query
+        self.query_kind = query_kind
+        self.candidates = candidates
+        listed = ", ".join(f"{cik} ({name})" for cik, name in candidates)
+        super().__init__(f"Ambiguous {query_kind}={query!r}: matches {listed}")
+
+
 class ExtractionError(ListingLensError):
     """Base class for errors raised by the extraction layer."""
 

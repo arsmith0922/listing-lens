@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from listinglens.core.errors import AllowlistViolation
+from listinglens.core.errors import AllowlistViolation, InputValidationError
 from listinglens.domain.identifiers import AccessionNumber, Cik
 from listinglens.ingestion import endpoints
 
@@ -73,3 +73,45 @@ def test_all_builder_outputs_pass_their_own_allowlist_check() -> None:
         endpoints.full_text_search_url("apple"),
     ]
     assert all(url.startswith("https://") for url in urls)
+
+
+GE_CIK = Cik.parse(40545)
+
+
+def test_submissions_overflow_url_accepts_the_companys_own_file() -> None:
+    url = endpoints.submissions_overflow_url(GE_CIK, "CIK0000040545-submissions-001.json")
+    assert url == "https://data.sec.gov/submissions/CIK0000040545-submissions-001.json"
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "CIK0000320193-submissions-001.json",
+        "../CIK0000040545-submissions-001.json",
+        "CIK0000040545-submissions-001.json/../x",
+        "CIK0000040545-submissions-001.json?x=1",
+        "CIK0000040545-submissions-1.json",
+        "CIK0000040545-submissions-001.json\n",
+        "",
+    ],
+)
+def test_submissions_overflow_url_rejects_foreign_or_malformed_names(name: str) -> None:
+    with pytest.raises(InputValidationError):
+        endpoints.submissions_overflow_url(GE_CIK, name)
+
+
+def test_filing_document_url_builds_archives_path() -> None:
+    url = endpoints.filing_document_url(APPLE_CIK, APPLE_ACCESSION, "a10-kexhibit21109302023.htm")
+    assert url == (
+        "https://www.sec.gov/Archives/edgar/data/320193/000032019323000106/"
+        "a10-kexhibit21109302023.htm"
+    )
+
+
+@pytest.mark.parametrize(
+    "filename",
+    ["", "..", "../x.htm", "a/b.htm", "a.htm?x=1", "a.htm#f", ".hidden", "a b.htm", "a.htm\n"],
+)
+def test_filing_document_url_rejects_non_plain_file_names(filename: str) -> None:
+    with pytest.raises(InputValidationError):
+        endpoints.filing_document_url(APPLE_CIK, APPLE_ACCESSION, filename)

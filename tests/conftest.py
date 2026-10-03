@@ -3,12 +3,16 @@ from __future__ import annotations
 import json
 import os
 import socket
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Mapping
 from pathlib import Path
 
 import httpx
 import pluggy
 import pytest
+
+from listinglens.ingestion.cache import CachedEdgarClient
+from listinglens.ingestion.repository import EdgarRepository
+from listinglens.ingestion.transport import EdgarTransport
 
 EDGAR_FIXTURES_DIR = Path(__file__).parent / "fixtures" / "edgar"
 
@@ -100,6 +104,62 @@ def sequenced_transport_factory() -> Callable[
     [list[httpx.Response | Exception]], SequencedTransport
 ]:
     return SequencedTransport
+
+
+Route = bytes | tuple[int, bytes]
+
+
+class RoutedTransport:
+    """Serves responses keyed by exact URL (unknown URLs 404) and records every request URL."""
+
+    def __init__(self, routes: Mapping[str, Route]) -> None:
+        self.routes = routes
+        self.requested: list[str] = []
+
+    def handler(self, request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        self.requested.append(url)
+        route = self.routes.get(url)
+        if route is None:
+            return httpx.Response(404, content=b"not found")
+        if isinstance(route, bytes):
+            return httpx.Response(200, content=route)
+        status, body = route
+        return httpx.Response(status, content=body)
+
+    @property
+    def transport(self) -> httpx.MockTransport:
+        return httpx.MockTransport(self.handler)
+
+
+@pytest.fixture
+def edgar_fixture_bytes() -> Callable[[str], bytes]:
+    def _read(name: str) -> bytes:
+        return (EDGAR_FIXTURES_DIR / name).read_bytes()
+
+    return _read
+
+
+RepositoryFactory = Callable[[Mapping[str, Route]], tuple[EdgarRepository, RoutedTransport]]
+
+
+@pytest.fixture
+def repository_factory(
+    tmp_path: Path, fake_clock: FakeClock
+) -> Generator[RepositoryFactory, None, None]:
+    """Real EdgarTransport and CachedEdgarClient over a URL-routed fake; no real network."""
+    clients: list[CachedEdgarClient] = []
+
+    def _build(routes: Mapping[str, Route]) -> tuple[EdgarRepository, RoutedTransport]:
+        routed = RoutedTransport(routes)
+        transport = EdgarTransport("test@example.com", transport=routed.transport, clock=fake_clock)
+        client = CachedEdgarClient(transport, tmp_path / "cache.db", tmp_path, clock=fake_clock)
+        clients.append(client)
+        return EdgarRepository(client), routed
+
+    yield _build
+    for client in clients:
+        client.close()
 
 
 @pytest.fixture

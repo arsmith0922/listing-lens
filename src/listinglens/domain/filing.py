@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
@@ -22,6 +22,9 @@ class FilingRef(BaseModel):
     cik: Cik
     form_type: str
     filed_date: date
+    report_date: date | None = None
+    acceptance_datetime: datetime | None = None
+    primary_document: str | None = None
 
 
 class FilingDocument(BaseModel):
