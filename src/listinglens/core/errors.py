@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from enum import StrEnum
 
 
@@ -127,6 +128,16 @@ class UndecodableDocument(IngestionError):
         self.detail = detail
         super().__init__(
             f"Document from {url} was retrieved whole but is not valid UTF-8: {detail}"
+        )
+
+
+class OutsideFullTextCoverage(IngestionError):
+    def __init__(self, start_date: date, coverage_start: date) -> None:
+        self.start_date = start_date
+        self.coverage_start = coverage_start
+        super().__init__(
+            f"Full-text search starts at {coverage_start.isoformat()}; "
+            f"start_date {start_date.isoformat()} is outside coverage"
         )
 
 
