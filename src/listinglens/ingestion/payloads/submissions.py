@@ -43,7 +43,7 @@ class FilingIndexPage(BaseModel):
     file_number: list[_OptStr] = Field(alias="fileNumber")
     film_number: list[_OptStr] = Field(alias="filmNumber")
     items: list[_OptStr]
-    core_type: list[str] = Field(alias="core_type")
+    core_type: list[str | None] = Field(alias="core_type")
     size: list[int]
     is_xbrl: list[int] = Field(alias="isXBRL")
     is_inline_xbrl: list[int] = Field(alias="isInlineXBRL")

@@ -6,6 +6,8 @@ from collections.abc import Callable
 import pytest
 
 from listinglens.core.errors import MalformedPayload
+from listinglens.domain.identifiers import Cik
+from listinglens.ingestion.filing_rows import page_to_filing_refs
 from listinglens.ingestion.payloads.submissions import FilingIndexPage, SubmissionsDocument
 
 FixtureLoader = Callable[[str], object]
@@ -41,6 +43,25 @@ def test_null_is_xbrl_numeric_becomes_none_on_real_data(load_edgar_fixture: Fixt
     numeric = doc.filings.recent.is_xbrl_numeric
     assert any(value is None for value in numeric)
     assert any(value is not None for value in numeric)
+
+
+def test_null_core_type_row_parses_and_maps_without_raising(
+    load_edgar_fixture: FixtureLoader,
+) -> None:
+    """Live Apple overflow page has core_type null on a 1994 row; the rest of the row is valid."""
+    raw = load_edgar_fixture("CIK0000040545-submissions-001.json")
+    assert isinstance(raw, dict)
+    mutated = copy.deepcopy(raw)
+    mutated["core_type"][3] = None
+
+    page = FilingIndexPage.parse(mutated, "https://x/null-core-type")
+    assert page.core_type[3] is None
+    assert all(isinstance(v, str) for i, v in enumerate(page.core_type) if i != 3)
+
+    refs = page_to_filing_refs(page, Cik.parse(40545), "https://x/null-core-type")
+    assert len(refs) == len(page.accession_number)
+    assert refs[3].accession_no.dashed == page.accession_number[3]
+    assert refs[3].form_type == page.form[3]
 
 
 def test_parses_multi_overflow_filer_with_both_refs(load_edgar_fixture: FixtureLoader) -> None:
