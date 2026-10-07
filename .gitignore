@@ -38,6 +38,7 @@ data/*.db*
 
 # Private planning docs (never publish)
 private/
+plans/
 SCOPING-BRIEF.md
 project-landscape.md
 career-paths.md

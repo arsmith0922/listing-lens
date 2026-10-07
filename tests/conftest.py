@@ -14,6 +14,7 @@ import pytest
 from listinglens.ingestion.cache import CachedEdgarClient
 from listinglens.ingestion.repository import EdgarRepository
 from listinglens.ingestion.search_repository import FullTextSearchRepository
+from listinglens.ingestion.service import IngestionService
 from listinglens.ingestion.transport import EdgarTransport
 
 EDGAR_FIXTURES_DIR = Path(__file__).parent / "fixtures" / "edgar"
@@ -186,6 +187,26 @@ def search_repository_factory(
         clients.append(client)
         repo = FullTextSearchRepository(client, page_size=page_size, result_window=result_window)
         return repo, routed
+
+    yield _build
+    for client in clients:
+        client.close()
+
+
+ServiceFactory = Callable[[Mapping[str, Route]], tuple[IngestionService, RoutedTransport]]
+
+
+@pytest.fixture
+def service_factory(tmp_path: Path, fake_clock: FakeClock) -> Generator[ServiceFactory, None, None]:
+    """IngestionService over the same real transport and cache stack; no real network."""
+    clients: list[CachedEdgarClient] = []
+
+    def _build(routes: Mapping[str, Route]) -> tuple[IngestionService, RoutedTransport]:
+        routed = RoutedTransport(routes)
+        transport = EdgarTransport("test@example.com", transport=routed.transport, clock=fake_clock)
+        client = CachedEdgarClient(transport, tmp_path / "cache.db", tmp_path, clock=fake_clock)
+        clients.append(client)
+        return IngestionService(client), routed
 
     yield _build
     for client in clients:

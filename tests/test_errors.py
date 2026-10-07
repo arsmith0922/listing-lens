@@ -73,9 +73,9 @@ def test_rate_limited_retry_after_defaults_to_none() -> None:
 
 
 def test_missing_user_agent_carries_typed_context() -> None:
-    err = MissingUserAgent(env_var="SEC_EDGAR_USER_AGENT")
+    err = MissingUserAgent(env_var="SEC_EDGAR_CONTACT")
     assert isinstance(err, IngestionError)
-    assert err.env_var == "SEC_EDGAR_USER_AGENT"
+    assert err.env_var == "SEC_EDGAR_CONTACT"
 
 
 def test_response_too_large_carries_typed_context() -> None:
