@@ -16,6 +16,7 @@ from listinglens.ingestion.repository import EdgarRepository
 from listinglens.ingestion.search_repository import FullTextSearchRepository
 from listinglens.ingestion.service import IngestionService
 from listinglens.ingestion.transport import EdgarTransport
+from tests.baseline import RunSelection, diff_baseline, is_full_suite, read_baseline
 
 EDGAR_FIXTURES_DIR = Path(__file__).parent / "fixtures" / "edgar"
 
@@ -143,26 +144,36 @@ def edgar_fixture_bytes() -> Callable[[str], bytes]:
     return _read
 
 
-RepositoryFactory = Callable[[Mapping[str, Route]], tuple[EdgarRepository, RoutedTransport]]
+StackBuilder = Callable[[Mapping[str, Route]], tuple[CachedEdgarClient, RoutedTransport]]
 
 
 @pytest.fixture
-def repository_factory(
-    tmp_path: Path, fake_clock: FakeClock
-) -> Generator[RepositoryFactory, None, None]:
+def edgar_stack(tmp_path: Path, fake_clock: FakeClock) -> Generator[StackBuilder, None, None]:
     """Real EdgarTransport and CachedEdgarClient over a URL-routed fake; no real network."""
     clients: list[CachedEdgarClient] = []
 
-    def _build(routes: Mapping[str, Route]) -> tuple[EdgarRepository, RoutedTransport]:
+    def _build(routes: Mapping[str, Route]) -> tuple[CachedEdgarClient, RoutedTransport]:
         routed = RoutedTransport(routes)
         transport = EdgarTransport("test@example.com", transport=routed.transport, clock=fake_clock)
         client = CachedEdgarClient(transport, tmp_path / "cache.db", tmp_path, clock=fake_clock)
         clients.append(client)
-        return EdgarRepository(client), routed
+        return client, routed
 
     yield _build
     for client in clients:
         client.close()
+
+
+RepositoryFactory = Callable[[Mapping[str, Route]], tuple[EdgarRepository, RoutedTransport]]
+
+
+@pytest.fixture
+def repository_factory(edgar_stack: StackBuilder) -> RepositoryFactory:
+    def _build(routes: Mapping[str, Route]) -> tuple[EdgarRepository, RoutedTransport]:
+        client, routed = edgar_stack(routes)
+        return EdgarRepository(client), routed
+
+    return _build
 
 
 class SearchRepositoryFactory(Protocol):
@@ -172,45 +183,27 @@ class SearchRepositoryFactory(Protocol):
 
 
 @pytest.fixture
-def search_repository_factory(
-    tmp_path: Path, fake_clock: FakeClock
-) -> Generator[SearchRepositoryFactory, None, None]:
-    """Search repository over the same real transport and cache stack; no real network."""
-    clients: list[CachedEdgarClient] = []
-
+def search_repository_factory(edgar_stack: StackBuilder) -> SearchRepositoryFactory:
     def _build(
         routes: Mapping[str, Route], *, page_size: int = 100, result_window: int = 10000
     ) -> tuple[FullTextSearchRepository, RoutedTransport]:
-        routed = RoutedTransport(routes)
-        transport = EdgarTransport("test@example.com", transport=routed.transport, clock=fake_clock)
-        client = CachedEdgarClient(transport, tmp_path / "cache.db", tmp_path, clock=fake_clock)
-        clients.append(client)
+        client, routed = edgar_stack(routes)
         repo = FullTextSearchRepository(client, page_size=page_size, result_window=result_window)
         return repo, routed
 
-    yield _build
-    for client in clients:
-        client.close()
+    return _build
 
 
 ServiceFactory = Callable[[Mapping[str, Route]], tuple[IngestionService, RoutedTransport]]
 
 
 @pytest.fixture
-def service_factory(tmp_path: Path, fake_clock: FakeClock) -> Generator[ServiceFactory, None, None]:
-    """IngestionService over the same real transport and cache stack; no real network."""
-    clients: list[CachedEdgarClient] = []
-
+def service_factory(edgar_stack: StackBuilder) -> ServiceFactory:
     def _build(routes: Mapping[str, Route]) -> tuple[IngestionService, RoutedTransport]:
-        routed = RoutedTransport(routes)
-        transport = EdgarTransport("test@example.com", transport=routed.transport, clock=fake_clock)
-        client = CachedEdgarClient(transport, tmp_path / "cache.db", tmp_path, clock=fake_clock)
-        clients.append(client)
+        client, routed = edgar_stack(routes)
         return IngestionService(client), routed
 
-    yield _build
-    for client in clients:
-        client.close()
+    return _build
 
 
 @pytest.fixture
@@ -223,37 +216,6 @@ def load_edgar_fixture() -> Callable[[str], object]:
         return data
 
     return _load
-
-
-def read_baseline(path: Path) -> set[str]:
-    if not path.exists():
-        return set()
-    lines = path.read_text(encoding="utf-8").splitlines()
-    return {line.strip() for line in lines if line.strip() and not line.strip().startswith("#")}
-
-
-def diff_baseline(expected: set[str], actual: set[str]) -> str | None:
-    missing = expected - actual
-    unexpected = actual - expected
-    if not missing and not unexpected:
-        return None
-    parts = []
-    if missing:
-        parts.append(f"recorded in known_failing.txt but did not xfail: {sorted(missing)}")
-    if unexpected:
-        parts.append(f"xfailed but not recorded in known_failing.txt: {sorted(unexpected)}")
-    return "; ".join(parts)
-
-
-def _is_full_suite_run(config: pytest.Config) -> bool:
-    option = config.option
-    return not (
-        getattr(option, "keyword", "")
-        or getattr(option, "markexpr", "")
-        or getattr(option, "lf", False)
-        or getattr(option, "ff", False)
-        or getattr(option, "exitfirst", False)
-    )
 
 
 _xfailed_node_ids: set[str] = set()
@@ -269,7 +231,7 @@ def pytest_runtest_makereport() -> Generator[None, pluggy.Result[pytest.TestRepo
 
 def pytest_sessionfinish(session: pytest.Session) -> None:
     config = session.config
-    if not _is_full_suite_run(config):
+    if not is_full_suite(RunSelection.from_config(config)):
         return
     expected = read_baseline(KNOWN_FAILING_PATH)
     mismatch = diff_baseline(expected, _xfailed_node_ids)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from collections.abc import Callable
 from datetime import date
 
@@ -9,6 +8,7 @@ import pytest
 from listinglens.core.errors import MalformedPayload, OutsideFullTextCoverage, UpstreamError
 from listinglens.ingestion import endpoints
 from tests.conftest import Route, SearchRepositoryFactory
+from tests.efts_pages import hit, page
 
 FixtureBytes = Callable[[str], bytes]
 
@@ -25,40 +25,6 @@ def _url(
     return endpoints.full_text_search_url(
         QUERY, forms=forms, start_date=start_date, end_date=end_date, from_offset=offset
     )
-
-
-def _hit(n: int, *, description: str | None = "10-K") -> dict[str, object]:
-    adsh = f"0000320193-23-{n:06d}"
-    source: dict[str, object] = {
-        "adsh": adsh,
-        "ciks": ["0000320193"],
-        "display_names": ["Apple Inc."],
-        "form": "10-K",
-        "root_forms": ["10-K"],
-        "file_date": "2023-11-03",
-        "period_ending": "2023-09-30",
-        "file_type": "10-K",
-        "file_description": description,
-        "file_num": ["001-36743"],
-        "film_num": ["231373000"],
-        "biz_states": ["CA"],
-        "biz_locations": ["Cupertino, CA"],
-        "inc_states": ["CA"],
-        "sics": ["3571"],
-        "items": [],
-        "sequence": 1,
-        "xsl": None,
-    }
-    return {"_id": f"{adsh}:doc.htm", "_source": source}
-
-
-def _page(hits: list[dict[str, object]], *, total: int = 0, relation: str = "eq") -> bytes:
-    body = {
-        "took": 1,
-        "hits": {"total": {"value": total, "relation": relation}, "hits": hits},
-        "aggregations": {},
-    }
-    return json.dumps(body).encode()
 
 
 def test_start_date_before_coverage_raises_and_fetches_nothing(
@@ -78,7 +44,7 @@ def test_start_date_before_coverage_raises_and_fetches_nothing(
 def test_coverage_boundary_and_no_start_date_do_not_trip_the_guard(
     search_repository_factory: SearchRepositoryFactory, start: date | None
 ) -> None:
-    routes: dict[str, Route] = {_url(0, start_date=start): _page([])}
+    routes: dict[str, Route] = {_url(0, start_date=start): page([])}
     repo, _ = search_repository_factory(routes)
     result = repo.search(QUERY, start_date=start)
     assert result.hits == ()
@@ -90,7 +56,7 @@ def test_real_recorded_pages_project_to_typed_hits(
 ) -> None:
     routes: dict[str, Route] = {
         _url(0): edgar_fixture_bytes("efts_search_normal.json"),
-        _url(100): _page([]),
+        _url(100): page([]),
     }
     repo, routed = search_repository_factory(routes)
     result = repo.search(QUERY)
@@ -109,8 +75,8 @@ def test_shared_accession_is_deduped_across_the_collected_set(
     search_repository_factory: SearchRepositoryFactory,
 ) -> None:
     routes: dict[str, Route] = {
-        _url(0): _page([_hit(1), _hit(1)]),
-        _url(2): _page([_hit(2)]),
+        _url(0): page([hit(1), hit(1)]),
+        _url(2): page([hit(2)]),
     }
     repo, _ = search_repository_factory(routes, page_size=2, result_window=100)
     result = repo.search(QUERY)
@@ -124,7 +90,7 @@ def test_shared_accession_is_deduped_across_the_collected_set(
 def test_total_is_estimate_follows_the_reported_relation(
     search_repository_factory: SearchRepositoryFactory, relation: str, expected: bool
 ) -> None:
-    routes: dict[str, Route] = {_url(0): _page([_hit(1)], total=1, relation=relation)}
+    routes: dict[str, Route] = {_url(0): page([hit(1)], total=1, relation=relation)}
     repo, _ = search_repository_factory(routes, page_size=2)
     result = repo.search(QUERY)
     assert result.total == 1
@@ -135,8 +101,8 @@ def test_total_comes_from_the_first_page_only(
     search_repository_factory: SearchRepositoryFactory,
 ) -> None:
     routes: dict[str, Route] = {
-        _url(0): _page([_hit(1), _hit(2)], total=3, relation="eq"),
-        _url(2): _page([_hit(3)], total=999, relation="gte"),
+        _url(0): page([hit(1), hit(2)], total=3, relation="eq"),
+        _url(2): page([hit(3)], total=999, relation="gte"),
     }
     repo, _ = search_repository_factory(routes, page_size=2, result_window=100)
     result = repo.search(QUERY)
@@ -148,9 +114,9 @@ def test_cap_guard_stops_at_the_last_in_window_page_and_never_requests_past_it(
     search_repository_factory: SearchRepositoryFactory, edgar_fixture_bytes: FixtureBytes
 ) -> None:
     routes: dict[str, Route] = {
-        _url(0): _page([_hit(1), _hit(2)]),
-        _url(2): _page([_hit(3), _hit(4)]),
-        _url(4): _page([_hit(5), _hit(6)]),
+        _url(0): page([hit(1), hit(2)]),
+        _url(2): page([hit(3), hit(4)]),
+        _url(4): page([hit(5), hit(6)]),
         _url(6): edgar_fixture_bytes("efts_search_boundary_error.json"),
     }
     repo, routed = search_repository_factory(routes, page_size=2, result_window=6)
@@ -166,7 +132,7 @@ def test_forms_and_dates_reach_the_request_url(
 ) -> None:
     forms = frozenset({"10-K"})
     url = _url(0, forms=forms, start_date=date(2020, 1, 1), end_date=date(2020, 12, 31))
-    repo, routed = search_repository_factory({url: _page([])})
+    repo, routed = search_repository_factory({url: page([])})
     repo.search(QUERY, forms=forms, start_date=date(2020, 1, 1), end_date=date(2020, 12, 31))
     assert routed.requested == [url]
 

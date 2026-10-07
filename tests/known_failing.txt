@@ -1,9 +1,13 @@
 # Recorded known-failing baseline (D15). One pytest node id per line.
 # Compared against the live set of strict-xfailed tests at session end,
-# on a full-suite run only. Blank lines and lines starting with # are ignored.
+# on a full-suite run only (a bare `pytest` of the configured testpaths with
+# no selection flag; see tests/baseline.py). Blank lines and lines starting
+# with # are ignored.
 #
-# Empty as of Phase 1 chunk 1: no ingestion code exists yet, so there is
-# nothing genuinely unhandled to record. Populated in chunk 9 with three
-# entries: legacy non-UTF-8 document decoding, name-to-CIK resolution for
-# issuers absent from company_tickers.json, and EFTS search_after deep
-# pagination beyond the result cap.
+# Each entry is backed by a strict-xfail test in tests/test_known_gaps.py that
+# fails today and would pass only once the capability exists: legacy non-UTF-8
+# document decoding, name-to-CIK resolution for issuers absent from
+# company_tickers.json, and EFTS deep pagination beyond the result window.
+tests/test_known_gaps.py::test_legacy_latin1_document_decodes
+tests/test_known_gaps.py::test_name_resolution_for_issuer_absent_from_ticker_map
+tests/test_known_gaps.py::test_search_returns_more_than_the_result_window
