@@ -1,0 +1,218 @@
+{
+ "CIK0000040545-submissions-001:acceptanceDateTime": [
+  40,
+  "2019-01-03T22:28:08+00:00",
+  "2018-10-03T20:04:35+00:00",
+  "a82e109c72f4937438f4f01a83c5bf26120850041f43b075518371e28f8c66fe"
+ ],
+ "CIK0000040545-submissions-001:filingDate": [
+  40,
+  "2019-01-03",
+  "2018-10-03",
+  "2e8f9585894105b3f1727c172504015435904fd1cb24b056e2bd5beb863ea367"
+ ],
+ "CIK0000040545-submissions-001:reportDate": [
+  40,
+  "2018-12-31",
+  "2018-10-01",
+  "f45ba09b79e29025ad3e609d37fc912fa5808b8c190d5aa94fc0e2f7018e8f9c"
+ ],
+ "CIK0000040545-submissions-002:acceptanceDateTime": [
+  40,
+  "2008-10-01T21:25:53+00:00",
+  "2008-09-05T20:30:33+00:00",
+  "cedda3e0850a14d7fc8a30b7e640df893317176ff1359ce185485a498f2a0357"
+ ],
+ "CIK0000040545-submissions-002:filingDate": [
+  40,
+  "2008-10-01",
+  "2008-09-05",
+  "09564f10b16778ef90ab51eef9da4cce31ce23493fa89872df2019ac4903a6fe"
+ ],
+ "CIK0000040545-submissions-002:reportDate": [
+  40,
+  "2008-10-01",
+  "2008-09-04",
+  "6a880aa1c564fe7594ca94b8ec8f60ab31098a3078b42efcc47ce6d4cf1b3951"
+ ],
+ "companyfacts_ge_edge:end": [
+  188,
+  "2009-06-30",
+  "2015-05-28",
+  "518a3f8a90c65655dc5335a841718d302923ebc0a77c10c8ac1c9f21b062eaa2"
+ ],
+ "companyfacts_ge_edge:filed": [
+  188,
+  "2009-08-03",
+  "2015-11-02",
+  "02d4bd07f7a84f64555433f72cc5a57ec87ed6cf7c20461152331b192e798c56"
+ ],
+ "companyfacts_ge_edge:start": [
+  188,
+  null,
+  null,
+  "de849b53efe0db554dcbd63239d73a2adfa59769084a390a05ceac5a8049c2af"
+ ],
+ "companyfacts_luckin:end": [
+  3298,
+  "2018-12-31",
+  "2025-12-31",
+  "668d71eabe313364218a5739d9891203246b3d631c1924910ed28d4b3e49488d"
+ ],
+ "companyfacts_luckin:filed": [
+  3298,
+  "2021-06-30",
+  "2026-03-27",
+  "5276b8102da2d05da3203a284ba4746c541f9bc924aa43ce0fee77eeb0f65e63"
+ ],
+ "companyfacts_luckin:start": [
+  3298,
+  null,
+  null,
+  "33314df2d13b4aa3ebac793feb66cef96d0ad384c441b502d2260921db411f25"
+ ],
+ "companyfacts_trans_american:end": [
+  1724,
+  "2024-06-27",
+  "2023-12-31",
+  "19aca9a9c1da84e6ceeae4a90dc1d17efb1b266acc3115a2b80cc107bc637a07"
+ ],
+ "companyfacts_trans_american:filed": [
+  1724,
+  "2024-07-02",
+  "2025-07-17",
+  "46e4d63e7c3677211993f9b1a7831d310380939a7a832f99a08cdfb600a116a3"
+ ],
+ "companyfacts_trans_american:start": [
+  1724,
+  null,
+  "2023-01-01",
+  "fb3ba90770d8abe843d08cbe0960d64bcca3d495e86d1bc23506049c4bd1dd4e"
+ ],
+ "submissions_ge:acceptanceDateTime": [
+  40,
+  "2026-09-22T08:14:13+00:00",
+  "2026-04-21T10:36:02+00:00",
+  "dd5e08204a9dedf6b211287427e1bf771c4723220b117f8873bd77cdb419560e"
+ ],
+ "submissions_ge:files.filingFrom": [
+  2,
+  "2008-10-02",
+  "1994-01-28",
+  "e20c525f5b9eaaec20c008db351b4d13fa02ab4a9181dcd9ee6925eeb9af3c30"
+ ],
+ "submissions_ge:files.filingTo": [
+  2,
+  "2019-01-02",
+  "2008-09-30",
+  "240837f6ce80beda0da50bf1f5bcb1d9ee3e35f23d3bc584c8429548b96bd09e"
+ ],
+ "submissions_ge:filingDate": [
+  40,
+  "2026-09-22",
+  "2026-04-21",
+  "909f282580d6b725d729c63df2ed3e1f089770c88ddc74337a74e04ad90e10bc"
+ ],
+ "submissions_ge:formerNames.from": [
+  0,
+  null,
+  null,
+  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ ],
+ "submissions_ge:formerNames.to": [
+  0,
+  null,
+  null,
+  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ ],
+ "submissions_ge:reportDate": [
+  40,
+  "2026-09-21",
+  "2026-03-31",
+  "76076ea0c3be3c8b21900d7c63dd9d2784ae0bc2d172dc2fba00ab991a45ca2f"
+ ],
+ "submissions_luckin:acceptanceDateTime": [
+  246,
+  "2026-09-09T23:30:11+00:00",
+  "2019-02-22T21:31:53+00:00",
+  "743725744fc7fb3c33fc8c55ca43551455b68fa43ca85fb5b6f5498fb25ad254"
+ ],
+ "submissions_luckin:files.filingFrom": [
+  0,
+  null,
+  null,
+  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ ],
+ "submissions_luckin:files.filingTo": [
+  0,
+  null,
+  null,
+  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ ],
+ "submissions_luckin:filingDate": [
+  246,
+  "2026-09-09",
+  "2019-02-22",
+  "b2c5dfab68cbdee3c7de0bcc3020de57d5c30d83c1c1e3c1c11662d7767918d1"
+ ],
+ "submissions_luckin:formerNames.from": [
+  1,
+  "2019-02-22T05:00:00+00:00",
+  "2019-02-22T05:00:00+00:00",
+  "ae1b1386d06575c6daf645925dc2fc0fe1e788349ced715bd80b99385c592d2b"
+ ],
+ "submissions_luckin:formerNames.to": [
+  1,
+  "2026-09-09T04:00:00+00:00",
+  "2026-09-09T04:00:00+00:00",
+  "d27c048c70380deae50e321a7bad7409fa560ab23a3fce6c128c319a220b544e"
+ ],
+ "submissions_luckin:reportDate": [
+  246,
+  null,
+  null,
+  "d976c3e47154b1ea29bacb98729cc7cc9111f02570774d00d3be36f6aac567f1"
+ ],
+ "submissions_trans_american:acceptanceDateTime": [
+  48,
+  "2026-07-17T20:01:34+00:00",
+  "2023-08-18T14:14:43+00:00",
+  "93927c55ab512ec0ee9d37330c143ef30142a0b2767b88c3fc38c93ff2c1f1fe"
+ ],
+ "submissions_trans_american:files.filingFrom": [
+  0,
+  null,
+  null,
+  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ ],
+ "submissions_trans_american:files.filingTo": [
+  0,
+  null,
+  null,
+  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ ],
+ "submissions_trans_american:filingDate": [
+  48,
+  "2026-07-17",
+  "2023-08-18",
+  "45e102689d3a543ed151230f1395173faa78a3fd9c2fbc2f0db0a15a5424a22a"
+ ],
+ "submissions_trans_american:formerNames.from": [
+  0,
+  null,
+  null,
+  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ ],
+ "submissions_trans_american:formerNames.to": [
+  0,
+  null,
+  null,
+  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ ],
+ "submissions_trans_american:reportDate": [
+  48,
+  "2026-07-13",
+  null,
+  "ccc7227fbfa248c708c2fbf0c443a92bf1ab04021b09e68d6fb17e8bec863d6f"
+ ]
+}

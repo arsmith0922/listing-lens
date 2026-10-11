@@ -187,10 +187,35 @@ def test_text_fields_reject_non_strings(key: str) -> None:
 @pytest.mark.parametrize("key", ["end", "filed", "start"])
 @pytest.mark.parametrize(
     "bad",
-    ["2023-13-45", "yesterday", "20230930", 0, 1696032000, True],
-    ids=["month13", "word", "compact", "zero", "timestamp", "bool"],
+    [
+        "2023-13-45",
+        "yesterday",
+        "20230930",
+        0,
+        1696032000,
+        True,
+        "0",
+        "86400",
+        "1696032000",
+        "2023-09-30T00:00:00",
+        "2023-09-30T10:00:00Z",
+    ],
+    ids=[
+        "month13",
+        "word",
+        "compact",
+        "zero",
+        "timestamp",
+        "bool",
+        "zero-string",
+        "one-day-string",
+        "timestamp-string",
+        "midnight-datetime",
+        "datetime-z",
+    ],
 )
 def test_dates_must_be_iso_strings(key: str, bad: object) -> None:
+    """Numeric strings are the case chunk 11's str-only gate let through (read as timestamps)."""
     _assert_malformed(_doc(_fact(**{key: bad})), f"{FACT_PATH}.{key}")
 
 

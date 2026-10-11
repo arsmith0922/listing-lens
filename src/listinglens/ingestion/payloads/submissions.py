@@ -1,23 +1,22 @@
 from __future__ import annotations
 
-from datetime import date, datetime
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
 
 from listinglens.core.errors import MalformedPayload
 from listinglens.ingestion.payloads.common import EmptyStrAsNone, parse_or_raise
+from listinglens.ingestion.payloads.dates import IsoDate, IsoDateTime, OptIsoDate
 
 _OptStr = Annotated[str | None, EmptyStrAsNone]
-_OptDate = Annotated[date | None, EmptyStrAsNone]
 
 
 class FormerName(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     name: str
-    from_date: datetime = Field(alias="from")
-    to_date: datetime = Field(alias="to")
+    from_date: IsoDateTime = Field(alias="from")
+    to_date: IsoDateTime = Field(alias="to")
 
 
 class OverflowFileRef(BaseModel):
@@ -25,8 +24,8 @@ class OverflowFileRef(BaseModel):
 
     name: str
     filing_count: int = Field(alias="filingCount")
-    filing_from: date = Field(alias="filingFrom")
-    filing_to: date = Field(alias="filingTo")
+    filing_from: IsoDate = Field(alias="filingFrom")
+    filing_to: IsoDate = Field(alias="filingTo")
 
 
 class FilingIndexPage(BaseModel):
@@ -35,9 +34,9 @@ class FilingIndexPage(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     accession_number: list[str] = Field(alias="accessionNumber")
-    filing_date: list[date] = Field(alias="filingDate")
-    report_date: list[_OptDate] = Field(alias="reportDate")
-    acceptance_date_time: list[datetime] = Field(alias="acceptanceDateTime")
+    filing_date: list[IsoDate] = Field(alias="filingDate")
+    report_date: list[OptIsoDate] = Field(alias="reportDate")
+    acceptance_date_time: list[IsoDateTime] = Field(alias="acceptanceDateTime")
     act: list[_OptStr]
     form: list[str]
     file_number: list[_OptStr] = Field(alias="fileNumber")

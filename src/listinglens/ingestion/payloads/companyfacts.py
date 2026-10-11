@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import re
-from datetime import date
 from decimal import Decimal
 from typing import Annotated
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 from listinglens.ingestion.payloads.common import parse_or_raise
+from listinglens.ingestion.payloads.dates import IsoDate
 
 _CIK_DIGITS = re.compile(r"[0-9]{1,10}")
 
@@ -23,16 +23,6 @@ def _exact_number(value: object) -> object:
 
 
 ExactNumber = Annotated[Decimal, BeforeValidator(_exact_number)]
-
-
-def _iso_date_text(value: object) -> object:
-    """JSON carries dates as strings; lax pydantic would also turn 0 into 1970-01-01."""
-    if not isinstance(value, str):
-        raise ValueError("date must be an ISO date string")
-    return value
-
-
-IsoDate = Annotated[date, BeforeValidator(_iso_date_text)]
 
 
 def _cik_digits(value: object) -> object:
