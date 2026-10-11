@@ -60,5 +60,25 @@
     "file": "efts_search_boundary_error.json",
     "sha256": "695b25d6138cb3eaa42b46e91e4d65039c7f1219428485a2c80c32487c30da03",
     "url": "https://efts.sec.gov/LATEST/search-index?q=%22the%22&forms=10-K&from=9901"
+  },
+  {
+    "fetched_at": "2026-10-11T04:19:47.453432+00:00",
+    "file": "companyfacts_trans_american.json",
+    "sha256": "de39df3cfb039e59fe304972d0b52a5e4f8d05444d2f61fffcc11024b8c8fdc5",
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001990446.json"
+  },
+  {
+    "fetched_at": "2026-10-11T04:19:47.878427+00:00",
+    "file": "companyfacts_luckin.json",
+    "sha256": "1f5718da4e283364926225794f14d09b3d0fe9370f6a7e3c486336888b299701",
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001767582.json"
+  },
+  {
+    "fetched_at": "2026-10-11T04:19:48.161798+00:00",
+    "file": "companyfacts_ge_edge.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "5822da13c1eff8a7e2b9b6cad9e322bca78faa0f3b73950cfc9a6a37c8099577",
+    "trimmed": true,
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000040545.json"
   }
 ]
