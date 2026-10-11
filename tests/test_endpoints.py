@@ -20,6 +20,13 @@ def test_submissions_url_uses_padded_cik() -> None:
     )
 
 
+def test_company_facts_url_uses_padded_cik() -> None:
+    assert (
+        endpoints.company_facts_url(APPLE_CIK)
+        == "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json"
+    )
+
+
 def test_company_tickers_url() -> None:
     assert endpoints.company_tickers_url() == "https://www.sec.gov/files/company_tickers.json"
 
@@ -64,9 +71,18 @@ def test_builder_cannot_emit_off_allowlist_url_even_if_base_is_corrupted(
         endpoints.submissions_url(APPLE_CIK)
 
 
+def test_company_facts_builder_cannot_emit_off_allowlist_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(endpoints, "_DATA_SEC_GOV", "https://evil.com")
+    with pytest.raises(AllowlistViolation):
+        endpoints.company_facts_url(APPLE_CIK)
+
+
 def test_all_builder_outputs_pass_their_own_allowlist_check() -> None:
     urls = [
         endpoints.submissions_url(APPLE_CIK),
+        endpoints.company_facts_url(APPLE_CIK),
         endpoints.company_tickers_url(),
         endpoints.filing_directory_url(APPLE_CIK, APPLE_ACCESSION),
         endpoints.filing_index_url(APPLE_CIK, APPLE_ACCESSION),

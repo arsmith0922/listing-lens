@@ -30,6 +30,12 @@ def submissions_overflow_url(cik: Cik, name: str) -> str:
     return url
 
 
+def company_facts_url(cik: Cik) -> str:
+    url = f"{_DATA_SEC_GOV}/api/xbrl/companyfacts/CIK{cik.padded}.json"
+    assert_allowed(url)
+    return url
+
+
 def company_tickers_url() -> str:
     url = f"{_WWW_SEC_GOV}/files/company_tickers.json"
     assert_allowed(url)
