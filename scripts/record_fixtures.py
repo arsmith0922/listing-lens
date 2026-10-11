@@ -163,7 +163,9 @@ def write_fixture(
         text = json.dumps(data, sort_keys=True, separators=(",", ":"))
     else:
         text = json.dumps(data, indent=2, sort_keys=True)
-    path.write_text(text, encoding="utf-8")
+    # newline="\n": the hash below is over this text, and .gitattributes stores fixtures as exact
+    # bytes (-text), so Windows must not write CRLF here.
+    path.write_text(text, encoding="utf-8", newline="\n")
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
     MANIFEST.append(_manifest_entry(filename, url, digest, trimmed))
     print(f"wrote {filename} ({len(text)} bytes){' [trimmed]' if trimmed else ''}")
@@ -185,7 +187,8 @@ def write_manifest() -> None:
     by_file = {str(entry["file"]): entry for entry in MANIFEST}
     merged = [by_file.pop(str(entry["file"]), entry) for entry in existing]
     merged.extend(by_file.values())
-    MANIFEST_PATH.write_text(json.dumps(merged, indent=2, sort_keys=True), encoding="utf-8")
+    text = json.dumps(merged, indent=2, sort_keys=True)
+    MANIFEST_PATH.write_text(text, encoding="utf-8", newline="\n")
     print(f"wrote manifest.json ({len(merged)} entries, {len(MANIFEST)} from this run)")
 
 

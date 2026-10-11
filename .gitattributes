@@ -1,0 +1,3 @@
+# Recorded SEC fixtures are hashed byte for byte (manifest.json sha256). Never convert line
+# endings, in either direction, on any platform.
+tests/fixtures/** -text

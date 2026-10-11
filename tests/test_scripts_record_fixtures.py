@@ -162,6 +162,35 @@ def test_write_raw_fixture_writes_the_exact_bytes_and_hashes_them(
     assert "trimmed" not in entry
 
 
+@pytest.mark.parametrize("compact", [False, True], ids=["indented", "compact"])
+def test_write_fixture_writes_lf_only_and_the_manifest_hash_matches_the_file_bytes(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, compact: bool
+) -> None:
+    """.gitattributes stores fixtures as exact bytes (-text), so the recorder must write the same
+    LF bytes it hashes. On Windows, write_text without newline="\\n" would write CRLF."""
+    module = _load_script_module()
+    monkeypatch.setattr(module, "FIXTURES_DIR", tmp_path)
+    monkeypatch.setattr(module, "MANIFEST", [])
+    module.write_fixture(
+        "fixture.json", {"a": [1, 2, {"b": "x"}], "c": "y"}, "https://x/f", False, compact=compact
+    )
+    written = (tmp_path / "fixture.json").read_bytes()
+    assert b"\r" not in written
+    assert (b"\n" in written) is (not compact)
+    (entry,) = module.MANIFEST
+    assert entry["sha256"] == hashlib.sha256(written).hexdigest()
+
+
+def test_manifest_is_written_with_lf_only(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    module = _load_script_module()
+    monkeypatch.setattr(module, "MANIFEST_PATH", tmp_path / "manifest.json")
+    monkeypatch.setattr(module, "MANIFEST", [{"file": "a.json", "sha256": "x"}])
+    module.write_manifest()
+    written = (tmp_path / "manifest.json").read_bytes()
+    assert b"\n" in written
+    assert b"\r" not in written
+
+
 def test_manifest_merge_replaces_by_file_and_keeps_other_entries(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
