@@ -12,6 +12,7 @@ import pluggy
 import pytest
 
 from listinglens.ingestion.cache import CachedEdgarClient
+from listinglens.ingestion.facts_repository import CompanyFactsRepository
 from listinglens.ingestion.repository import EdgarRepository
 from listinglens.ingestion.search_repository import FullTextSearchRepository
 from listinglens.ingestion.service import IngestionService
@@ -172,6 +173,20 @@ def repository_factory(edgar_stack: StackBuilder) -> RepositoryFactory:
     def _build(routes: Mapping[str, Route]) -> tuple[EdgarRepository, RoutedTransport]:
         client, routed = edgar_stack(routes)
         return EdgarRepository(client), routed
+
+    return _build
+
+
+FactsRepositoryFactory = Callable[
+    [Mapping[str, Route]], tuple[CompanyFactsRepository, RoutedTransport]
+]
+
+
+@pytest.fixture
+def facts_repository_factory(edgar_stack: StackBuilder) -> FactsRepositoryFactory:
+    def _build(routes: Mapping[str, Route]) -> tuple[CompanyFactsRepository, RoutedTransport]:
+        client, routed = edgar_stack(routes)
+        return CompanyFactsRepository(client), routed
 
     return _build
 

@@ -148,6 +148,15 @@ class CompanyNotFound(IngestionError):
         super().__init__(f"Company not found for {identifier_kind}={identifier}")
 
 
+class CompanyFactsNotFound(IngestionError):
+    """The company exists but has no XBRL facts (for example a filer that has not yet tagged)."""
+
+    def __init__(self, identifier: str, identifier_kind: str) -> None:
+        self.identifier = identifier
+        self.identifier_kind = identifier_kind
+        super().__init__(f"No XBRL company facts for {identifier_kind}={identifier}")
+
+
 class AmbiguousCompany(IngestionError):
     def __init__(
         self, query: str, query_kind: str, candidates: tuple[tuple[str, str], ...]

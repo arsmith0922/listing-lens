@@ -9,7 +9,6 @@ from listinglens.core.errors import (
     InputValidationError,
     MalformedPayload,
     UndecodableDocument,
-    UpstreamError,
 )
 from listinglens.domain.company import CompanyRef, ResolvedCompany
 from listinglens.domain.filing import FilingDocument, FilingRef, SourceText
@@ -21,14 +20,7 @@ from listinglens.ingestion.filing_rows import page_to_filing_refs
 from listinglens.ingestion.payloads.archives import ArchivesIndex
 from listinglens.ingestion.payloads.submissions import FilingIndexPage, SubmissionsDocument
 from listinglens.ingestion.payloads.tickers import CompanyTickersMap
-
-
-def _json(response: httpx.Response, url: str) -> object:
-    try:
-        data: object = response.json()
-    except ValueError as exc:
-        raise MalformedPayload(url=url, field="<body>", detail=str(exc)) from exc
-    return data
+from listinglens.ingestion.responses import decode_json, ensure_success
 
 
 class EdgarRepository:
@@ -59,7 +51,7 @@ class EdgarRepository:
                 ) from exc
             missing = MalformedPayload(url=url, field="filings.files", detail="listed file is 404")
             response = self._get_ok(url, not_found=missing)
-            page = FilingIndexPage.parse(_json(response, url), url)
+            page = FilingIndexPage.parse(decode_json(response, url), url)
             refs.extend(page_to_filing_refs(page, cik, url))
         return refs
 
@@ -69,7 +61,7 @@ class EdgarRepository:
         index_url = endpoints.filing_index_url(company.cik, accession)
         no_filing = FilingNotFound(identifier=accession.dashed, identifier_kind="accession_no")
         index_response = self._get_ok(index_url, not_found=no_filing)
-        index = ArchivesIndex.parse(_json(index_response, index_url), index_url)
+        index = ArchivesIndex.parse(decode_json(index_response, index_url), index_url)
         if document_name not in {item.name for item in index.directory.item}:
             raise FilingNotFound(identifier=document_name, identifier_kind="document")
         try:
@@ -100,24 +92,16 @@ class EdgarRepository:
     def _ticker_index(self) -> CompanyIndex:
         url = endpoints.company_tickers_url()
         response = self._get_ok(url, not_found=None)
-        return CompanyIndex.from_map(CompanyTickersMap.parse(_json(response, url), url))
+        return CompanyIndex.from_map(CompanyTickersMap.parse(decode_json(response, url), url))
 
     def _submissions(self, cik: Cik) -> SubmissionsDocument:
         url = endpoints.submissions_url(cik)
         missing = CompanyNotFound(identifier=cik.padded, identifier_kind="cik")
         response = self._get_ok(url, not_found=missing)
-        return SubmissionsDocument.parse(_json(response, url), url)
+        return SubmissionsDocument.parse(decode_json(response, url), url)
 
     def _get_ok(self, url: str, *, not_found: IngestionError | None) -> httpx.Response:
         response = self._client.get(url)
         if response.status_code == 404 and not_found is not None:
             raise not_found
-        if not 200 <= response.status_code < 300:
-            raise UpstreamError(
-                host=httpx.URL(url).host,
-                url=url,
-                status_code=response.status_code,
-                attempts=1,
-                detail="unexpected status, not retried",
-            )
-        return response
+        return ensure_success(response, url)

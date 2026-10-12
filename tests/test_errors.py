@@ -5,6 +5,7 @@ import pytest
 from listinglens.core.errors import (
     AllowlistReason,
     AllowlistViolation,
+    CompanyFactsNotFound,
     ExtractionError,
     FilingNotFound,
     IngestionError,
@@ -114,6 +115,14 @@ def test_upstream_error_carries_detail_for_transport_failure() -> None:
     )
     assert err.status_code is None
     assert err.detail == "ConnectTimeout"
+
+
+def test_company_facts_not_found_carries_typed_context() -> None:
+    err = CompanyFactsNotFound(identifier="0001990446", identifier_kind="cik")
+    assert isinstance(err, IngestionError)
+    assert err.identifier == "0001990446"
+    assert err.identifier_kind == "cik"
+    assert "0001990446" in str(err)
 
 
 def test_xbrl_concept_missing_carries_typed_context() -> None:
