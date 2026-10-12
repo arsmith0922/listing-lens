@@ -17,7 +17,11 @@ from listinglens.domain.financials import TargetConcept
 # definitions. Tags that are name traps are deliberately absent: LiabilitiesAndStockholdersEquity
 # (liabilities plus equity), NetIncomeLossAvailableToCommonStockholdersBasic (after preferred
 # dividends), the IncomeLossFromContinuingOperationsBeforeIncomeTaxes Domestic and Foreign
-# subsets, and the WeightedAverage share counts (not point-in-time).
+# subsets, and the WeightedAverage share counts (not point-in-time). For income from continuing
+# operations also excluded: every before-income-taxes tag (that is PRETAX_INCOME),
+# EffectiveIncomeTaxRateContinuingOperations (a rate, unit pure), the per-share continuing
+# operations tags (USD/shares), every discontinued-operations tag (the opposite figure), and
+# NetIncomeLoss and ProfitLoss (total net income, a different target).
 
 
 class PeriodKind(StrEnum):
@@ -130,6 +134,22 @@ ALIASES: Mapping[TargetConcept, ConceptSpec] = MappingProxyType(
         # reported annually; not identical to Nasdaq's market value of publicly held shares.
         TargetConcept.PUBLIC_FLOAT: ConceptSpec(
             PeriodKind.INSTANT, _MONEY, (_dei("EntityPublicFloat"),)
+        ),
+        # FLAG: parent first, then the total including the noncontrolling interest, the same
+        # convention as net income and equity (the taxonomy defines the bare tag as the figure
+        # attributable to the parent). Chunk 13 confirms which the Net Income Standard means; the
+        # cross-tag diagnostic surfaces the total when the two differ. No fixture tags either
+        # (D33); a corroborated fallback to net income is a separate mechanism in selection (D35),
+        # not a candidate here.
+        TargetConcept.INCOME_FROM_CONTINUING_OPERATIONS: ConceptSpec(
+            PeriodKind.FLOW,
+            _MONEY,
+            (
+                _gaap("IncomeLossFromContinuingOperations"),
+                _gaap(
+                    "IncomeLossFromContinuingOperationsIncludingPortionAttributableToNoncontrollingInterest"
+                ),
+            ),
         ),
     }
 )

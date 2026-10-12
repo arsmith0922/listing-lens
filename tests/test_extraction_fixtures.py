@@ -72,9 +72,71 @@ def test_trans_american_cik_arrives_as_a_padded_string_and_is_cited_as_a_cik() -
     assert figure.value.citation.cik == Cik.parse(1990446)
 
 
-@pytest.mark.parametrize("concept", list(T))
+@pytest.mark.parametrize("concept", [c for c in T if c is not T.INCOME_FROM_CONTINUING_OPERATIONS])
 def test_trans_american_has_no_disagreement_at_its_latest_periods(concept: TargetConcept) -> None:
     assert figure_for(fixture_document(TA), concept, URL).diagnostics == ()
+
+
+CONTINUING_TAGS = (
+    "IncomeLossFromContinuingOperations",
+    "IncomeLossFromContinuingOperationsIncludingPortionAttributableToNoncontrollingInterest",
+)
+
+
+@pytest.mark.parametrize("name", [TA, LK, GE])
+def test_no_recorded_fixture_tags_income_from_continuing_operations_after_tax(name: str) -> None:
+    """Read straight from the raw JSON, with no model or extraction code: the new target's own
+    tags appear in none of the three recorded fixtures (D33)."""
+    concepts = dig(raw_fixture(name), "facts", "us-gaap")
+    assert isinstance(concepts, dict)
+    assert set(CONTINUING_TAGS).isdisjoint(concepts)
+
+
+@pytest.mark.parametrize("name", [TA, LK, GE])
+def test_income_from_continuing_operations_is_a_gap_for_every_recorded_issuer(name: str) -> None:
+    with pytest.raises(ConceptNotFound):
+        figure_for(fixture_document(name), T.INCOME_FROM_CONTINUING_OPERATIONS, URL)
+
+
+def test_luckins_continuing_operations_rate_is_a_rate_not_an_income_figure() -> None:
+    """The name-trap evidence: this tag says ContinuingOperations but is 0.32 in unit pure."""
+    tag = "EffectiveIncomeTaxRateContinuingOperations"
+    assert raw_val(LK, "us-gaap", tag, "pure", LK_20F, "2025-12-31", "2025-01-01") == Decimal(
+        "0.32"
+    )
+
+
+# Pre-tax minus income tax equals net income exactly, in both of Luckin's currencies and for
+# Trans American. These raw constants are the evidence that net income stands in for income from
+# continuing operations when no discontinued operations exist (D35).
+IDENTITY_ROWS = [
+    # fixture, unit, accession, start, end, pretax, tax, net income, net income tag
+    (LK, "USD", LK_20F, "2025-01-01", "2025-12-31", 753632000, 239755000, 513877000, "ProfitLoss"),
+    (
+        LK,
+        "CNY",
+        LK_20F,
+        "2025-01-01",
+        "2025-12-31",
+        5280175000,
+        1679793000,
+        3600382000,
+        "ProfitLoss",
+    ),
+    (TA, "USD", TA_10K, "2024-01-01", "2024-12-31", -2808894, 0, -2808894, "NetIncomeLoss"),
+]
+
+
+@pytest.mark.parametrize("row", IDENTITY_ROWS, ids=["luckin-usd", "luckin-cny", "trans-american"])
+def test_pretax_minus_tax_equals_net_income_in_the_raw_fixtures(
+    row: tuple[str, str, str, str, str, int, int, int, str],
+) -> None:
+    name, unit, accn, start, end, pretax, tax, net, net_tag = row
+    raw_pretax = raw_val(name, "us-gaap", PRETAX_TAG, unit, accn, end, start)
+    raw_tax = raw_val(name, "us-gaap", "IncomeTaxExpenseBenefit", unit, accn, end, start)
+    raw_net = raw_val(name, "us-gaap", net_tag, unit, accn, end, start)
+    assert (raw_pretax, raw_tax, raw_net) == (Decimal(pretax), Decimal(tax), Decimal(net))
+    assert pretax - tax == net
 
 
 def test_trans_american_equity_restatement_pair_is_surfaced() -> None:

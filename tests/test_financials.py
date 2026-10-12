@@ -85,8 +85,10 @@ def _observation(value: str, accn: str = "0000320193-23-000106") -> Observation:
     )
 
 
-def test_the_target_concepts_are_the_eight_phase_two_figures() -> None:
-    assert {member.value for member in TargetConcept} == {
+def test_the_target_concepts_are_the_nine_phase_two_figures_in_a_stable_order() -> None:
+    """The ninth, income from continuing operations, is appended last (D33), so every earlier
+    ordering (snapshot figures, gap lists) is unchanged."""
+    assert [member.value for member in TargetConcept] == [
         "stockholders_equity",
         "net_income",
         "pretax_income",
@@ -95,7 +97,8 @@ def test_the_target_concepts_are_the_eight_phase_two_figures() -> None:
         "cash",
         "shares_outstanding",
         "public_float",
-    }
+        "income_from_continuing_operations",
+    ]
 
 
 def test_a_value_repeats_its_citations_unit_and_period() -> None:

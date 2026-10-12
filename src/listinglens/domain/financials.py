@@ -26,6 +26,9 @@ class TargetConcept(StrEnum):
     CASH = "cash"
     SHARES_OUTSTANDING = "shares_outstanding"
     PUBLIC_FLOAT = "public_float"
+    # Appended last (D33) so every earlier ordering stays stable. Net income from continuing
+    # operations after tax, the figure the Nasdaq Net Income Standard tests.
+    INCOME_FROM_CONTINUING_OPERATIONS = "income_from_continuing_operations"
 
 
 class FinancialValue(BaseModel):

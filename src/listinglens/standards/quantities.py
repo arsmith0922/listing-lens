@@ -43,6 +43,7 @@ CONCEPT_UNITS: Mapping[TargetConcept, ThresholdUnit] = MappingProxyType(
         TargetConcept.CASH: ThresholdUnit.USD,
         TargetConcept.SHARES_OUTSTANDING: ThresholdUnit.SHARES,
         TargetConcept.PUBLIC_FLOAT: ThresholdUnit.USD,
+        TargetConcept.INCOME_FROM_CONTINUING_OPERATIONS: ThresholdUnit.USD,
     }
 )
 

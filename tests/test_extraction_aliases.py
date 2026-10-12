@@ -56,6 +56,14 @@ EXPECTED_CANDIDATES = {
         (G, "CommonStockSharesOutstanding"),
     ),
     TargetConcept.PUBLIC_FLOAT: ((D, "EntityPublicFloat"),),
+    # Parent first (the bare tag is the parent-attributable figure), then the total (D33).
+    TargetConcept.INCOME_FROM_CONTINUING_OPERATIONS: (
+        (G, "IncomeLossFromContinuingOperations"),
+        (
+            G,
+            "IncomeLossFromContinuingOperationsIncludingPortionAttributableToNoncontrollingInterest",
+        ),
+    ),
 }
 
 EXPECTED_PERIOD_KINDS = {
@@ -67,9 +75,17 @@ EXPECTED_PERIOD_KINDS = {
     TargetConcept.CASH: PeriodKind.INSTANT,
     TargetConcept.SHARES_OUTSTANDING: PeriodKind.INSTANT,
     TargetConcept.PUBLIC_FLOAT: PeriodKind.INSTANT,
+    TargetConcept.INCOME_FROM_CONTINUING_OPERATIONS: PeriodKind.FLOW,
 }
 
-NAME_TRAPS = ("LiabilitiesAnd", "AvailableToCommon", "Domestic", "Foreign", "WeightedAverage")
+# Substrings no candidate of any target may contain.
+NAME_TRAPS = ("LiabilitiesAnd", "AvailableToCommon", "WeightedAverage")
+# Pre-tax tags legitimately carry these; every other target must not.
+PRETAX_ONLY_TRAPS = ("BeforeIncomeTaxes", "Domestic", "Foreign")
+# Extra traps for income from continuing operations: a rate, per-share figures, the opposite
+# figure, and (as exact tags) total net income, which is a different target.
+CONTINUING_TRAPS = ("Rate", "PerBasic", "PerDiluted", "PerShare", "Discontinued")
+CONTINUING_EXACT_TRAPS = ("NetIncomeLoss", "ProfitLoss")
 
 
 def test_every_target_concept_has_a_spec_and_nothing_else_does() -> None:
@@ -100,9 +116,41 @@ def test_expected_unit_follows_the_kind(concept: TargetConcept) -> None:
     assert spec.expected_unit == expected
 
 
+def _tags(concept: TargetConcept) -> list[str]:
+    return [c.tag for c in ALIASES[concept].candidates]
+
+
 def test_no_candidate_is_a_name_trap() -> None:
-    tags = [c.tag for spec in ALIASES.values() for c in spec.candidates]
+    tags = [t for concept in TargetConcept for t in _tags(concept)]
     assert [t for t in tags if any(trap in t for trap in NAME_TRAPS)] == []
+
+
+@pytest.mark.parametrize(
+    "concept", [c for c in TargetConcept if c is not TargetConcept.PRETAX_INCOME]
+)
+def test_only_the_pretax_target_may_use_before_income_taxes_tags(concept: TargetConcept) -> None:
+    bad = [t for t in _tags(concept) if any(trap in t for trap in PRETAX_ONLY_TRAPS)]
+    assert bad == []
+
+
+def test_income_from_continuing_operations_excludes_every_look_alike() -> None:
+    """Pre-tax tags (that is PRETAX_INCOME), the effective tax rate (a rate in unit pure),
+    per-share figures, discontinued operations, and total net income are all different figures
+    whose names merely resemble it."""
+    tags = _tags(TargetConcept.INCOME_FROM_CONTINUING_OPERATIONS)
+    assert [t for t in tags if any(trap in t for trap in CONTINUING_TRAPS)] == []
+    assert [t for t in tags if t in CONTINUING_EXACT_TRAPS] == []
+    assert not set(tags) & set(_tags(TargetConcept.PRETAX_INCOME))
+    assert not set(tags) & set(_tags(TargetConcept.NET_INCOME))
+
+
+def test_no_tag_feeds_two_targets() -> None:
+    """Each tag is one measure; sharing it between targets would blur which figure is which."""
+    seen: dict[str, TargetConcept] = {}
+    for concept in TargetConcept:
+        for tag in _tags(concept):
+            assert tag not in seen, f"{tag} feeds both {seen[tag]} and {concept}"
+            seen[tag] = concept
 
 
 def test_a_tag_is_never_listed_twice_for_one_target() -> None:

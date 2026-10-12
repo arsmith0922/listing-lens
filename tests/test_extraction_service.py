@@ -33,7 +33,7 @@ def _routes(cik: int, body: bytes) -> dict[str, bytes]:
     return {company_facts_url(Cik.parse(cik)): body}
 
 
-def test_trans_american_snapshot_has_all_eight_figures_and_no_gaps(
+def test_trans_american_snapshot_has_eight_figures_and_the_continuing_operations_gap(
     extraction_service_factory: ExtractionServiceFactory, edgar_fixture_bytes: FixtureBytes
 ) -> None:
     service, _ = extraction_service_factory(
@@ -43,12 +43,15 @@ def test_trans_american_snapshot_has_all_eight_figures_and_no_gaps(
 
     assert snapshot.cik == Cik.parse(1990446)
     assert snapshot.entity_name == "TRANS AMERICAN AQUACULTURE, INC."
-    assert snapshot.gaps == ()
-    assert [f.value.concept for f in snapshot.figures] == list(TargetConcept)
+    # No fixture tags income from continuing operations after tax (D33).
+    assert [(g.concept, g.reason) for g in snapshot.gaps] == [
+        (T.INCOME_FROM_CONTINUING_OPERATIONS, "concept_not_found")
+    ]
+    assert [f.value.concept for f in snapshot.figures] == list(TargetConcept)[:-1]
     assert all(not f.value.is_convenience_translation for f in snapshot.figures)
 
 
-def test_luckin_snapshot_flags_every_figure_as_a_translation_and_gaps_the_missing_two(
+def test_luckin_snapshot_flags_every_figure_as_a_translation_and_gaps_the_missing_three(
     extraction_service_factory: ExtractionServiceFactory, edgar_fixture_bytes: FixtureBytes
 ) -> None:
     service, _ = extraction_service_factory(
@@ -68,11 +71,12 @@ def test_luckin_snapshot_flags_every_figure_as_a_translation_and_gaps_the_missin
     assert {(g.concept, g.reason) for g in snapshot.gaps} == {
         (T.SHARES_OUTSTANDING, "concept_not_found"),
         (T.PUBLIC_FLOAT, "concept_not_found"),
+        (T.INCOME_FROM_CONTINUING_OPERATIONS, "concept_not_found"),
     }
     assert all(g.detail for g in snapshot.gaps)
 
 
-def test_ge_trimmed_snapshot_has_three_figures_and_five_gaps(
+def test_ge_trimmed_snapshot_has_three_figures_and_six_gaps(
     extraction_service_factory: ExtractionServiceFactory, edgar_fixture_bytes: FixtureBytes
 ) -> None:
     service, _ = extraction_service_factory(
@@ -86,7 +90,7 @@ def test_ge_trimmed_snapshot_has_three_figures_and_five_gaps(
         T.PUBLIC_FLOAT,
     }
     assert {g.reason for g in snapshot.gaps} == {"concept_not_found"}
-    assert len(snapshot.gaps) == 5
+    assert len(snapshot.gaps) == 6
 
 
 @pytest.mark.parametrize(
@@ -123,7 +127,7 @@ class _CountingFacts(CompanyFactsRepository):
         return self._inner.fetch(cik)
 
 
-def test_a_snapshot_fetches_the_facts_exactly_once_for_all_eight_targets(
+def test_a_snapshot_fetches_the_facts_exactly_once_for_all_nine_targets(
     facts_repository_factory: FactsRepositoryFactory, edgar_fixture_bytes: FixtureBytes
 ) -> None:
     repository, _ = facts_repository_factory(
