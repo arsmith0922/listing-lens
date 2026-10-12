@@ -6,8 +6,8 @@ from typing import Annotated
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
+from listinglens.core.dates import IsoDate
 from listinglens.ingestion.payloads.common import parse_or_raise
-from listinglens.ingestion.payloads.dates import IsoDate
 
 _CIK_DIGITS = re.compile(r"[0-9]{1,10}")
 

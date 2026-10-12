@@ -1,0 +1,8 @@
+# SYNTHETIC TEST DATA. Not Nasdaq content. Every value here is invented to exercise the loader.
+
+translation:
+  value: allow_flagged
+  basis: Synthetic policy used only by loader tests.
+proxy:
+  value: "off"
+  basis: Synthetic policy used only by loader tests.

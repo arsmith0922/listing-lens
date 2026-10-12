@@ -1,0 +1,16 @@
+# Ruleset-wide choices that are ours, not Nasdaq's (D32). Each records why it is set this way.
+# Rule files for the Nasdaq standards are added here by the next commit (D33).
+
+translation:
+  value: allow_flagged
+  basis: >-
+    Project decision D32. A figure that is a convenience translation into USD may feed a USD
+    threshold, unconverted, and the result must carry the translation flag. Refusing would leave
+    every foreign-currency reporter unevaluable. A cited rule on how Nasdaq applies USD
+    thresholds to such issuers (Gate 1 question Q9) may override this per rule.
+proxy:
+  value: "off"
+  basis: >-
+    Project decision D32. A rule's explicit proxy (for example disclosed public float standing in
+    for a market value that needs a price) is used only when this is "on", and the result is
+    always reported as evaluated via a proxy.

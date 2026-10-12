@@ -1,0 +1,219 @@
+# SYNTHETIC TEST DATA. Not Nasdaq content. Every id, name, number, quotation, and URL here is
+# invented to exercise the loader and the grouping. It states nothing about any exchange's rules.
+
+# Tier-common rules: no standard_id, so they apply whichever standard is chosen.
+- rule_id: SYN-C-HOLDERS
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo, direct_listing]
+  metric: {kind: external, input: holder_count}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 11
+  threshold_unit: count
+  effective_from: 2020-01-01
+  citation:
+    rule_section: SYN section 1
+    rule_url: https://example.invalid/synthetic/1
+    quoted_text: Synthetic quotation one, not rule text.
+    retrieved_on: 2026-01-02
+  verification: {verified: false}
+
+- rule_id: SYN-C-BID
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo]
+  metric: {kind: external, input: market_price}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 1.5
+  threshold_unit: usd_per_share
+  effective_from: 2020-01-01
+  citation:
+    rule_section: SYN section 2
+    rule_url: https://example.invalid/synthetic/2
+    quoted_text: Synthetic quotation two, not rule text.
+    retrieved_on: 2026-01-02
+  verification: {verified: false}
+
+# A standard with one rule in two dated versions: version 1 ends exactly where version 2 begins.
+- rule_id: SYN-EQ-1
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo]
+  standard_id: SYN-EQUITY
+  standard_name: Synthetic Equity Standard
+  metric: {kind: concept, concept: stockholders_equity}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 500
+  threshold_unit: usd
+  effective_from: 2020-01-01
+  effective_to: 2024-06-01
+  citation:
+    rule_section: SYN section 3 (version 1)
+    rule_url: https://example.invalid/synthetic/3
+    quoted_text: Synthetic quotation three, not rule text.
+    retrieved_on: 2026-01-02
+  verification: {verified: false}
+
+- rule_id: SYN-EQ-1
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo]
+  standard_id: SYN-EQUITY
+  standard_name: Synthetic Equity Standard
+  metric: {kind: concept, concept: stockholders_equity}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 1000
+  threshold_unit: usd
+  effective_from: 2024-06-01
+  citation:
+    rule_section: SYN section 3 (version 2)
+    rule_url: https://example.invalid/synthetic/3
+    quoted_text: Synthetic quotation three, amended, not rule text.
+    retrieved_on: 2026-01-02
+    sec_release: SYN-RELEASE-1
+    sec_release_url: https://example.invalid/synthetic/release-1
+  verification: {verified: true, verified_on: 2026-01-03, verified_by: synthetic reviewer}
+
+# A price-dependent rule with an explicit proxy.
+- rule_id: SYN-MV-1
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo]
+  standard_id: SYN-MV
+  standard_name: Synthetic Market Value Standard
+  metric: {kind: derived, quantity: market_value_of_listed_securities}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 5000
+  threshold_unit: usd
+  effective_from: 2020-01-01
+  citation:
+    rule_section: SYN section 4
+    rule_url: https://example.invalid/synthetic/4
+    quoted_text: Synthetic quotation four, not rule text.
+    retrieved_on: 2026-01-02
+  verification: {verified: false}
+  proxy:
+    concept: public_float
+    caveat: Synthetic caveat. Disclosed public float differs in date and definition.
+
+# One requirement with alternative branches: the most recent fiscal year, or two of the last three.
+- rule_id: SYN-INC-LATEST
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo]
+  standard_id: SYN-INCOME
+  standard_name: Synthetic Income Standard
+  requirement: SYN-INC-REQ
+  branch: latest
+  metric: {kind: concept, concept: net_income}
+  window: {kind: latest_fiscal_year}
+  comparison: gte
+  threshold: 100
+  threshold_unit: usd
+  effective_from: 2020-01-01
+  citation:
+    rule_section: SYN section 5
+    rule_url: https://example.invalid/synthetic/5
+    quoted_text: Synthetic quotation five, not rule text.
+    retrieved_on: 2026-01-02
+  verification: {verified: false}
+
+- rule_id: SYN-INC-TWO-OF-THREE
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo]
+  standard_id: SYN-INCOME
+  standard_name: Synthetic Income Standard
+  requirement: SYN-INC-REQ
+  branch: two_of_three
+  metric: {kind: concept, concept: net_income}
+  window: {kind: n_of_last_m_fiscal_years, n: 2, m: 3}
+  comparison: gte
+  threshold: 100
+  threshold_unit: usd
+  effective_from: 2020-01-01
+  citation:
+    rule_section: SYN section 5
+    rule_url: https://example.invalid/synthetic/5
+    quoted_text: Synthetic quotation five, not rule text.
+    retrieved_on: 2026-01-02
+  verification: {verified: false}
+
+# An OR inside one requirement where one alternative is a single value and the other is a pair.
+- rule_id: SYN-INC-VALUE
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo]
+  standard_id: SYN-INCOME
+  standard_name: Synthetic Income Standard
+  requirement: SYN-INC-LIQUIDITY
+  branch: value_only
+  metric: {kind: derived, quantity: market_value_of_publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 1000
+  threshold_unit: usd
+  effective_from: 2020-01-01
+  citation:
+    rule_section: SYN section 6
+    rule_url: https://example.invalid/synthetic/6
+    quoted_text: Synthetic quotation six, not rule text.
+    retrieved_on: 2026-01-02
+  verification: {verified: false}
+
+- rule_id: SYN-INC-PAIR-VALUE
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo]
+  standard_id: SYN-INCOME
+  standard_name: Synthetic Income Standard
+  requirement: SYN-INC-LIQUIDITY
+  branch: value_and_equity
+  metric: {kind: derived, quantity: market_value_of_publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 500
+  threshold_unit: usd
+  effective_from: 2020-01-01
+  citation:
+    rule_section: SYN section 6
+    rule_url: https://example.invalid/synthetic/6
+    quoted_text: Synthetic quotation six, not rule text.
+    retrieved_on: 2026-01-02
+  verification: {verified: false}
+
+- rule_id: SYN-INC-PAIR-EQUITY
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo]
+  standard_id: SYN-INCOME
+  standard_name: Synthetic Income Standard
+  requirement: SYN-INC-LIQUIDITY
+  branch: value_and_equity
+  metric: {kind: concept, concept: stockholders_equity}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 200
+  threshold_unit: usd
+  effective_from: 2020-01-01
+  citation:
+    rule_section: SYN section 6
+    rule_url: https://example.invalid/synthetic/6
+    quoted_text: Synthetic quotation six, not rule text.
+    retrieved_on: 2026-01-02
+  verification: {verified: false}

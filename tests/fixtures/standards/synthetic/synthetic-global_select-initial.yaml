@@ -1,0 +1,82 @@
+# SYNTHETIC TEST DATA. Not Nasdaq content. Every id, name, number, quotation, and URL here is
+# invented to exercise the loader and the multi-year windows. It states nothing about any rules.
+
+- rule_id: SYN-GS-HISTORY
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  metric: {kind: external, input: operating_history}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 2
+  threshold_unit: count
+  effective_from: 2021-03-01
+  citation:
+    rule_section: SYN section 7
+    rule_url: https://example.invalid/synthetic/7
+    quoted_text: Synthetic quotation seven, not rule text.
+    retrieved_on: 2026-01-02
+  verification: {verified: false}
+
+# An aggregate over three fiscal years, with a per-year condition: positive in every one of the
+# three years, and a minimum in each of the two most recent.
+- rule_id: SYN-GS-AGG
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: SYN-EARNINGS
+  standard_name: Synthetic Earnings Standard
+  metric: {kind: concept, concept: pretax_income}
+  window: {kind: aggregate_over_fiscal_years, years: 3}
+  comparison: gte
+  threshold: 1000
+  threshold_unit: usd
+  effective_from: 2021-03-01
+  citation:
+    rule_section: SYN section 8
+    rule_url: https://example.invalid/synthetic/8
+    quoted_text: Synthetic quotation eight, not rule text.
+    retrieved_on: 2026-01-02
+  verification: {verified: false}
+
+- rule_id: SYN-GS-ALL-POSITIVE
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: SYN-EARNINGS
+  standard_name: Synthetic Earnings Standard
+  metric: {kind: concept, concept: pretax_income}
+  window: {kind: n_of_last_m_fiscal_years, n: 3, m: 3}
+  comparison: gt
+  threshold: 0
+  threshold_unit: usd
+  effective_from: 2021-03-01
+  citation:
+    rule_section: SYN section 8
+    rule_url: https://example.invalid/synthetic/8
+    quoted_text: Synthetic quotation eight, not rule text.
+    retrieved_on: 2026-01-02
+  verification: {verified: false}
+
+- rule_id: SYN-GS-RECENT-TWO
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: SYN-EARNINGS
+  standard_name: Synthetic Earnings Standard
+  metric: {kind: concept, concept: pretax_income}
+  window: {kind: n_of_last_m_fiscal_years, n: 2, m: 2}
+  comparison: gte
+  threshold: 200
+  threshold_unit: usd
+  effective_from: 2021-03-01
+  citation:
+    rule_section: SYN section 8
+    rule_url: https://example.invalid/synthetic/8
+    quoted_text: Synthetic quotation eight, not rule text.
+    retrieved_on: 2026-01-02
+  verification: {verified: false}

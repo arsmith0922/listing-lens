@@ -5,7 +5,7 @@ from datetime import UTC, date, datetime, timedelta, timezone
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from listinglens.ingestion.payloads.dates import IsoDate, IsoDateTime, OptIsoDate
+from listinglens.core.dates import IsoDate, IsoDateTime, OptIsoDate
 
 
 class _Date(BaseModel):

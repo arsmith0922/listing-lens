@@ -81,6 +81,13 @@ FORBIDDEN_EXTRACTION_IMPORTS = (
 )
 
 
+FORBIDDEN_STANDARDS_IMPORTS = (
+    "httpx",
+    "listinglens.ingestion",
+    "listinglens.extraction",
+)
+
+
 def find_forbidden_imports(text: str, forbidden: tuple[str, ...]) -> set[str]:
     """Imported module names that equal or sit under a forbidden one."""
     found: set[str] = set()
@@ -207,18 +214,39 @@ def test_ingestion_layer_has_no_form_literals_or_pathway_import() -> None:
     assert not violations, violations
 
 
-def test_extraction_layer_does_no_http_and_imports_no_transport() -> None:
+def _layer_violations(layer: str, forbidden: tuple[str, ...]) -> dict[str, list[str]]:
     root = _repo_root()
-    extraction_files = [
+    files = [
         p
         for p in _tracked_files()
-        if _rel(p, root).startswith("src/listinglens/extraction/") and p.suffix == ".py"
+        if _rel(p, root).startswith(f"src/listinglens/{layer}/") and p.suffix == ".py"
     ]
-    assert extraction_files, "extraction layer not found"
+    assert files, f"{layer} layer not found"
     violations: dict[str, list[str]] = {}
-    for path in extraction_files:
-        text = path.read_text(encoding="utf-8")
-        found = find_forbidden_imports(text, FORBIDDEN_EXTRACTION_IMPORTS)
+    for path in files:
+        found = find_forbidden_imports(path.read_text(encoding="utf-8"), forbidden)
         if found:
-            violations[str(path)] = sorted(found)
-    assert not violations, violations
+            violations[_rel(path, root)] = sorted(found)
+    return violations
+
+
+def test_extraction_layer_does_no_http_and_imports_no_transport() -> None:
+    assert _layer_violations("extraction", FORBIDDEN_EXTRACTION_IMPORTS) == {}
+
+
+def test_standards_layer_does_no_http_and_imports_neither_ingestion_nor_extraction() -> None:
+    assert _layer_violations("standards", FORBIDDEN_STANDARDS_IMPORTS) == {}
+
+
+def test_only_the_yaml_loader_imports_yaml() -> None:
+    importers = _layer_violations("standards", ("yaml",))
+    assert set(importers) == {"src/listinglens/standards/yaml_loader.py"}
+    outside = [
+        p
+        for p in _tracked_files()
+        if p.suffix == ".py"
+        and _rel(p, _repo_root()).startswith("src/")
+        and not _rel(p, _repo_root()).startswith("src/listinglens/standards/")
+        and find_forbidden_imports(p.read_text(encoding="utf-8"), ("yaml",))
+    ]
+    assert outside == []
