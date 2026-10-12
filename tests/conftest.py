@@ -11,6 +11,7 @@ import httpx
 import pluggy
 import pytest
 
+from listinglens.extraction.service import ExtractionService
 from listinglens.ingestion.cache import CachedEdgarClient
 from listinglens.ingestion.facts_repository import CompanyFactsRepository
 from listinglens.ingestion.repository import EdgarRepository
@@ -187,6 +188,22 @@ def facts_repository_factory(edgar_stack: StackBuilder) -> FactsRepositoryFactor
     def _build(routes: Mapping[str, Route]) -> tuple[CompanyFactsRepository, RoutedTransport]:
         client, routed = edgar_stack(routes)
         return CompanyFactsRepository(client), routed
+
+    return _build
+
+
+ExtractionServiceFactory = Callable[
+    [Mapping[str, Route]], tuple[ExtractionService, RoutedTransport]
+]
+
+
+@pytest.fixture
+def extraction_service_factory(
+    facts_repository_factory: FactsRepositoryFactory,
+) -> ExtractionServiceFactory:
+    def _build(routes: Mapping[str, Route]) -> tuple[ExtractionService, RoutedTransport]:
+        repository, routed = facts_repository_factory(routes)
+        return ExtractionService(repository), routed
 
     return _build
 

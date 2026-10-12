@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import subprocess
 from pathlib import Path
 
@@ -72,6 +73,31 @@ def find_form_literals(text: str) -> set[str]:
     }
 
 
+FORBIDDEN_EXTRACTION_IMPORTS = (
+    "httpx",
+    "listinglens.ingestion.transport",
+    "listinglens.ingestion.cache",
+    "listinglens.ingestion.client",
+)
+
+
+def find_forbidden_imports(text: str, forbidden: tuple[str, ...]) -> set[str]:
+    """Imported module names that equal or sit under a forbidden one."""
+    found: set[str] = set()
+    for node in ast.walk(ast.parse(text)):
+        names = (
+            [alias.name for alias in node.names]
+            if isinstance(node, ast.Import)
+            else [node.module or ""]
+            if isinstance(node, ast.ImportFrom)
+            else []
+        )
+        for name in names:
+            if any(name == bad or name.startswith(f"{bad}.") for bad in forbidden):
+                found.add(name)
+    return found
+
+
 def find_pathway_imports(text: str) -> bool:
     return "domain.pathway" in text or "domain import pathway" in text
 
@@ -105,6 +131,18 @@ def test_find_pathway_imports_detects_domain_pathway_import() -> None:
     assert find_pathway_imports("from listinglens.domain.pathway import Pathway\n")
     assert find_pathway_imports("from listinglens.domain import pathway\n")
     assert not find_pathway_imports("from listinglens.domain import company\n")
+
+
+def test_find_forbidden_imports_detects_modules_and_submodules_only() -> None:
+    forbidden = FORBIDDEN_EXTRACTION_IMPORTS
+    assert find_forbidden_imports("import httpx", forbidden) == {"httpx"}
+    assert find_forbidden_imports("from httpx import Client", forbidden) == {"httpx"}
+    assert find_forbidden_imports("import httpx.exceptions", forbidden) == {"httpx.exceptions"}
+    cache_import = "from listinglens.ingestion.cache import CachedEdgarClient"
+    assert find_forbidden_imports(cache_import, forbidden) == {"listinglens.ingestion.cache"}
+    assert find_forbidden_imports("from listinglens.ingestion import endpoints", forbidden) == set()
+    assert find_forbidden_imports("x = 'import httpx'", forbidden) == set()
+    assert find_forbidden_imports("import httpxfoo", forbidden) == set()
 
 
 def _repo_root() -> Path:
@@ -166,4 +204,21 @@ def test_ingestion_layer_has_no_form_literals_or_pathway_import() -> None:
             violations[str(path)] = literals
         if find_pathway_imports(text):
             violations.setdefault(str(path), []).append("imports domain.pathway")
+    assert not violations, violations
+
+
+def test_extraction_layer_does_no_http_and_imports_no_transport() -> None:
+    root = _repo_root()
+    extraction_files = [
+        p
+        for p in _tracked_files()
+        if _rel(p, root).startswith("src/listinglens/extraction/") and p.suffix == ".py"
+    ]
+    assert extraction_files, "extraction layer not found"
+    violations: dict[str, list[str]] = {}
+    for path in extraction_files:
+        text = path.read_text(encoding="utf-8")
+        found = find_forbidden_imports(text, FORBIDDEN_EXTRACTION_IMPORTS)
+        if found:
+            violations[str(path)] = sorted(found)
     assert not violations, violations

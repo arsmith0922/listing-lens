@@ -6,20 +6,22 @@ from listinglens.core.errors import (
     AllowlistReason,
     AllowlistViolation,
     CompanyFactsNotFound,
+    ConceptNotFound,
     ExtractionError,
     FilingNotFound,
     IngestionError,
     InputValidationError,
     ListingLensError,
     MissingUserAgent,
+    PeriodUnavailable,
     RateLimited,
     ResponseTooLarge,
     RuleNotFound,
     SectionNotFound,
     StandardsError,
     TooManyRedirects,
+    UnitUnavailable,
     UpstreamError,
-    XbrlConceptMissing,
 )
 
 
@@ -125,11 +127,42 @@ def test_company_facts_not_found_carries_typed_context() -> None:
     assert "0001990446" in str(err)
 
 
-def test_xbrl_concept_missing_carries_typed_context() -> None:
-    err = XbrlConceptMissing(concept="AccountsPayableCurrent", cik="0000320193")
+def test_concept_not_found_carries_typed_context() -> None:
+    err = ConceptNotFound(target="revenue", cik="0000320193", tried=("Revenues", "SalesRevenueNet"))
     assert isinstance(err, ExtractionError)
-    assert err.concept == "AccountsPayableCurrent"
+    assert err.target == "revenue"
     assert err.cik == "0000320193"
+    assert err.tried == ("Revenues", "SalesRevenueNet")
+    assert "Revenues, SalesRevenueNet" in str(err)
+
+
+def test_unit_unavailable_carries_typed_context() -> None:
+    err = UnitUnavailable(
+        target="total_assets",
+        cik="0001767582",
+        tag="Assets",
+        expected_unit="USD",
+        available_units=("CNY",),
+    )
+    assert isinstance(err, ExtractionError)
+    assert err.tag == "Assets"
+    assert err.expected_unit == "USD"
+    assert err.available_units == ("CNY",)
+    assert "CNY" in str(err)
+
+
+def test_period_unavailable_carries_typed_context() -> None:
+    err = PeriodUnavailable(
+        target="revenue",
+        cik="0001990446",
+        tag="Revenues",
+        expected_unit="USD",
+        period_kind="flow",
+    )
+    assert isinstance(err, ExtractionError)
+    assert err.tag == "Revenues"
+    assert err.period_kind == "flow"
+    assert not isinstance(err, UnitUnavailable)
 
 
 def test_section_not_found_carries_typed_context() -> None:
