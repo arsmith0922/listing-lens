@@ -15,7 +15,8 @@ class InputKind(StrEnum):
 
     MARKET_PRICE = "market_price"
     PUBLICLY_HELD_SHARES = "publicly_held_shares"  # excludes affiliate holdings, so not dei shares
-    HOLDER_COUNT = "holder_count"
+    TOTAL_HOLDERS = "total_holders"  # Rule 5450's "Total Holders"
+    PUBLIC_HOLDERS = "public_holders"  # Rule 5550's "Public Holders"; a different measure
     MARKET_MAKER_COUNT = "market_maker_count"
     OPERATING_HISTORY = "operating_history"  # a count of fiscal years; unit COUNT (see D32)
 
@@ -25,7 +26,8 @@ INPUT_UNITS: Mapping[InputKind, ThresholdUnit] = MappingProxyType(
     {
         InputKind.MARKET_PRICE: ThresholdUnit.USD_PER_SHARE,
         InputKind.PUBLICLY_HELD_SHARES: ThresholdUnit.SHARES,
-        InputKind.HOLDER_COUNT: ThresholdUnit.COUNT,
+        InputKind.TOTAL_HOLDERS: ThresholdUnit.COUNT,
+        InputKind.PUBLIC_HOLDERS: ThresholdUnit.COUNT,
         InputKind.MARKET_MAKER_COUNT: ThresholdUnit.COUNT,
         InputKind.OPERATING_HISTORY: ThresholdUnit.COUNT,
     }

@@ -62,7 +62,10 @@ class StandardSet(BaseModel):
 
 
 def in_force(rule: StandardRule, as_of: date) -> bool:
-    """effective_from is inclusive and effective_to is exclusive, so versions tile without a gap."""
+    """effective_from is inclusive and effective_to is exclusive, so versions tile without a gap.
+    A rule with no effective_from (stayed or pending) is never in force."""
+    if rule.effective_from is None:
+        return False
     return rule.effective_from <= as_of and (rule.effective_to is None or as_of < rule.effective_to)
 
 

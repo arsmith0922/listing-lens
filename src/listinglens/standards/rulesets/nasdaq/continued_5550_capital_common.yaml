@@ -1,0 +1,128 @@
+# Nasdaq continued listing, Rule 5550. Stable text from SR-NASDAQ-2009-018 (operative
+# 2009-04-13), read from the Nasdaq rulebook on 2026-10-13 and verified by the architect (the stayed
+# floor below excepted).
+# Capital Market. Tier-common conditions in 5550(a); one financial standard in 5550(b).
+
+- rule_id: nasdaq-5550-c-market-makers
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo, spac_ipo, de_spac, reverse_merger, direct_listing]
+  metric: {kind: external, input: market_maker_count}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 2
+  threshold_unit: count
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5550(a)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "At least two registered and active Market Makers, one of which may be a Market Maker entering a stabilizing bid"
+    retrieved_on: 2026-10-13
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-13, verified_by: Austin Smith}
+
+  # How long the bid must stay below $1 is not encoded; chunk 14 flags that and reports this
+  # rule not evaluable (external market_price).
+- rule_id: nasdaq-5550-c-bid-price
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo, spac_ipo, de_spac, reverse_merger, direct_listing]
+  metric: {kind: external, input: market_price}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 1
+  threshold_unit: usd_per_share
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5550(a)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Minimum bid price of at least $1 per share"
+    retrieved_on: 2026-10-13
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-13, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5550-c-public-holders
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo, spac_ipo, de_spac, reverse_merger, direct_listing]
+  metric: {kind: external, input: public_holders}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 300
+  threshold_unit: count
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5550(a)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "At least 300 Public Holders"
+    retrieved_on: 2026-10-13
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-13, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5550-c-publicly-held-shares
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo, spac_ipo, de_spac, reverse_merger, direct_listing]
+  metric: {kind: external, input: publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 500000
+  threshold_unit: shares
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5550(a)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "At least 500,000 Publicly Held Shares"
+    retrieved_on: 2026-10-13
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-13, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5550-c-mvphs
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo, spac_ipo, de_spac, reverse_merger, direct_listing]
+  metric: {kind: derived, quantity: market_value_of_publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 1000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5550(a)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Market Value of Publicly Held Shares of at least $1 million"
+    retrieved_on: 2026-10-13
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-13, verified_by: Austin Smith}
+
+  # Stayed: added by SR-NASDAQ-2026-004, whose approval order the SEC stayed. No
+  # effective_from and unverified, so it is never in force (D36).
+- rule_id: nasdaq-5550-c-mvls-floor-stayed
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo, spac_ipo, de_spac, reverse_merger, direct_listing]
+  metric: {kind: derived, quantity: market_value_of_listed_securities}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 5000000
+  threshold_unit: usd
+  effective_from: ~
+  citation:
+    rule_section: "Rule 5550(a)(6)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Market Value of Listed Securities of at least $5 million [Not in effect: the SEC stayed the approval order for SR-NASDAQ-2026-004.]"
+    retrieved_on: 2026-10-13
+    sec_release: SR-NASDAQ-2026-004
+    sec_release_url: https://listingcenter.nasdaq.com/assets/RuleBook/Nasdaq/rules/SR-NASDAQ-2026-004_letter-deputy-secretary-regarding-sr-nasdaq-2026-004.pdf
+  verification: {verified: false}

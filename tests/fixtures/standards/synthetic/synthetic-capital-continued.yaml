@@ -7,7 +7,7 @@
   tier: capital
   listing_type: continued
   pathways: [traditional_ipo, direct_listing]
-  metric: {kind: external, input: holder_count}
+  metric: {kind: external, input: public_holders}
   window: {kind: instant}
   comparison: gte
   threshold: 11

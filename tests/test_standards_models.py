@@ -60,7 +60,7 @@ def test_an_explicit_requirement_is_the_requirement_key() -> None:
         ({"kind": "concept", "concept": "stockholders_equity"}, "shares"),
         ({"kind": "concept", "concept": "shares_outstanding"}, "usd"),
         ({"kind": "external", "input": "market_price"}, "usd"),
-        ({"kind": "external", "input": "holder_count"}, "usd"),
+        ({"kind": "external", "input": "total_holders"}, "usd"),
         ({"kind": "derived", "quantity": "market_value_of_listed_securities"}, "shares"),
     ],
 )
@@ -104,7 +104,6 @@ def test_a_date_may_be_an_iso_string_or_a_date(value: object) -> None:
         "2020-13-45",
         "2020-01-01\n",
         "2020-01-01T00:00:00Z",
-        None,
     ],
     ids=[
         "datetime",
@@ -115,7 +114,6 @@ def test_a_date_may_be_an_iso_string_or_a_date(value: object) -> None:
         "month13",
         "newline",
         "dt",
-        "null",
     ],
 )
 def test_a_date_that_is_not_an_iso_date_is_rejected(value: object) -> None:

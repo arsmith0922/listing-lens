@@ -1,0 +1,91 @@
+# Nasdaq continued listing, Rule 5450. Stable text from SR-NASDAQ-2009-018 (operative
+# 2009-04-13), read from the Nasdaq rulebook on 2026-10-13 and verified by the architect.
+# Rule 5305(e) puts Global Select Market companies under the Rule 5400 Series, so this copy for tier global_select is identical to the other 5450 copy except tier and ids (D36).
+
+- rule_id: nasdaq-5450b1-gs-equity
+  exchange: nasdaq
+  tier: global_select
+  listing_type: continued
+  pathways: [traditional_ipo, spac_ipo, de_spac, reverse_merger, direct_listing]
+  standard_id: nasdaq-5450b1-gs
+  standard_name: "Equity Standard"
+  metric: {kind: concept, concept: stockholders_equity}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 10000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5450(b)(1)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "Stockholders' equity of at least $10 million"
+    retrieved_on: 2026-10-13
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-13, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5450b1-gs-publicly-held-shares
+  exchange: nasdaq
+  tier: global_select
+  listing_type: continued
+  pathways: [traditional_ipo, spac_ipo, de_spac, reverse_merger, direct_listing]
+  standard_id: nasdaq-5450b1-gs
+  standard_name: "Equity Standard"
+  metric: {kind: external, input: publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 750000
+  threshold_unit: shares
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5450(b)(1)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "At least 750,000 Publicly Held Shares"
+    retrieved_on: 2026-10-13
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-13, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5450b1-gs-mvphs
+  exchange: nasdaq
+  tier: global_select
+  listing_type: continued
+  pathways: [traditional_ipo, spac_ipo, de_spac, reverse_merger, direct_listing]
+  standard_id: nasdaq-5450b1-gs
+  standard_name: "Equity Standard"
+  metric: {kind: derived, quantity: market_value_of_publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 5000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5450(b)(1)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "Market Value of Publicly Held Shares of at least $5 million"
+    retrieved_on: 2026-10-13
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-13, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5450b1-gs-market-makers
+  exchange: nasdaq
+  tier: global_select
+  listing_type: continued
+  pathways: [traditional_ipo, spac_ipo, de_spac, reverse_merger, direct_listing]
+  standard_id: nasdaq-5450b1-gs
+  standard_name: "Equity Standard"
+  metric: {kind: external, input: market_maker_count}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 2
+  threshold_unit: count
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5450(b)(1)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "At least two registered and active Market Makers"
+    retrieved_on: 2026-10-13
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-13, verified_by: Austin Smith}

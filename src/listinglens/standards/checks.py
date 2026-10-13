@@ -17,7 +17,8 @@ def _fail(source: str, rule: StandardRule, field: str, detail: str) -> Standards
 def _check_unique_versions(rules: Sequence[StandardRule], source: str) -> None:
     seen: set[tuple[str, str, str]] = set()
     for rule in rules:
-        key = (rule.exchange.value, rule.rule_id, rule.effective_from.isoformat())
+        started = "never" if rule.effective_from is None else rule.effective_from.isoformat()
+        key = (rule.exchange.value, rule.rule_id, started)
         if key in seen:
             raise _fail(source, rule, "effective_from", "this version of the rule appears twice")
         seen.add(key)
@@ -29,13 +30,16 @@ def _check_versions_of_one_rule(rules: Sequence[StandardRule], source: str) -> N
     for rule in rules:
         by_id.setdefault((rule.exchange.value, rule.rule_id), []).append(rule)
     for versions in by_id.values():
-        ordered = sorted(versions, key=lambda r: r.effective_from)
+        # An undated version (stayed or pending) is a successor not yet in force, so it sorts last.
+        ordered = sorted(versions, key=lambda r: (r.effective_from is None, r.effective_from))
         first = ordered[0]
         for later in ordered[1:]:
             for field in ("tier", "listing_type", "standard_id"):
                 if getattr(later, field) != getattr(first, field):
                     raise _fail(source, later, field, "changes between versions of the same rule")
         for earlier, later in pairwise(ordered):
+            if later.effective_from is None:
+                continue  # a pending successor has no start to overlap with
             if earlier.effective_to is None or earlier.effective_to > later.effective_from:
                 raise _fail(source, later, "effective_from", "overlaps an earlier version")
 

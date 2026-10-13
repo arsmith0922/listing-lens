@@ -1,0 +1,99 @@
+# Nasdaq continued listing, Rule 5550. Stable text from SR-NASDAQ-2009-018 (operative
+# 2009-04-13), read from the Nasdaq rulebook on 2026-10-13 and verified by the architect.
+# Capital Market. Tier-common conditions in 5550(a); one financial standard in 5550(b).
+
+# The two_of_three_fiscal_years branch needs the multi-year series that extraction does not
+# produce yet, so chunk 14 reports it not evaluable; the latest_fiscal_year branch is
+# evaluable from the latest annual figure (D36).
+
+- rule_id: nasdaq-5550b1-c-equity
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo, spac_ipo, de_spac, reverse_merger, direct_listing]
+  standard_id: nasdaq-5550b1-c
+  standard_name: "Equity Standard"
+  metric: {kind: concept, concept: stockholders_equity}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 2500000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5550(b)(1)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Stockholders' equity of at least $2.5 million"
+    retrieved_on: 2026-10-13
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-13, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5550b2-c-mvls
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo, spac_ipo, de_spac, reverse_merger, direct_listing]
+  standard_id: nasdaq-5550b2-c
+  standard_name: "Market Value of Listed Securities Standard"
+  metric: {kind: derived, quantity: market_value_of_listed_securities}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 35000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5550(b)(2)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Market Value of Listed Securities of at least $35 million"
+    retrieved_on: 2026-10-13
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-13, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5550b3-c-net-income-latest
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo, spac_ipo, de_spac, reverse_merger, direct_listing]
+  standard_id: nasdaq-5550b3-c
+  standard_name: "Net Income Standard"
+  requirement: nasdaq-5550b3-c-net-income-period
+  branch: latest_fiscal_year
+  metric: {kind: concept, concept: income_from_continuing_operations}
+  window: {kind: latest_fiscal_year}
+  comparison: gte
+  threshold: 500000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5550(b)(3)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Net income from continuing operations of $500,000 in the most recently completed fiscal year or in two of the three most recently completed fiscal years"
+    retrieved_on: 2026-10-13
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-13, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5550b3-c-net-income-two-of-three
+  exchange: nasdaq
+  tier: capital
+  listing_type: continued
+  pathways: [traditional_ipo, spac_ipo, de_spac, reverse_merger, direct_listing]
+  standard_id: nasdaq-5550b3-c
+  standard_name: "Net Income Standard"
+  requirement: nasdaq-5550b3-c-net-income-period
+  branch: two_of_three_fiscal_years
+  metric: {kind: concept, concept: income_from_continuing_operations}
+  window: {kind: n_of_last_m_fiscal_years, n: 2, m: 3}
+  comparison: gte
+  threshold: 500000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5550(b)(3)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Net income from continuing operations of $500,000 in the most recently completed fiscal year or in two of the three most recently completed fiscal years"
+    retrieved_on: 2026-10-13
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-13, verified_by: Austin Smith}

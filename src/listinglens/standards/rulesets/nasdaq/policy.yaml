@@ -1,5 +1,5 @@
 # Ruleset-wide choices that are ours, not Nasdaq's (D32). Each records why it is set this way.
-# Rule files for the Nasdaq standards are added here by the next commit (D33).
+# The Nasdaq continued-listing rule files sit beside this one (D36).
 
 translation:
   value: allow_flagged

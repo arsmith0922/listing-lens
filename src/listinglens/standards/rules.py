@@ -141,7 +141,7 @@ class StandardRule(BaseModel):
     comparison: Comparison
     threshold: Threshold
     threshold_unit: ThresholdUnit
-    effective_from: RuleDate
+    effective_from: RuleDate | None  # None: never in force (a stayed or pending rule); write ~
     effective_to: RuleDate | None = None
     citation: RuleCitation
     verification: Verification
@@ -166,7 +166,14 @@ class StandardRule(BaseModel):
             raise ValueError("pathways must be a non-empty list without duplicates")
         if self.threshold_unit is not self.metric.unit:
             raise ValueError(f"threshold_unit must be {self.metric.unit.value} for this metric")
-        if self.effective_to is not None and self.effective_to <= self.effective_from:
+        if self.effective_from is None:
+            # Both directions of one rule: a dateless rule is never in force, so it cannot be
+            # verified, and a verified rule is live, so it cannot be dateless.
+            if self.verification.verified:
+                raise ValueError("a verified rule is in force, so it records an effective_from")
+            if self.effective_to is not None:
+                raise ValueError("effective_to needs an effective_from")
+        elif self.effective_to is not None and self.effective_to <= self.effective_from:
             raise ValueError("effective_to must be after effective_from")
         if self.proxy is not None:
             if not self.requires:
