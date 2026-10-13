@@ -49,6 +49,7 @@ def test_trans_american_snapshot_has_eight_figures_and_the_continuing_operations
     ]
     assert [f.value.concept for f in snapshot.figures] == list(TargetConcept)[:-1]
     assert all(not f.value.is_convenience_translation for f in snapshot.figures)
+    assert all(f.value.reported_twins == () for f in snapshot.figures)
 
 
 def test_luckin_snapshot_flags_every_figure_as_a_translation_and_gaps_the_missing_three(
@@ -68,6 +69,7 @@ def test_luckin_snapshot_flags_every_figure_as_a_translation_and_gaps_the_missin
         T.CASH,
     ]
     assert all(f.value.is_convenience_translation for f in snapshot.figures)
+    assert all([twin.unit for twin in f.value.reported_twins] == ["CNY"] for f in snapshot.figures)
     assert {(g.concept, g.reason) for g in snapshot.gaps} == {
         (T.SHARES_OUTSTANDING, "concept_not_found"),
         (T.PUBLIC_FLOAT, "concept_not_found"),

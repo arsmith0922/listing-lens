@@ -7,10 +7,11 @@ import pytest
 
 from listinglens.core.errors import MalformedPayload
 from listinglens.domain.citation import DurationPeriod, InstantPeriod, Taxonomy, XbrlSource
-from listinglens.domain.financials import TargetConcept
+from listinglens.domain.financials import FinancialValue, TargetConcept
 from listinglens.domain.identifiers import AccessionNumber, Cik
 from listinglens.extraction.figures import figure_for
-from tests.extraction_docs import URL, Facts, RawFact, make_document, raw_fact
+from listinglens.ingestion.payloads.companyfacts import CompanyFactsDocument
+from tests.extraction_docs import URL, Facts, RawFact, annual, make_document, raw_fact
 
 ACCN = "0000320193-23-000106"
 ASSETS_PATH = "facts.us-gaap.Assets.units.USD"
@@ -120,4 +121,77 @@ def test_a_document_cik_outside_the_valid_range_is_malformed_at_the_cik() -> Non
     with pytest.raises(MalformedPayload) as excinfo:
         figure_for(document, TargetConcept.TOTAL_ASSETS, URL)
     assert excinfo.value.field == "cik"
+    assert excinfo.value.url == URL
+
+
+def _translated_assets(usd: int | Decimal, cny: int | Decimal) -> CompanyFactsDocument:
+    facts: Facts = {
+        "us-gaap": {
+            "Assets": {
+                "USD": [raw_fact(usd, "2023-12-31", accn=ACCN)],
+                "CNY": [raw_fact(cny, "2023-12-31", accn=ACCN)],
+            }
+        }
+    }
+    return make_document(facts, cik=320193)
+
+
+def _twin_figure(usd: int | Decimal, cny: int | Decimal) -> FinancialValue:
+    return figure_for(_translated_assets(usd, cny), TargetConcept.TOTAL_ASSETS, URL).value
+
+
+def test_a_figure_with_no_twin_has_none() -> None:
+    document = make_document(
+        {"us-gaap": {"Assets": {"USD": [raw_fact(5, "2023-12-31", accn=ACCN)]}}}, cik=320193
+    )
+    value = figure_for(document, TargetConcept.TOTAL_ASSETS, URL).value
+    assert (value.is_convenience_translation, value.reported_twins) == (False, ())
+
+
+def test_a_translated_figure_carries_its_reported_twin_and_the_implied_rate() -> None:
+    value = _twin_figure(100, 700)
+    assert value.value == Decimal(100)  # the USD figure, untouched
+    assert value.is_convenience_translation is True
+    (twin,) = value.reported_twins
+    assert (twin.unit, twin.value, twin.implied_rate) == ("CNY", Decimal(700), Decimal(7))
+    assert twin.period == value.period
+
+
+def test_the_reported_value_is_exact_and_the_rate_is_reported_over_usd() -> None:
+    exact = Decimal("123456789012345678")
+    (twin,) = _twin_figure(Decimal("3"), exact).reported_twins
+    assert twin.value == exact
+    assert twin.implied_rate == exact / Decimal(3)
+
+
+def test_a_flow_twin_carries_the_duration_period() -> None:
+    facts: Facts = {
+        "us-gaap": {
+            "Revenues": {
+                "USD": [annual(10, 2023, accn=ACCN)],
+                "CNY": [annual(70, 2023, accn=ACCN)],
+            }
+        }
+    }
+    value = figure_for(make_document(facts, cik=320193), TargetConcept.REVENUE, URL).value
+    assert value.reported_twins[0].period == DurationPeriod(
+        start=date(2023, 1, 1), end=date(2023, 12, 31)
+    )
+
+
+def test_a_zero_usd_figure_has_a_twin_with_no_rate() -> None:
+    (twin,) = _twin_figure(0, 0).reported_twins
+    assert twin.implied_rate is None
+
+
+@pytest.mark.parametrize(
+    ("usd", "cny"),
+    [(100, -700), (-100, 700), (100, 0)],
+    ids=["negative-reported", "negative-usd", "zero-reported"],
+)
+def test_a_corrupt_pair_is_a_malformed_payload_not_a_raw_error(usd: int, cny: int) -> None:
+    """A rate that is not positive means the two figures cannot be a translation of each other."""
+    with pytest.raises(MalformedPayload) as excinfo:
+        figure_for(_translated_assets(usd, cny), TargetConcept.TOTAL_ASSETS, URL)
+    assert excinfo.value.field == f"{ASSETS_PATH}.reported_twins"
     assert excinfo.value.url == URL

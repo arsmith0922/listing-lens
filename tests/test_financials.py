@@ -20,8 +20,10 @@ from listinglens.domain.financials import (
     ExtractedFigure,
     FinancialValue,
     Observation,
+    ReportedTwin,
     RestatementDiagnostic,
     TargetConcept,
+    translation_rate,
 )
 from listinglens.domain.identifiers import AccessionNumber, Cik
 
@@ -54,15 +56,31 @@ def _value(
     unit: str = "USD",
     citation: XbrlLocator | None = None,
     translated: bool = False,
+    twins: tuple[ReportedTwin, ...] = (),
+    value: Decimal = Decimal("352583000000"),
 ) -> FinancialValue:
     return FinancialValue(
         concept=TargetConcept.TOTAL_ASSETS,
-        value=Decimal("352583000000"),
+        value=value,
         unit=unit,
         period=period,
         citation=citation if citation is not None else _locator(),
         is_convenience_translation=translated,
+        reported_twins=twins,
     )
+
+
+def _twin(
+    unit: str = "CNY",
+    value: str = "700",
+    period: InstantPeriod | DurationPeriod = INSTANT,
+    rate: Decimal | None = Decimal(7),
+) -> ReportedTwin:
+    return ReportedTwin(unit=unit, value=Decimal(value), period=period, implied_rate=rate)
+
+
+def _translated(*twins: ReportedTwin, flag: bool = True, usd: str = "100") -> FinancialValue:
+    return _value(translated=flag, twins=twins, value=Decimal(usd))
 
 
 def _payload() -> dict[str, object]:
@@ -171,3 +189,93 @@ def test_a_gap_accepts_exactly_the_three_reasons(reason: str) -> None:
 def test_a_gap_rejects_any_other_reason() -> None:
     with pytest.raises(ValidationError):
         ConceptGap.model_validate({"concept": TargetConcept.CASH, "reason": "bogus", "detail": "x"})
+
+
+def test_a_figure_with_no_twin_has_the_flag_false_and_an_empty_tuple() -> None:
+    value = _value()
+    assert value.is_convenience_translation is False
+    assert value.reported_twins == ()
+
+
+def test_a_translated_figure_carries_the_reported_figure_unconverted() -> None:
+    value = _translated(_twin())
+    assert value.is_convenience_translation is True
+    assert value.value == Decimal(100)  # the USD figure is untouched
+    (twin,) = value.reported_twins
+    assert (twin.unit, twin.value, twin.implied_rate) == ("CNY", Decimal(700), Decimal(7))
+
+
+@pytest.mark.parametrize(
+    ("twins", "flag"),
+    [((_twin(),), False), ((), True)],
+    ids=["twins-without-flag", "flag-without-twins"],
+)
+def test_the_flag_must_equal_whether_twins_exist(
+    twins: tuple[ReportedTwin, ...], flag: bool
+) -> None:
+    with pytest.raises(InputValidationError) as excinfo:
+        _translated(*twins, flag=flag)
+    assert excinfo.value.field == "is_convenience_translation"
+
+
+def test_a_twin_in_the_figures_own_unit_is_rejected() -> None:
+    with pytest.raises(InputValidationError) as excinfo:
+        _translated(_twin(unit="USD"))
+    assert excinfo.value.field == "reported_twins"
+
+
+def test_a_twins_period_must_equal_the_figures_period() -> None:
+    with pytest.raises(InputValidationError) as excinfo:
+        _translated(_twin(period=DURATION))
+    assert excinfo.value.field == "reported_twins"
+
+
+def test_each_twin_unit_may_appear_only_once() -> None:
+    with pytest.raises(InputValidationError) as excinfo:
+        _translated(_twin(), _twin())
+    assert excinfo.value.field == "reported_twins"
+    assert len(_translated(_twin(unit="CNY"), _twin(unit="HKD")).reported_twins) == 2
+
+
+def test_a_forged_or_stale_rate_is_rejected() -> None:
+    with pytest.raises(InputValidationError) as excinfo:
+        _translated(_twin(rate=Decimal(8)))
+    assert excinfo.value.field == "reported_twins"
+
+
+def test_the_rate_is_none_exactly_when_the_usd_figure_is_zero() -> None:
+    assert _translated(_twin(value="0", rate=None), usd="0").reported_twins[0].implied_rate is None
+    with pytest.raises(InputValidationError):
+        _translated(_twin(rate=Decimal(7)), usd="0")  # a rate where none exists
+    with pytest.raises(InputValidationError):
+        _translated(_twin(rate=None))  # no rate though the USD figure is not zero
+
+
+@pytest.mark.parametrize("rate", [Decimal(0), Decimal(-7)], ids=["zero", "negative"])
+def test_a_twin_rejects_a_rate_that_is_not_positive(rate: Decimal) -> None:
+    with pytest.raises(InputValidationError):
+        _twin(rate=rate)
+
+
+def test_the_rate_is_reported_over_usd_and_undefined_for_a_zero_usd_figure() -> None:
+    assert translation_rate(Decimal(700), Decimal(100)) == Decimal(7)  # not 100 / 700
+    assert translation_rate(Decimal(-700), Decimal(-100)) == Decimal(7)
+    assert translation_rate(Decimal(700), Decimal(0)) is None
+
+
+def test_an_eighteen_digit_reported_value_stays_exact() -> None:
+    exact = "0.123456789012345678"
+    rate = translation_rate(Decimal(exact), Decimal(100))
+    twin = _twin(value=exact, rate=rate)
+    assert str(twin.value) == exact
+
+
+def test_a_twin_is_frozen_strict_and_forbids_extras() -> None:
+    twin = _twin()
+    with pytest.raises(ValidationError):
+        _assign(twin, "value", Decimal(1))
+    payload = {"unit": "CNY", "value": Decimal(7), "period": INSTANT, "implied_rate": None}
+    with pytest.raises(ValidationError):
+        ReportedTwin.model_validate({**payload, "extra": 1})
+    with pytest.raises(ValidationError):
+        ReportedTwin.model_validate({**payload, "value": 7.5})

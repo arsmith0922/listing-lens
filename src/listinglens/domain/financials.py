@@ -31,14 +31,48 @@ class TargetConcept(StrEnum):
     INCOME_FROM_CONTINUING_OPERATIONS = "income_from_continuing_operations"
 
 
+def translation_rate(reported: Decimal, usd: Decimal) -> Decimal | None:
+    """Units of the reported currency per one USD, implied by a pair of figures; None when the
+    USD figure is zero. A derived approximation, never rounded here: the filer's USD figures are
+    themselves rounded, so the rate differs a little from line to line and from the filer's own
+    stated rate. The one place the formula lives, used to build a twin and to check one."""
+    return None if usd == 0 else reported / usd
+
+
+class ReportedTwin(BaseModel):
+    """The same figure as the filer reported it in its own currency, same accession and period.
+
+    value is exactly as reported and nothing is converted. implied_rate is reported divided by
+    the USD figure, so a reader can see that the USD number is a point-in-time translation and
+    at what rate.
+    """
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    unit: str
+    value: Decimal
+    period: XbrlPeriod
+    implied_rate: Decimal | None
+
+    @model_validator(mode="after")
+    def _rate_is_positive(self) -> ReportedTwin:
+        if self.implied_rate is not None and self.implied_rate <= 0:
+            raise InputValidationError(
+                field="reported_twins", value="implied_rate must be positive"
+            )
+        return self
+
+
 class FinancialValue(BaseModel):
     """One extracted figure with the citation that locates it in the filing data.
 
     unit and period repeat the citation's, so a reader never has to unwrap it; the validator
     keeps the two from ever disagreeing. is_convenience_translation marks a figure that the
     filer also reported in another currency at the same accession and period (a USD
-    re-presentation of CNY, say). Nothing is converted; whether such a figure may feed a USD
-    threshold is a chunk 13 decision.
+    re-presentation of CNY, say), and reported_twins carries those reported figures. The flag
+    is stored beside the twins, not derived, so it serializes; the validator keeps it equal to
+    bool(reported_twins). Nothing is converted; whether such a figure may feed a USD threshold
+    is a chunk 13 decision.
     """
 
     model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
@@ -49,6 +83,7 @@ class FinancialValue(BaseModel):
     period: XbrlPeriod
     citation: XbrlLocator
     is_convenience_translation: bool
+    reported_twins: tuple[ReportedTwin, ...] = ()
 
     @model_validator(mode="after")
     def _matches_citation(self) -> FinancialValue:
@@ -56,6 +91,24 @@ class FinancialValue(BaseModel):
             raise InputValidationError(field="unit", value=self.unit)
         if self.period != self.citation.period:
             raise InputValidationError(field="period", value=repr(self.period))
+        return self
+
+    @model_validator(mode="after")
+    def _twins_agree(self) -> FinancialValue:
+        if self.is_convenience_translation != bool(self.reported_twins):
+            raise InputValidationError(
+                field="is_convenience_translation", value=str(self.is_convenience_translation)
+            )
+        units = [twin.unit for twin in self.reported_twins]
+        if len(set(units)) != len(units):
+            raise InputValidationError(field="reported_twins", value="a unit appears twice")
+        for twin in self.reported_twins:
+            if twin.unit == self.unit:
+                raise InputValidationError(field="reported_twins", value="twin unit is the unit")
+            if twin.period != self.period:
+                raise InputValidationError(field="reported_twins", value="twin period differs")
+            if twin.implied_rate != translation_rate(twin.value, self.value):
+                raise InputValidationError(field="reported_twins", value="implied_rate is wrong")
         return self
 
 

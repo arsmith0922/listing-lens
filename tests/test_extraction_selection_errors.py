@@ -180,3 +180,48 @@ def test_a_share_count_is_never_a_convenience_translation() -> None:
     }
     chosen = select_figure(make_document(facts), TargetConcept.SHARES_OUTSTANDING)
     assert chosen.is_convenience_translation is False
+
+
+def _twins(units: dict[str, list[dict[str, object]]]) -> list[tuple[str, int, str]]:
+    """(unit, value, accession) of each reported twin the selection found."""
+    document = make_document({"us-gaap": {"Assets": units}})
+    selection = select_figure(document, TargetConcept.TOTAL_ASSETS)
+    return [(unit, int(fact.val), fact.accn) for unit, fact in selection.reported_twins]
+
+
+def test_the_twin_is_the_reported_fact_itself_in_its_own_unit_unconverted() -> None:
+    usd = raw_fact(1, "2023-12-31", accn=_accn(1))
+    cny = raw_fact(7, "2023-12-31", accn=_accn(1))
+    assert _twins({"USD": [usd], "CNY": [cny]}) == [("CNY", 7, _accn(1))]
+    assert _twins({"USD": [usd]}) == []
+
+
+def test_every_other_unit_with_a_matching_fact_is_a_twin_sorted_by_unit() -> None:
+    usd = raw_fact(1, "2023-12-31")
+    units = {
+        "USD": [usd],
+        "HKD": [raw_fact(8, "2023-12-31")],
+        "CNY": [raw_fact(7, "2023-12-31")],
+        "EUR": [raw_fact(9, "2023-12-31", accn=_accn(5))],  # a different filing: not a twin
+    }
+    assert [unit for unit, _, _ in _twins(units)] == ["CNY", "HKD"]
+
+
+def test_a_unit_that_repeats_the_period_gives_its_latest_filed_fact() -> None:
+    usd = raw_fact(1, "2023-12-31", accn=_accn(1), filed="2024-03-01")
+    early = raw_fact(7, "2023-12-31", accn=_accn(1), filed="2024-03-01")
+    late = raw_fact(8, "2023-12-31", accn=_accn(1), filed="2024-06-01")
+    assert _twins({"USD": [usd], "CNY": [early, late]}) == [("CNY", 8, _accn(1))]
+    assert _twins({"USD": [usd], "CNY": [late, early]}) == [("CNY", 8, _accn(1))]
+
+
+def test_the_figure_chosen_decides_which_filings_twins_are_reported() -> None:
+    older = raw_fact(1, "2023-12-31", accn=_accn(1), filed="2024-03-01")
+    newer = raw_fact(1, "2023-12-31", accn=_accn(2), filed="2024-06-01")
+    cny = {
+        "CNY": [
+            raw_fact(7, "2023-12-31", accn=_accn(1), filed="2024-03-01"),
+            raw_fact(9, "2023-12-31", accn=_accn(2), filed="2024-06-01"),
+        ]
+    }
+    assert _twins({"USD": [older, newer], **cny}) == [("CNY", 9, _accn(2))]

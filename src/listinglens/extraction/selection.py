@@ -22,7 +22,11 @@ class Selection:
     fact: XbrlFact
     same_period: tuple[XbrlFact, ...]  # every accession's fact for the chosen tag at the period
     other_tags: tuple[tuple[Candidate, XbrlFact], ...]  # other candidates at the same period
-    is_convenience_translation: bool
+    reported_twins: tuple[tuple[str, XbrlFact], ...]  # (unit, fact) the filer also reported
+
+    @property
+    def is_convenience_translation(self) -> bool:
+        return bool(self.reported_twins)
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,15 +43,24 @@ def _latest(facts: Iterable[XbrlFact]) -> XbrlFact:
     return max(facts, key=lambda fact: (fact.filed, fact.accn))
 
 
-def _has_twin(concept: XbrlConcept, unit: str, fact: XbrlFact) -> bool:
-    """Whether the same filing reports this period in another unit, which makes the chosen
-    figure a re-presentation (a convenience translation) rather than the reported currency."""
-    return any(
-        other.accn == fact.accn and other.start == fact.start and other.end == fact.end
-        for other_unit, facts in concept.units.items()
-        if other_unit != unit
-        for other in facts
-    )
+def _reported_twins(
+    concept: XbrlConcept, unit: str, fact: XbrlFact
+) -> tuple[tuple[str, XbrlFact], ...]:
+    """The same filing's report of this period in each other unit, which makes the chosen figure
+    a re-presentation (a convenience translation) rather than the reported currency. One entry
+    per unit, sorted by unit, taking the latest-filed fact if a unit repeats the period."""
+    found: list[tuple[str, XbrlFact]] = []
+    for other_unit in sorted(concept.units):
+        if other_unit == unit:
+            continue
+        matches = [
+            other
+            for other in concept.units[other_unit]
+            if other.accn == fact.accn and other.start == fact.start and other.end == fact.end
+        ]
+        if matches:
+            found.append((other_unit, _latest(matches)))
+    return tuple(found)
 
 
 def _raise_unselectable(
@@ -118,7 +131,7 @@ def select_figure(
         at_period = [f for f in item.eligible if period_key(f) == best.key]
         if at_period:
             others.append((item.candidate, _latest(at_period)))
-    translated = spec.unit_kind is UnitKind.MONETARY and _has_twin(best.concept, unit, fact)
+    twins = _reported_twins(best.concept, unit, fact) if spec.unit_kind is UnitKind.MONETARY else ()
     return Selection(
         concept=concept,
         candidate=best.candidate,
@@ -126,5 +139,5 @@ def select_figure(
         fact=fact,
         same_period=same_period,
         other_tags=tuple(others),
-        is_convenience_translation=translated,
+        reported_twins=twins,
     )

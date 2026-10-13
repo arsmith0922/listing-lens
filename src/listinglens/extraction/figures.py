@@ -14,8 +14,10 @@ from listinglens.domain.financials import (
     ExtractedFigure,
     FinancialValue,
     Observation,
+    ReportedTwin,
     RestatementDiagnostic,
     TargetConcept,
+    translation_rate,
 )
 from listinglens.domain.identifiers import AccessionNumber, Cik
 from listinglens.extraction.selection import Selection, select_figure
@@ -89,6 +91,15 @@ def _build(selection: Selection, document: CompanyFactsDocument) -> ExtractedFig
         fiscal_period=fact.fp,
         source=XbrlSource.COMPANYFACTS,
     )
+    twins = tuple(
+        ReportedTwin(
+            unit=twin_unit,
+            value=twin_fact.val,
+            period=period,
+            implied_rate=translation_rate(twin_fact.val, fact.val),
+        )
+        for twin_unit, twin_fact in selection.reported_twins
+    )
     value = FinancialValue(
         concept=selection.concept,
         value=fact.val,
@@ -96,6 +107,7 @@ def _build(selection: Selection, document: CompanyFactsDocument) -> ExtractedFig
         period=period,
         citation=citation,
         is_convenience_translation=selection.is_convenience_translation,
+        reported_twins=twins,
     )
     return ExtractedFigure(value=value, diagnostics=_diagnostics(selection, period))
 
