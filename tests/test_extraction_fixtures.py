@@ -72,7 +72,7 @@ def test_trans_american_cik_arrives_as_a_padded_string_and_is_cited_as_a_cik() -
     assert figure.value.citation.cik == Cik.parse(1990446)
 
 
-@pytest.mark.parametrize("concept", [c for c in T if c is not T.INCOME_FROM_CONTINUING_OPERATIONS])
+@pytest.mark.parametrize("concept", list(T))
 def test_trans_american_has_no_disagreement_at_its_latest_periods(concept: TargetConcept) -> None:
     assert figure_for(fixture_document(TA), concept, URL).diagnostics == ()
 
@@ -92,10 +92,11 @@ def test_no_recorded_fixture_tags_income_from_continuing_operations_after_tax(na
     assert set(CONTINUING_TAGS).isdisjoint(concepts)
 
 
-@pytest.mark.parametrize("name", [TA, LK, GE])
-def test_income_from_continuing_operations_is_a_gap_for_every_recorded_issuer(name: str) -> None:
+def test_income_from_continuing_operations_is_a_gap_where_net_income_cannot_stand_in() -> None:
+    """GE (trimmed) has no pre-tax, tax, or net income fact. Trans American and Luckin tag no
+    continuing-operations element either, but net income stands in for them (D35)."""
     with pytest.raises(ConceptNotFound):
-        figure_for(fixture_document(name), T.INCOME_FROM_CONTINUING_OPERATIONS, URL)
+        figure_for(fixture_document(GE), T.INCOME_FROM_CONTINUING_OPERATIONS, URL)
 
 
 def test_luckins_continuing_operations_rate_is_a_rate_not_an_income_figure() -> None:

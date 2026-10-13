@@ -181,3 +181,28 @@ def test_every_candidate_is_a_valid_citation_concept() -> None:
 def test_the_map_is_a_read_only_view() -> None:
     assert isinstance(ALIASES, MappingProxyType)
     assert isinstance(UNIT_FOR_KIND, MappingProxyType)
+
+
+def test_only_income_from_continuing_operations_has_a_net_income_fallback() -> None:
+    """The fallback (D35) is pinned tag by tag: the parent measure, the total that needs a
+    witness, the NCI income fact that vetoes it, and the common-stockholder figure that is a
+    witness only. The common figure is never a candidate for any target (a name trap)."""
+    with_fallback = [c for c, spec in ALIASES.items() if spec.fallback is not None]
+    assert with_fallback == [TargetConcept.INCOME_FROM_CONTINUING_OPERATIONS]
+    fallback = ALIASES[TargetConcept.INCOME_FROM_CONTINUING_OPERATIONS].fallback
+    assert fallback is not None
+    assert fallback.pretax is TargetConcept.PRETAX_INCOME
+    assert [(c.taxonomy, c.tag) for c in (fallback.tax, fallback.parent, fallback.total)] == [
+        (G, "IncomeTaxExpenseBenefit"),
+        (G, "NetIncomeLoss"),
+        (G, "ProfitLoss"),
+    ]
+    assert (fallback.nci_income.taxonomy, fallback.nci_income.tag) == (
+        G,
+        "NetIncomeLossAttributableToNoncontrollingInterest",
+    )
+    assert (fallback.common.taxonomy, fallback.common.tag) == (
+        G,
+        "NetIncomeLossAvailableToCommonStockholdersBasic",
+    )
+    assert all(c.tag != fallback.common.tag for spec in ALIASES.values() for c in spec.candidates)

@@ -93,12 +93,31 @@ HEADLINES = [
     _h(TA, T.CASH, CASH_TAG, TA_10Q, "2025-09-30", 509),
     _h(TA, T.SHARES_OUTSTANDING, SHARES, TA_10Q, "2026-01-14", 1805926955, "shares", "dei"),
     _h(TA, T.PUBLIC_FLOAT, "EntityPublicFloat", TA_10K, "2024-06-30", 2355126, "USD", "dei"),
+    # No fixture tags income from continuing operations, so net income stands in, corroborated by
+    # pre-tax minus tax (D35). Trans American: NetIncomeLoss, the parent measure. Luckin has no
+    # NetIncomeLoss; ProfitLoss is the parent figure there only from FY2022, when its NCI ended.
+    _h(
+        TA,
+        T.INCOME_FROM_CONTINUING_OPERATIONS,
+        "NetIncomeLoss",
+        TA_10K,
+        "2024-01-01..2024-12-31",
+        -2808894,
+    ),
     _h(LK, T.STOCKHOLDERS_EQUITY, "StockholdersEquity", LK_20F, "2025-12-31", 2230092000),
     _h(LK, T.NET_INCOME, "ProfitLoss", LK_20F, "2025-01-01..2025-12-31", 513877000),
     _h(LK, T.PRETAX_INCOME, PRETAX_TAG, LK_20F, "2025-01-01..2025-12-31", 753632000),
     _h(LK, T.TOTAL_ASSETS, "Assets", LK_20F, "2025-12-31", 4324905000),
     _h(LK, T.REVENUE, LK_REVENUE_TAG, LK_20F, "2025-01-01..2025-12-31", 7034825000),
     _h(LK, T.CASH, CASH_TAG, LK_20F, "2025-12-31", 327436000),
+    _h(
+        LK,
+        T.INCOME_FROM_CONTINUING_OPERATIONS,
+        "ProfitLoss",
+        LK_20F,
+        "2025-01-01..2025-12-31",
+        513877000,
+    ),
     _h(GE, T.TOTAL_ASSETS, "Assets", GE_10Q, "2026-06-30", 127672000000),
     _h(GE, T.SHARES_OUTSTANDING, SHARES, GE_10Q, "2026-06-30", 1037562513, "shares", "dei"),
     _h(GE, T.PUBLIC_FLOAT, "EntityPublicFloat", GE_10K, "2025-06-30", 270200000000, "USD", "dei"),

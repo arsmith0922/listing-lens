@@ -92,7 +92,9 @@ def test_a_filer_that_tags_only_the_total_is_read_from_the_total() -> None:
 )
 def test_a_look_alike_tag_alone_never_produces_a_figure(look_alike: str, unit: str) -> None:
     """Each of these resembles the target by name or sits beside it in the statements, but is a
-    different figure. Without the target's own tags the result is a gap, never a substitute."""
+    different figure. Without the target's own tags the result is a gap, never a substitute. (Net
+    income can stand in only with the pre-tax and tax facts that corroborate it, D35, which these
+    one-tag documents lack.)"""
     facts: Facts = {"us-gaap": {look_alike: {unit: [annual(7, 2023)]}}}
     with pytest.raises(ConceptNotFound) as excinfo:
         select_figure(make_document(facts), TARGET)

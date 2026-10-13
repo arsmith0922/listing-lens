@@ -47,10 +47,31 @@ class Candidate:
 
 
 @dataclass(frozen=True, slots=True)
+class Fallback:
+    """Net income standing in for a target the issuer does not tag, only when an identity
+    corroborates it (D35): the pre-tax figure (PRETAX_INCOME's candidates, matched at the same
+    accession and period) minus the income-tax expense must equal the net income figure exactly.
+
+    parent is the parent's own net income. total includes the noncontrolling interest, so it is
+    the parent's figure only if no NCI exists, which nci_income and common witness: an NCI income
+    fact that is nonzero vetoes it, a zero one or a common-stockholder figure equal to the total
+    passes it, and neither refuses. common is a witness only, never a value.
+    """
+
+    pretax: TargetConcept
+    tax: Candidate
+    parent: Candidate
+    total: Candidate
+    nci_income: Candidate
+    common: Candidate
+
+
+@dataclass(frozen=True, slots=True)
 class ConceptSpec:
     period_kind: PeriodKind
     unit_kind: UnitKind
     candidates: tuple[Candidate, ...]
+    fallback: Fallback | None = None
 
     @property
     def expected_unit(self) -> str:
@@ -139,8 +160,11 @@ ALIASES: Mapping[TargetConcept, ConceptSpec] = MappingProxyType(
         # convention as net income and equity (the taxonomy defines the bare tag as the figure
         # attributable to the parent). Chunk 13 confirms which the Net Income Standard means; the
         # cross-tag diagnostic surfaces the total when the two differ. No fixture tags either
-        # (D33); a corroborated fallback to net income is a separate mechanism in selection (D35),
-        # not a candidate here.
+        # (D33), so the corroborated fallback to net income applies (D35); it is a separate
+        # mechanism, not a candidate here. FLAG: an issuer with no NCI but with preferred
+        # dividends that does not tag a zero NCI income fact is a gap on the total path, because
+        # the common-stockholder figure then differs from the total and absent NCI facts prove
+        # nothing. That errs toward a missed figure rather than a wrong one.
         TargetConcept.INCOME_FROM_CONTINUING_OPERATIONS: ConceptSpec(
             PeriodKind.FLOW,
             _MONEY,
@@ -149,6 +173,14 @@ ALIASES: Mapping[TargetConcept, ConceptSpec] = MappingProxyType(
                 _gaap(
                     "IncomeLossFromContinuingOperationsIncludingPortionAttributableToNoncontrollingInterest"
                 ),
+            ),
+            Fallback(
+                pretax=TargetConcept.PRETAX_INCOME,
+                tax=_gaap("IncomeTaxExpenseBenefit"),
+                parent=_gaap("NetIncomeLoss"),
+                total=_gaap("ProfitLoss"),
+                nci_income=_gaap("NetIncomeLossAttributableToNoncontrollingInterest"),
+                common=_gaap("NetIncomeLossAvailableToCommonStockholdersBasic"),
             ),
         ),
     }

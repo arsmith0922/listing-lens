@@ -33,7 +33,7 @@ def _routes(cik: int, body: bytes) -> dict[str, bytes]:
     return {company_facts_url(Cik.parse(cik)): body}
 
 
-def test_trans_american_snapshot_has_eight_figures_and_the_continuing_operations_gap(
+def test_trans_american_snapshot_has_all_nine_figures_and_no_gaps(
     extraction_service_factory: ExtractionServiceFactory, edgar_fixture_bytes: FixtureBytes
 ) -> None:
     service, _ = extraction_service_factory(
@@ -43,16 +43,18 @@ def test_trans_american_snapshot_has_eight_figures_and_the_continuing_operations
 
     assert snapshot.cik == Cik.parse(1990446)
     assert snapshot.entity_name == "TRANS AMERICAN AQUACULTURE, INC."
-    # No fixture tags income from continuing operations after tax (D33).
-    assert [(g.concept, g.reason) for g in snapshot.gaps] == [
-        (T.INCOME_FROM_CONTINUING_OPERATIONS, "concept_not_found")
-    ]
-    assert [f.value.concept for f in snapshot.figures] == list(TargetConcept)[:-1]
+    # No fixture tags income from continuing operations after tax (D33), so NetIncomeLoss
+    # stands in, corroborated by pre-tax minus tax (D35): all nine targets have a figure.
+    assert snapshot.gaps == ()
+    assert [f.value.concept for f in snapshot.figures] == list(TargetConcept)
+    continuing = snapshot.figures[-1].value
+    assert continuing.citation.concept == "NetIncomeLoss"
+    assert continuing.corroborated_by is not None
     assert all(not f.value.is_convenience_translation for f in snapshot.figures)
     assert all(f.value.reported_twins == () for f in snapshot.figures)
 
 
-def test_luckin_snapshot_flags_every_figure_as_a_translation_and_gaps_the_missing_three(
+def test_luckin_snapshot_flags_every_figure_as_a_translation_and_gaps_the_missing_two(
     extraction_service_factory: ExtractionServiceFactory, edgar_fixture_bytes: FixtureBytes
 ) -> None:
     service, _ = extraction_service_factory(
@@ -67,13 +69,13 @@ def test_luckin_snapshot_flags_every_figure_as_a_translation_and_gaps_the_missin
         T.TOTAL_ASSETS,
         T.REVENUE,
         T.CASH,
+        T.INCOME_FROM_CONTINUING_OPERATIONS,
     ]
     assert all(f.value.is_convenience_translation for f in snapshot.figures)
     assert all([twin.unit for twin in f.value.reported_twins] == ["CNY"] for f in snapshot.figures)
     assert {(g.concept, g.reason) for g in snapshot.gaps} == {
         (T.SHARES_OUTSTANDING, "concept_not_found"),
         (T.PUBLIC_FLOAT, "concept_not_found"),
-        (T.INCOME_FROM_CONTINUING_OPERATIONS, "concept_not_found"),
     }
     assert all(g.detail for g in snapshot.gaps)
 

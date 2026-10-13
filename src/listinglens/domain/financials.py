@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
-from decimal import Decimal
+from decimal import Context, Decimal
 from enum import StrEnum
 from typing import Annotated, Literal
 
@@ -29,6 +29,38 @@ class TargetConcept(StrEnum):
     # Appended last (D33) so every earlier ordering stays stable. Net income from continuing
     # operations after tax, the figure the Nasdaq Net Income Standard tests.
     INCOME_FROM_CONTINUING_OPERATIONS = "income_from_continuing_operations"
+
+
+Witness = Literal["parent_tag", "nci_income_is_zero", "common_equals_total"]
+
+_EXACT = Context(prec=100)
+
+
+def exact_difference(minuend: Decimal, subtrahend: Decimal) -> Decimal:
+    """minuend - subtrahend without the default 28-digit rounding. An identity such as pre-tax
+    minus tax equals net income is only evidence if it is compared exactly; in the default
+    context 10**30 + 1 minus 0 rounds to 10**30 and would falsely equal it. The one place the
+    subtraction lives, used to find the evidence and to re-check it."""
+    return _EXACT.subtract(minuend, subtrahend)
+
+
+class IdentityEvidence(BaseModel):
+    """Why a net income figure stands in for income from continuing operations (D35).
+
+    The issuer tags no continuing-operations element, but pre-tax income minus income-tax
+    expense equals the net income figure exactly at the same accession and period, so no
+    discontinued operations separate them. witness says why the net income figure is the
+    parent's: it is the parent tag itself, or the total with an NCI income fact of zero, or the
+    total equal to the common-stockholder figure (so the NCI and preferred deductions are nil).
+    """
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    pretax_tag: str
+    pretax_value: Decimal
+    tax_tag: str
+    tax_value: Decimal
+    witness: Witness
 
 
 def translation_rate(reported: Decimal, usd: Decimal) -> Decimal | None:
@@ -84,6 +116,7 @@ class FinancialValue(BaseModel):
     citation: XbrlLocator
     is_convenience_translation: bool
     reported_twins: tuple[ReportedTwin, ...] = ()
+    corroborated_by: IdentityEvidence | None = None
 
     @model_validator(mode="after")
     def _matches_citation(self) -> FinancialValue:
@@ -109,6 +142,17 @@ class FinancialValue(BaseModel):
                 raise InputValidationError(field="reported_twins", value="twin period differs")
             if twin.implied_rate != translation_rate(twin.value, self.value):
                 raise InputValidationError(field="reported_twins", value="implied_rate is wrong")
+        return self
+
+    @model_validator(mode="after")
+    def _evidence_holds(self) -> FinancialValue:
+        evidence = self.corroborated_by
+        if evidence is None:
+            return self
+        if self.concept is not TargetConcept.INCOME_FROM_CONTINUING_OPERATIONS:
+            raise InputValidationError(field="corroborated_by", value="only on continuing ops")
+        if exact_difference(evidence.pretax_value, evidence.tax_value) != self.value:
+            raise InputValidationError(field="corroborated_by", value="the identity does not hold")
         return self
 
 

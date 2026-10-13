@@ -108,6 +108,7 @@ def _build(selection: Selection, document: CompanyFactsDocument) -> ExtractedFig
         citation=citation,
         is_convenience_translation=selection.is_convenience_translation,
         reported_twins=twins,
+        corroborated_by=selection.corroborated_by,
     )
     return ExtractedFigure(value=value, diagnostics=_diagnostics(selection, period))
 

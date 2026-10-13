@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date
 from typing import NoReturn
 
 from listinglens.core.errors import ConceptNotFound, PeriodUnavailable, UnitUnavailable
-from listinglens.domain.financials import TargetConcept
+from listinglens.domain.financials import IdentityEvidence, TargetConcept
 from listinglens.extraction.aliases import ALIASES, Candidate, ConceptSpec, UnitKind
+from listinglens.extraction.corroboration import Key, corroborate
 from listinglens.extraction.periods import is_eligible, period_key
 from listinglens.ingestion.payloads.companyfacts import CompanyFactsDocument, XbrlConcept, XbrlFact
 
@@ -23,6 +24,7 @@ class Selection:
     same_period: tuple[XbrlFact, ...]  # every accession's fact for the chosen tag at the period
     other_tags: tuple[tuple[Candidate, XbrlFact], ...]  # other candidates at the same period
     reported_twins: tuple[tuple[str, XbrlFact], ...]  # (unit, fact) the filer also reported
+    corroborated_by: IdentityEvidence | None  # set when net income stood in (D35)
 
     @property
     def is_convenience_translation(self) -> bool:
@@ -35,6 +37,7 @@ class _Usable:
     concept: XbrlConcept
     eligible: tuple[XbrlFact, ...]
     key: tuple[date, date]
+    evidence: Mapping[Key, IdentityEvidence] | None = None  # set for corroborated candidates
 
 
 def _latest(facts: Iterable[XbrlFact]) -> XbrlFact:
@@ -115,6 +118,11 @@ def select_figure(
             no_period.append(candidate)
             continue
         usable.append(_Usable(candidate, xbrl, eligible, max(period_key(f) for f in eligible)))
+    if spec.fallback is not None:
+        # After the explicit tags, so at the same period an explicit tag wins the tie (D35).
+        for found in corroborate(document, spec.fallback, unit, not_after):
+            key = max(period_key(f) for f in found.facts)
+            usable.append(_Usable(found.candidate, found.concept, found.facts, key, found.evidence))
     if not usable:
         _raise_unselectable(concept, cik, spec, no_period, wrong_unit)
 
@@ -126,11 +134,12 @@ def select_figure(
     fact = _latest(same_period)
     others: list[tuple[Candidate, XbrlFact]] = []
     for item in usable:
-        if item is best:
+        if item is best or item.evidence is not None:
             continue
         at_period = [f for f in item.eligible if period_key(f) == best.key]
         if at_period:
             others.append((item.candidate, _latest(at_period)))
+    evidence = None if best.evidence is None else best.evidence[(fact.accn, fact.start, fact.end)]
     twins = _reported_twins(best.concept, unit, fact) if spec.unit_kind is UnitKind.MONETARY else ()
     return Selection(
         concept=concept,
@@ -140,4 +149,5 @@ def select_figure(
         same_period=same_period,
         other_tags=tuple(others),
         reported_twins=twins,
+        corroborated_by=evidence,
     )
