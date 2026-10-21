@@ -1,0 +1,97 @@
+# Nasdaq initial listing, Rule 5505, IPO circumstance only (pathway traditional_ipo).
+# Read from the Nasdaq rulebook on 2026-10-20 and verified by the architect (D37).
+# Net Income Standard 5505(b)(3).
+# MVUPHS records carry the 2025 amendment value only; an as_of before their effective date
+# yields the standard without that condition until the eval-phase backfill (D37).
+
+- rule_id: nasdaq-5505b3-c-net-income-latest
+  exchange: nasdaq
+  tier: capital
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5505b3-c
+  standard_name: "Net Income Standard"
+  requirement: nasdaq-5505b3-c-net-income-period
+  branch: latest_fiscal_year
+  metric: {kind: concept, concept: income_from_continuing_operations}
+  window: {kind: latest_fiscal_year}
+  comparison: gte
+  threshold: 750000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5505(b)(3)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Net income from continuing operations of $750,000 in the most recently completed fiscal year or in two of the three most recently completed fiscal years"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5505b3-c-net-income-two-of-three
+  exchange: nasdaq
+  tier: capital
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5505b3-c
+  standard_name: "Net Income Standard"
+  requirement: nasdaq-5505b3-c-net-income-period
+  branch: two_of_three_fiscal_years
+  metric: {kind: concept, concept: income_from_continuing_operations}
+  window: {kind: n_of_last_m_fiscal_years, n: 2, m: 3}
+  comparison: gte
+  threshold: 750000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5505(b)(3)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Net income from continuing operations of $750,000 in the most recently completed fiscal year or in two of the three most recently completed fiscal years"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5505b3-c-equity
+  exchange: nasdaq
+  tier: capital
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5505b3-c
+  standard_name: "Net Income Standard"
+  metric: {kind: concept, concept: stockholders_equity}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 4000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5505(b)(3)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Stockholders' equity of at least $4 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5505b3-c-mvuphs
+  exchange: nasdaq
+  tier: capital
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5505b3-c
+  standard_name: "Net Income Standard"
+  metric: {kind: derived, quantity: market_value_of_unrestricted_publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 15000000
+  threshold_unit: usd
+  effective_from: 2025-12-18
+  citation:
+    rule_section: "Rule 5505(b)(3)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Market Value of Unrestricted Publicly Held Shares of at least $15 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2025-068
+    sec_release_url: https://www.sec.gov/files/rules/sro/nasdaq/2025/34-104450.pdf
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}

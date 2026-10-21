@@ -1,0 +1,68 @@
+# Nasdaq initial listing, Rule 5405, IPO circumstance only (pathway traditional_ipo).
+# Read from the Nasdaq rulebook on 2026-10-20 and verified by the architect (D37).
+# Tier-common conditions of 5405(a); one financial standard of 5405(b) is also needed.
+# MVUPHS records carry the 2025 amendment value only; an as_of before their effective date
+# yields the standard without that condition until the eval-phase backfill (D37).
+
+- rule_id: nasdaq-5405-g-bid-price
+  exchange: nasdaq
+  tier: global
+  listing_type: initial
+  pathways: [traditional_ipo]
+  metric: {kind: external, input: market_price}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 4
+  threshold_unit: usd_per_share
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5405(a)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "Minimum bid price of at least $4 per share"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5405-g-uphs
+  exchange: nasdaq
+  tier: global
+  listing_type: initial
+  pathways: [traditional_ipo]
+  metric: {kind: external, input: unrestricted_publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 1100000
+  threshold_unit: shares
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5405(a)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "At least 1,100,000 Unrestricted Publicly Held Shares"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+  # Only the 400 count is a rule here; clause (ii), that at least 50% of them each hold
+  # Unrestricted Securities worth $2,500 or more, is in the quoted text and is not
+  # modeled separately. Chunk 14 flags it (D37).
+- rule_id: nasdaq-5405-g-round-lot-holders
+  exchange: nasdaq
+  tier: global
+  listing_type: initial
+  pathways: [traditional_ipo]
+  metric: {kind: external, input: round_lot_holders}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 400
+  threshold_unit: count
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5405(a)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "(i) At least 400 Round Lot Holders; and (ii) at least 50% of such Round Lot Holders must each hold Unrestricted Securities with a Market Value of at least $2,500"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}

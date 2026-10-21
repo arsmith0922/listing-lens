@@ -46,6 +46,8 @@ def describe_window(rule: StandardRule) -> str:
     window = rule.window
     if window.kind == "n_of_last_m_fiscal_years":
         return f"{window.n}of{window.m}"
+    if window.kind == "aggregate_over_fiscal_years":
+        return f"agg{window.years}"
     return "instant" if window.kind == "instant" else "latest"
 
 

@@ -19,6 +19,10 @@ class InputKind(StrEnum):
     PUBLIC_HOLDERS = "public_holders"  # Rule 5550's "Public Holders"; a different measure
     MARKET_MAKER_COUNT = "market_maker_count"
     OPERATING_HISTORY = "operating_history"  # a count of fiscal years; unit COUNT (see D32)
+    # Initial listing (D37). Each is a separately defined term, so each is its own input.
+    UNRESTRICTED_PUBLICLY_HELD_SHARES = "unrestricted_publicly_held_shares"  # not publicly held
+    ROUND_LOT_HOLDERS = "round_lot_holders"  # not Total Holders or Public Holders
+    NET_TANGIBLE_ASSETS = "net_tangible_assets"  # total assets less intangibles and liabilities
 
 
 # The unit each input is measured in, which is the unit a rule on it must use.
@@ -30,6 +34,9 @@ INPUT_UNITS: Mapping[InputKind, ThresholdUnit] = MappingProxyType(
         InputKind.PUBLIC_HOLDERS: ThresholdUnit.COUNT,
         InputKind.MARKET_MAKER_COUNT: ThresholdUnit.COUNT,
         InputKind.OPERATING_HISTORY: ThresholdUnit.COUNT,
+        InputKind.UNRESTRICTED_PUBLICLY_HELD_SHARES: ThresholdUnit.SHARES,
+        InputKind.ROUND_LOT_HOLDERS: ThresholdUnit.COUNT,
+        InputKind.NET_TANGIBLE_ASSETS: ThresholdUnit.USD,
     }
 )
 
@@ -56,6 +63,9 @@ class DerivedQuantity(StrEnum):
 
     MARKET_VALUE_OF_LISTED_SECURITIES = "market_value_of_listed_securities"
     MARKET_VALUE_OF_PUBLICLY_HELD_SHARES = "market_value_of_publicly_held_shares"
+    MARKET_VALUE_OF_UNRESTRICTED_PUBLICLY_HELD_SHARES = (
+        "market_value_of_unrestricted_publicly_held_shares"
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,6 +83,10 @@ DERIVED_SPECS: Mapping[DerivedQuantity, DerivedSpec] = MappingProxyType(
         ),
         DerivedQuantity.MARKET_VALUE_OF_PUBLICLY_HELD_SHARES: DerivedSpec(
             ThresholdUnit.USD, (InputKind.PUBLICLY_HELD_SHARES, InputKind.MARKET_PRICE)
+        ),
+        DerivedQuantity.MARKET_VALUE_OF_UNRESTRICTED_PUBLICLY_HELD_SHARES: DerivedSpec(
+            ThresholdUnit.USD,
+            (InputKind.UNRESTRICTED_PUBLICLY_HELD_SHARES, InputKind.MARKET_PRICE),
         ),
     }
 )

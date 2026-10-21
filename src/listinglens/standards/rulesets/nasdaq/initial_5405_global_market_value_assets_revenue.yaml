@@ -1,0 +1,214 @@
+# Nasdaq initial listing, Rule 5405, IPO circumstance only (pathway traditional_ipo).
+# Read from the Nasdaq rulebook on 2026-10-20 and verified by the architect (D37).
+# Market Value Standard 5405(b)(3) and Total Assets/Total Revenue Standard 5405(b)(4).
+# MVUPHS records carry the 2025 amendment value only; an as_of before their effective date
+# yields the standard without that condition until the eval-phase backfill (D37).
+
+# Branches are independent years today; same-year pairing of assets and revenue is added
+# when the multi-year series makes the two_of_three_fiscal_years branch evaluable (D36).
+
+- rule_id: nasdaq-5405b3-g-mvls
+  exchange: nasdaq
+  tier: global
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5405b3-g
+  standard_name: "Market Value Standard"
+  metric: {kind: derived, quantity: market_value_of_listed_securities}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 75000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5405(b)(3)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "Market Value of Listed Securities of $75 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5405b3-g-mvuphs
+  exchange: nasdaq
+  tier: global
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5405b3-g
+  standard_name: "Market Value Standard"
+  metric: {kind: derived, quantity: market_value_of_unrestricted_publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 20000000
+  threshold_unit: usd
+  effective_from: 2025-04-11
+  citation:
+    rule_section: "Rule 5405(b)(3)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "Market Value of Unrestricted Publicly Held Shares of at least $20 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2024-084
+    sec_release_url: https://www.sec.gov/files/rules/sro/nasdaq/2025/34-102622.pdf
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5405b3-g-market-makers
+  exchange: nasdaq
+  tier: global
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5405b3-g
+  standard_name: "Market Value Standard"
+  metric: {kind: external, input: market_maker_count}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 4
+  threshold_unit: count
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5405(b)(3)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "At least four registered and active Market Makers"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5405b4-g-assets-latest
+  exchange: nasdaq
+  tier: global
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5405b4-g
+  standard_name: "Total Assets/Total Revenue Standard"
+  requirement: nasdaq-5405b4-g-assets-revenue-period
+  branch: latest_fiscal_year
+  metric: {kind: concept, concept: total_assets}
+  window: {kind: latest_fiscal_year}
+  comparison: gte
+  threshold: 75000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5405(b)(4)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "Total assets and total revenue of $75 million each for the most recently completed fiscal year or two of the three most recently completed fiscal years"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5405b4-g-revenue-latest
+  exchange: nasdaq
+  tier: global
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5405b4-g
+  standard_name: "Total Assets/Total Revenue Standard"
+  requirement: nasdaq-5405b4-g-assets-revenue-period
+  branch: latest_fiscal_year
+  metric: {kind: concept, concept: revenue}
+  window: {kind: latest_fiscal_year}
+  comparison: gte
+  threshold: 75000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5405(b)(4)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "Total assets and total revenue of $75 million each for the most recently completed fiscal year or two of the three most recently completed fiscal years"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5405b4-g-assets-two-of-three
+  exchange: nasdaq
+  tier: global
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5405b4-g
+  standard_name: "Total Assets/Total Revenue Standard"
+  requirement: nasdaq-5405b4-g-assets-revenue-period
+  branch: two_of_three_fiscal_years
+  metric: {kind: concept, concept: total_assets}
+  window: {kind: n_of_last_m_fiscal_years, n: 2, m: 3}
+  comparison: gte
+  threshold: 75000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5405(b)(4)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "Total assets and total revenue of $75 million each for the most recently completed fiscal year or two of the three most recently completed fiscal years"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5405b4-g-revenue-two-of-three
+  exchange: nasdaq
+  tier: global
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5405b4-g
+  standard_name: "Total Assets/Total Revenue Standard"
+  requirement: nasdaq-5405b4-g-assets-revenue-period
+  branch: two_of_three_fiscal_years
+  metric: {kind: concept, concept: revenue}
+  window: {kind: n_of_last_m_fiscal_years, n: 2, m: 3}
+  comparison: gte
+  threshold: 75000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5405(b)(4)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "Total assets and total revenue of $75 million each for the most recently completed fiscal year or two of the three most recently completed fiscal years"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5405b4-g-mvuphs
+  exchange: nasdaq
+  tier: global
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5405b4-g
+  standard_name: "Total Assets/Total Revenue Standard"
+  metric: {kind: derived, quantity: market_value_of_unrestricted_publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 20000000
+  threshold_unit: usd
+  effective_from: 2025-04-11
+  citation:
+    rule_section: "Rule 5405(b)(4)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "Market Value of Unrestricted Publicly Held Shares of at least $20 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2024-084
+    sec_release_url: https://www.sec.gov/files/rules/sro/nasdaq/2025/34-102622.pdf
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5405b4-g-market-makers
+  exchange: nasdaq
+  tier: global
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5405b4-g
+  standard_name: "Total Assets/Total Revenue Standard"
+  metric: {kind: external, input: market_maker_count}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 4
+  threshold_unit: count
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5405(b)(4)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series
+    quoted_text: "At least four registered and active Market Makers"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}

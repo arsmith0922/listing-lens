@@ -1,0 +1,137 @@
+# Nasdaq initial listing, Rule 5505, IPO circumstance only (pathway traditional_ipo).
+# Read from the Nasdaq rulebook on 2026-10-20 and verified by the architect (D37).
+# Equity Standard 5505(b)(1) and Market Value of Listed Securities Standard 5505(b)(2).
+# MVUPHS records carry the 2025 amendment value only; an as_of before their effective date
+# yields the standard without that condition until the eval-phase backfill (D37).
+
+- rule_id: nasdaq-5505b1-c-equity
+  exchange: nasdaq
+  tier: capital
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5505b1-c
+  standard_name: "Equity Standard"
+  metric: {kind: concept, concept: stockholders_equity}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 5000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5505(b)(1)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Stockholders' equity of at least $5 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5505b1-c-mvuphs
+  exchange: nasdaq
+  tier: capital
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5505b1-c
+  standard_name: "Equity Standard"
+  metric: {kind: derived, quantity: market_value_of_unrestricted_publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 15000000
+  threshold_unit: usd
+  effective_from: 2025-04-11
+  citation:
+    rule_section: "Rule 5505(b)(1)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Market Value of Unrestricted Publicly Held Shares of at least $15 million (for a Company listing in connection with an initial public offering, including through the issuance of American Depository Receipts, this requirement must be satisfied from the offering proceeds)"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2024-084
+    sec_release_url: https://www.sec.gov/files/rules/sro/nasdaq/2025/34-102622.pdf
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5505b1-c-operating-history
+  exchange: nasdaq
+  tier: capital
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5505b1-c
+  standard_name: "Equity Standard"
+  metric: {kind: external, input: operating_history}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 2
+  threshold_unit: count
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5505(b)(1)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Two year operating history"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5505b2-c-mvls
+  exchange: nasdaq
+  tier: capital
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5505b2-c
+  standard_name: "Market Value of Listed Securities Standard"
+  metric: {kind: derived, quantity: market_value_of_listed_securities}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 50000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5505(b)(2)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Market Value of Listed Securities of at least $50 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5505b2-c-equity
+  exchange: nasdaq
+  tier: capital
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5505b2-c
+  standard_name: "Market Value of Listed Securities Standard"
+  metric: {kind: concept, concept: stockholders_equity}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 4000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5505(b)(2)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Stockholders' equity of at least $4 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5505b2-c-mvuphs
+  exchange: nasdaq
+  tier: capital
+  listing_type: initial
+  pathways: [traditional_ipo]
+  standard_id: nasdaq-5505b2-c
+  standard_name: "Market Value of Listed Securities Standard"
+  metric: {kind: derived, quantity: market_value_of_unrestricted_publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 15000000
+  threshold_unit: usd
+  effective_from: 2025-04-11
+  citation:
+    rule_section: "Rule 5505(b)(2)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    quoted_text: "Market Value of Unrestricted Publicly Held Shares of at least $15 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2024-084
+    sec_release_url: https://www.sec.gov/files/rules/sro/nasdaq/2025/34-102622.pdf
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
