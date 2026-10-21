@@ -20,7 +20,7 @@ build-backend = "hatchling.build"
 packages = ["src/listinglens"]
 
 [tool.uv]
-required-version = ">=0.12.18"
+required-version = ">=0.13.4"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -52,5 +52,5 @@ dev = [
     "pytest==9.1.1",
     "ruff==0.16.6",
     "types-pyyaml==6.0.12.20260906",
-    "uv==0.12.18",
+    "uv==0.13.4",
 ]
