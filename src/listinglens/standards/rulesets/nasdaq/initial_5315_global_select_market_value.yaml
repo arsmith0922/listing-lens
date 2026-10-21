@@ -1,0 +1,101 @@
+# Nasdaq initial listing, Rule 5315 (Global Select Market), IPO circumstance only
+# (pathway traditional_ipo). Read from the Nasdaq rulebook on 2026-10-20 and verified by
+# the architect (D38).
+# Rule 5315 is all tier-common: meet 5315(e), plus one branch of each of 5315(f)(1),
+# (f)(2), and (f)(3). Each 'meet one' group is one requirement with one branch per
+# alternative, so there are no standards here.
+# 5315(f)(2) market value of unrestricted publicly held shares (meet one of three).
+
+# Omitted: the closed-end-fund value (a separately governed company type, outside the
+# operating-company IPO scope). The affiliate-or-spin-off wording shares the IPO branch.
+# These are the 5315(f)(2) values, not the 2025-amended 5405 and 5505 values (D38).
+
+- rule_id: nasdaq-5315f2-gs-mv-110
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f2-gs-market-value
+  branch: market_value_110
+  metric: {kind: derived, quantity: market_value_of_unrestricted_publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 110000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(2)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "A Market Value of at least $110 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315f2-gs-mv-100
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f2-gs-market-value
+  branch: market_value_100_with_equity
+  metric: {kind: derived, quantity: market_value_of_unrestricted_publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 100000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(2)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "A Market Value of at least $100 million, if the Company has stockholders' equity of at least $110 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+  # The equity half of the $100 million alternative; it is an EDGAR figure and can be
+  # checked, but the branch needs the market value too, so it is not evaluable.
+- rule_id: nasdaq-5315f2-gs-equity-110
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f2-gs-market-value
+  branch: market_value_100_with_equity
+  metric: {kind: concept, concept: stockholders_equity}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 110000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(2)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "A Market Value of at least $100 million, if the Company has stockholders' equity of at least $110 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315f2-gs-mv-45
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f2-gs-market-value
+  branch: market_value_45_ipo
+  metric: {kind: derived, quantity: market_value_of_unrestricted_publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 45000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(2)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "A Market Value of at least $45 million in the case of: (i) a Company listing in connection with its initial public offering; and (ii) a Company that is affiliated with, or a spin-off from, another Company listed on the Global Select Market"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}

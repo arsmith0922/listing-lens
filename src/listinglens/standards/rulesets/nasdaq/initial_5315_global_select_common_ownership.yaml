@@ -1,0 +1,165 @@
+# Nasdaq initial listing, Rule 5315 (Global Select Market), IPO circumstance only
+# (pathway traditional_ipo). Read from the Nasdaq rulebook on 2026-10-20 and verified by
+# the architect (D38).
+# Rule 5315 is all tier-common: meet 5315(e), plus one branch of each of 5315(f)(1),
+# (f)(2), and (f)(3). Each 'meet one' group is one requirement with one branch per
+# alternative, so there are no standards here.
+# 5315(e) common conditions and 5315(f)(1) ownership (meet one of three).
+
+  # A company listing in its IPO is not already listed on the NGM (Global Market), so
+  # the $4 bid applies in this circumstance.
+- rule_id: nasdaq-5315-gs-bid-price
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  metric: {kind: external, input: market_price}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 4
+  threshold_unit: usd_per_share
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(e)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "If the Company is not listed on the NGM, a bid price of at least $4 per share"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315-gs-uphs
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  metric: {kind: external, input: unrestricted_publicly_held_shares}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 1250000
+  threshold_unit: shares
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(e)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "At least 1,250,000 Unrestricted Publicly Held Shares"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+  # Threshold 4 is the general case. The count is 3 for a company that meets the NGM
+  # Income Standard or the NGM Equity Standard (Rules 5405(b)(1), (b)(2)); that coupling
+  # is not modeled, and this rule is not evaluable (D38).
+- rule_id: nasdaq-5315-gs-market-makers
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  metric: {kind: external, input: market_maker_count}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 4
+  threshold_unit: count
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(e)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "A Company that meets the requirements of the NGM Income Standard (Rule 5405(b)(1)) or the NGM Equity Standard (Rule 5405(b)(2)) shall have at least three registered and active Market Makers. Otherwise, a Company shall have at least four registered and active Market Makers"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315f1-gs-total-holders-550
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f1-gs-ownership
+  branch: total_holders_550_and_volume
+  metric: {kind: external, input: total_holders}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 550
+  threshold_unit: count
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(1)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "At least 550 Total Holders and an average monthly trading volume over the prior 12 months of at least 1,100,000 shares per month"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+  # An average over the prior 12 months, carried in the input's name; no window
+  # expresses it, and chunk 14 supplies the averaging (D38).
+- rule_id: nasdaq-5315f1-gs-avg-volume
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f1-gs-ownership
+  branch: total_holders_550_and_volume
+  metric: {kind: external, input: average_monthly_trading_volume}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 1100000
+  threshold_unit: shares
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(1)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "At least 550 Total Holders and an average monthly trading volume over the prior 12 months of at least 1,100,000 shares per month"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315f1-gs-total-holders-2200
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f1-gs-ownership
+  branch: total_holders_2200
+  metric: {kind: external, input: total_holders}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 2200
+  threshold_unit: count
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(1)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "At least 2,200 Total Holders"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+  # Only the 450 count is a rule here; clause (ii), that at least 50% of them each hold
+  # Unrestricted Securities worth $2,500 or more, is in the quoted text and is not
+  # modeled separately. Chunk 14 flags it (D38).
+- rule_id: nasdaq-5315f1-gs-round-lot-holders
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f1-gs-ownership
+  branch: round_lot_holders_450
+  metric: {kind: external, input: round_lot_holders}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 450
+  threshold_unit: count
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(1)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "(i) A minimum of 450 Round Lot Holders; and (ii) at least 50% of such Round Lot Holders must each hold Unrestricted Securities with a Market Value of at least $2,500"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}

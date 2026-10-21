@@ -260,4 +260,4 @@ def test_before_the_2025_amendments_a_standard_lacks_its_unrestricted_market_val
 def test_the_continued_ruleset_is_unchanged_by_the_initial_rules(ruleset: Ruleset) -> None:
     kinds = [r.listing_type for r in ruleset.rules]
     assert kinds.count(ListingType.CONTINUED) == 46
-    assert len(ruleset.rules) == 46 + 36
+    assert kinds.count(ListingType.INITIAL) == 36 + 23  # Rules 5405 and 5505, then 5315 (D38)

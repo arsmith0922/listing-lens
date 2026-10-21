@@ -1,0 +1,166 @@
+# Nasdaq initial listing, Rule 5315 (Global Select Market), IPO circumstance only
+# (pathway traditional_ipo). Read from the Nasdaq rulebook on 2026-10-20 and verified by
+# the architect (D38).
+# Rule 5315 is all tier-common: meet 5315(e), plus one branch of each of 5315(f)(1),
+# (f)(2), and (f)(3). Each 'meet one' group is one requirement with one branch per
+# alternative, so there are no standards here.
+# 5315(f)(3) valuation, alternatives (A) Earnings and (B) Capitalization with Cash Flow.
+
+# (A) is the first use of the aggregate and each-of windows: all three conditions are
+# multi-year, so all are not evaluable until the multi-year series exists (D38).
+# (B) uses cash flow, an external series input (not an extraction concept), and
+# the 12-month average market capitalization.
+
+- rule_id: nasdaq-5315f3-gs-earnings-aggregate
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f3-gs-valuation
+  branch: earnings
+  metric: {kind: concept, concept: pretax_income}
+  window: {kind: aggregate_over_fiscal_years, years: 3}
+  comparison: gte
+  threshold: 11000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(3)(A)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "Aggregate income from continuing operations before income taxes of at least $11 million over the prior three fiscal years"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315f3-gs-earnings-positive-each-year
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f3-gs-valuation
+  branch: earnings
+  metric: {kind: concept, concept: pretax_income}
+  window: {kind: n_of_last_m_fiscal_years, n: 3, m: 3}
+  comparison: gt
+  threshold: 0
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(3)(A)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "positive income from continuing operations before income taxes in each of the prior three fiscal years"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315f3-gs-earnings-each-of-two
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f3-gs-valuation
+  branch: earnings
+  metric: {kind: concept, concept: pretax_income}
+  window: {kind: n_of_last_m_fiscal_years, n: 2, m: 2}
+  comparison: gte
+  threshold: 2200000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(3)(A)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "at least $2.2 million income from continuing operations before income taxes in each of the two most recent fiscal years"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315f3-gs-cashflow-aggregate
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f3-gs-valuation
+  branch: capitalization_cash_flow
+  metric: {kind: external, input: cash_flow}
+  window: {kind: aggregate_over_fiscal_years, years: 3}
+  comparison: gte
+  threshold: 27500000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(3)(B)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "Aggregate cash flows of at least $27.5 million over the prior three fiscal years"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315f3-gs-cashflow-positive-each-year
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f3-gs-valuation
+  branch: capitalization_cash_flow
+  metric: {kind: external, input: cash_flow}
+  window: {kind: n_of_last_m_fiscal_years, n: 3, m: 3}
+  comparison: gt
+  threshold: 0
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(3)(B)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "positive cash flows in each of the prior three fiscal years"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315f3-gs-cashflow-avg-market-cap
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f3-gs-valuation
+  branch: capitalization_cash_flow
+  metric: {kind: external, input: average_market_capitalization}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 550000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(3)(B)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "average market capitalization of at least $550 million over the prior 12 months"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315f3-gs-cashflow-revenue
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f3-gs-valuation
+  branch: capitalization_cash_flow
+  metric: {kind: concept, concept: revenue}
+  window: {kind: latest_fiscal_year}
+  comparison: gte
+  threshold: 110000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(3)(B)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "total revenue of at least $110 million in the previous fiscal year"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}

@@ -1,0 +1,121 @@
+# Nasdaq initial listing, Rule 5315 (Global Select Market), IPO circumstance only
+# (pathway traditional_ipo). Read from the Nasdaq rulebook on 2026-10-20 and verified by
+# the architect (D38).
+# Rule 5315 is all tier-common: meet 5315(e), plus one branch of each of 5315(f)(1),
+# (f)(2), and (f)(3). Each 'meet one' group is one requirement with one branch per
+# alternative, so there are no standards here.
+# 5315(f)(3) valuation, alternatives (C) Capitalization with Revenue and (D) Assets with Equity.
+
+# (D): Rule 5310(j) computes total assets and stockholders' equity from the most recent
+# financial statements, adjusted for the offering. They are encoded as instant figures like
+# the equity records elsewhere; the offering adjustment is a chunk 14 note (D38).
+
+- rule_id: nasdaq-5315f3-gs-revenue-avg-market-cap
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f3-gs-valuation
+  branch: capitalization_revenue
+  metric: {kind: external, input: average_market_capitalization}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 850000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(3)(C)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "Average market capitalization of at least $850 million over the prior 12 months"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315f3-gs-revenue-revenue
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f3-gs-valuation
+  branch: capitalization_revenue
+  metric: {kind: concept, concept: revenue}
+  window: {kind: latest_fiscal_year}
+  comparison: gte
+  threshold: 90000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(3)(C)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "total revenue of at least $90 million in the previous fiscal year"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315f3-gs-assets-market-cap
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f3-gs-valuation
+  branch: assets_equity
+  metric: {kind: external, input: market_capitalization}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 160000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(3)(D)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "Market capitalization of at least $160 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315f3-gs-assets-total-assets
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f3-gs-valuation
+  branch: assets_equity
+  metric: {kind: concept, concept: total_assets}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 80000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(3)(D)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "total assets of at least $80 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}
+
+- rule_id: nasdaq-5315f3-gs-assets-equity
+  exchange: nasdaq
+  tier: global_select
+  listing_type: initial
+  pathways: [traditional_ipo]
+  requirement: nasdaq-5315f3-gs-valuation
+  branch: assets_equity
+  metric: {kind: concept, concept: stockholders_equity}
+  window: {kind: instant}
+  comparison: gte
+  threshold: 55000000
+  threshold_unit: usd
+  effective_from: 2009-04-13
+  citation:
+    rule_section: "Rule 5315(f)(3)(D)"
+    rule_url: https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5300-series
+    quoted_text: "stockholders' equity of at least $55 million"
+    retrieved_on: 2026-10-20
+    sec_release: SR-NASDAQ-2009-018
+    sec_release_url: https://www.sec.gov/rule-release/34-59663
+  verification: {verified: true, verified_on: 2026-10-20, verified_by: Austin Smith}

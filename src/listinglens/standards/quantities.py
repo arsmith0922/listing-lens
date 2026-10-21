@@ -23,6 +23,11 @@ class InputKind(StrEnum):
     UNRESTRICTED_PUBLICLY_HELD_SHARES = "unrestricted_publicly_held_shares"  # not publicly held
     ROUND_LOT_HOLDERS = "round_lot_holders"  # not Total Holders or Public Holders
     NET_TANGIBLE_ASSETS = "net_tangible_assets"  # total assets less intangibles and liabilities
+    # Global Select initial listing (D38). Price and volume series are not EDGAR facts.
+    MARKET_CAPITALIZATION = "market_capitalization"  # at a point in time
+    AVERAGE_MARKET_CAPITALIZATION = "average_market_capitalization"  # over the prior 12 months
+    CASH_FLOW = "cash_flow"  # a yearly series; the rules test it over fiscal-year windows
+    AVERAGE_MONTHLY_TRADING_VOLUME = "average_monthly_trading_volume"  # over the prior 12 months
 
 
 # The unit each input is measured in, which is the unit a rule on it must use.
@@ -37,6 +42,10 @@ INPUT_UNITS: Mapping[InputKind, ThresholdUnit] = MappingProxyType(
         InputKind.UNRESTRICTED_PUBLICLY_HELD_SHARES: ThresholdUnit.SHARES,
         InputKind.ROUND_LOT_HOLDERS: ThresholdUnit.COUNT,
         InputKind.NET_TANGIBLE_ASSETS: ThresholdUnit.USD,
+        InputKind.MARKET_CAPITALIZATION: ThresholdUnit.USD,
+        InputKind.AVERAGE_MARKET_CAPITALIZATION: ThresholdUnit.USD,
+        InputKind.CASH_FLOW: ThresholdUnit.USD,
+        InputKind.AVERAGE_MONTHLY_TRADING_VOLUME: ThresholdUnit.SHARES,
     }
 )
 
