@@ -6,3 +6,6 @@ translation:
 proxy:
   value: "off"
   basis: Synthetic policy used only by loader tests.
+cushion:
+  default_ratio: 0.10
+  basis: Synthetic policy used only by loader tests.

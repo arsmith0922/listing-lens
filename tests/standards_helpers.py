@@ -13,6 +13,9 @@ translation:
 proxy:
   value: "off"
   basis: Synthetic policy for tests.
+cushion:
+  default_ratio: 0.10
+  basis: Synthetic policy for tests.
 """
 
 

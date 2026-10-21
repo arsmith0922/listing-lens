@@ -14,3 +14,9 @@ proxy:
     Project decision D32. A rule's explicit proxy (for example disclosed public float standing in
     for a market value that needs a price) is used only when this is "on", and the result is
     always reported as evaluated via a proxy.
+cushion:
+  default_ratio: 0.10
+  basis: >-
+    Project decision D39. A figure that meets a threshold but sits within this ratio of it (10
+    percent of the threshold) is reported at risk, not clear, so a small move can be seen
+    coming. It is one ratio for every rule; per-metric overrides can be added beside it.

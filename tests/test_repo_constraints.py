@@ -88,6 +88,19 @@ FORBIDDEN_STANDARDS_IMPORTS = (
 )
 
 
+# The margin engine is a pure function of a snapshot and a ruleset's policy (D39). It reads the
+# static alias table to classify a concept as a balance or a flow, and nothing that fetches or
+# extracts, so it can never touch the network.
+FORBIDDEN_MARGIN_IMPORTS = (
+    "httpx",
+    "listinglens.ingestion",
+    "listinglens.extraction.service",
+    "listinglens.extraction.figures",
+    "listinglens.extraction.selection",
+    "listinglens.extraction.corroboration",
+)
+
+
 def find_forbidden_imports(text: str, forbidden: tuple[str, ...]) -> set[str]:
     """Imported module names that equal or sit under a forbidden one."""
     found: set[str] = set()
@@ -150,6 +163,27 @@ def test_find_forbidden_imports_detects_modules_and_submodules_only() -> None:
     assert find_forbidden_imports("from listinglens.ingestion import endpoints", forbidden) == set()
     assert find_forbidden_imports("x = 'import httpx'", forbidden) == set()
     assert find_forbidden_imports("import httpxfoo", forbidden) == set()
+
+
+def test_the_margin_guard_flags_network_and_extraction_work_but_not_the_alias_table() -> None:
+    forbidden = FORBIDDEN_MARGIN_IMPORTS
+    assert find_forbidden_imports("import httpx", forbidden) == {"httpx"}
+    assert find_forbidden_imports("from httpx import Client", forbidden) == {"httpx"}
+    ingestion = "from listinglens.ingestion import endpoints"
+    assert find_forbidden_imports(ingestion, forbidden) == {"listinglens.ingestion"}
+    service = "from listinglens.extraction.service import ExtractionService"
+    assert find_forbidden_imports(service, forbidden) == {"listinglens.extraction.service"}
+    for module in ("figures", "selection", "corroboration"):
+        text = f"from listinglens.extraction.{module} import x"
+        assert find_forbidden_imports(text, forbidden) == {f"listinglens.extraction.{module}"}
+    assert (
+        find_forbidden_imports("from listinglens.extraction.aliases import ALIASES", forbidden)
+        == set()
+    )
+    assert (
+        find_forbidden_imports("from listinglens.standards.rules import StandardRule", forbidden)
+        == set()
+    )
 
 
 def _repo_root() -> Path:
@@ -236,6 +270,10 @@ def test_extraction_layer_does_no_http_and_imports_no_transport() -> None:
 
 def test_standards_layer_does_no_http_and_imports_neither_ingestion_nor_extraction() -> None:
     assert _layer_violations("standards", FORBIDDEN_STANDARDS_IMPORTS) == {}
+
+
+def test_margin_layer_does_no_http_and_does_no_extraction() -> None:
+    assert _layer_violations("margin", FORBIDDEN_MARGIN_IMPORTS) == {}
 
 
 def test_only_the_yaml_loader_imports_yaml() -> None:

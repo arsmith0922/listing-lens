@@ -200,6 +200,22 @@ class ProxySetting(BaseModel):
     basis: NonBlank
 
 
+class CushionSetting(BaseModel):
+    """How close to a threshold counts as at risk (D39): a ratio of the threshold. default_ratio
+    applies to every rule; per-metric overrides can be added beside it without changing it."""
+
+    model_config = CONFIG
+
+    default_ratio: Threshold
+    basis: NonBlank
+
+    @model_validator(mode="after")
+    def _is_a_proper_ratio(self) -> CushionSetting:
+        if not 0 <= self.default_ratio < 1:
+            raise ValueError("the cushion ratio must be at least 0 and below 1")
+        return self
+
+
 class RulesetPolicy(BaseModel):
     """Ruleset-wide choices that are ours, not Nasdaq's. Each records the basis for the choice."""
 
@@ -207,3 +223,4 @@ class RulesetPolicy(BaseModel):
 
     translation: TranslationSetting
     proxy: ProxySetting
+    cushion: CushionSetting

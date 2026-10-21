@@ -263,12 +263,14 @@ def test_the_policy_records_a_basis_for_each_choice() -> None:
     good = {
         "translation": {"value": "allow_flagged", "basis": "b"},
         "proxy": {"value": "off", "basis": "b"},
+        "cushion": {"default_ratio": Decimal("0.10"), "basis": "b"},
     }
     assert RulesetPolicy.model_validate(good).proxy.value.value == "off"
     for broken in (
         {**good, "translation": {"value": "convert", "basis": "b"}},
         {**good, "proxy": {"value": "off", "basis": " "}},
         {**good, "extra": 1},
+        {"translation": good["translation"], "proxy": good["proxy"]},
         {"translation": good["translation"]},
     ):
         with pytest.raises(ValidationError):
