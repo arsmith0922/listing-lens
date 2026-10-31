@@ -58,3 +58,29 @@ def test_non_https_scheme_is_rejected() -> None:
 
 def test_case_insensitive_host_match() -> None:
     assert_allowed("https://DATA.SEC.GOV/x")
+
+
+def test_the_nasdaq_symbol_directory_host_is_allowed() -> None:
+    assert_allowed("https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt")
+    assert_allowed("https://WWW.NASDAQTRADER.COM:443/dynamic/SymDir/nasdaqlisted.txt")
+
+
+@pytest.mark.parametrize(
+    ("url", "reason"),
+    [
+        ("https://nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt", AllowlistReason.HOST),
+        ("https://ftp.nasdaqtrader.com/symboldirectory/nasdaqlisted.txt", AllowlistReason.HOST),
+        ("https://www.nasdaqtrader.com.evil.com/x", AllowlistReason.HOST),
+        ("https://evilwww.nasdaqtrader.com/x", AllowlistReason.HOST),
+        ("https://www.nasdaq.com/x", AllowlistReason.HOST),
+        ("https://www.nasdaqtrader.com@evil.com/x", AllowlistReason.HOST),
+        ("http://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt", AllowlistReason.SCHEME),
+        ("ftp://ftp.nasdaqtrader.com/symboldirectory/nasdaqlisted.txt", AllowlistReason.SCHEME),
+        ("https://www.nasdaqtrader.com:8443/x", AllowlistReason.PORT),
+        ("https://www.nasdaqtrader.com./x", AllowlistReason.TRAILING_DOT),
+    ],
+)
+def test_only_the_exact_https_directory_host_is_allowed(url: str, reason: AllowlistReason) -> None:
+    with pytest.raises(AllowlistViolation) as exc_info:
+        assert_allowed(url)
+    assert exc_info.value.reason == reason

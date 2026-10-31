@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import httpx
 
-from listinglens.core.branding import user_agent
+from listinglens.core.branding import public_user_agent, user_agent
 from listinglens.core.errors import RateLimited, ResponseTooLarge, TooManyRedirects, UpstreamError
-from listinglens.ingestion.allowlist import assert_allowed
+from listinglens.ingestion.allowlist import SEC_HOSTS, assert_allowed
 from listinglens.ingestion.redirects import resolve_redirect
 from listinglens.ingestion.retry import (
     RetryAction,
@@ -38,11 +38,8 @@ class EdgarTransport:
         self._clock = clock or RealClock()
         self._throttle = TokenBucketThrottle(rate=rate, burst=burst, clock=self._clock)
         self._max_response_bytes = max_response_bytes
-        self._client = httpx.Client(
-            transport=transport,
-            headers={"User-Agent": user_agent(contact)},
-            follow_redirects=False,
-        )
+        self._contact_agent = user_agent(contact)
+        self._client = httpx.Client(transport=transport, follow_redirects=False)
 
     def get(self, url: str) -> httpx.Response:
         assert_allowed(url)
@@ -100,9 +97,15 @@ class EdgarTransport:
             self._clock.sleep(compute_backoff(attempt, retry_after_seconds))
             attempt += 1
 
+    def _agent_for(self, url: str) -> str:
+        """The contact goes to SEC hosts only; any other allowlisted host gets the public one."""
+        return self._contact_agent if _host_of(url) in SEC_HOSTS else public_user_agent()
+
     def _stream_capped(self, url: str) -> httpx.Response:
         buffer = bytearray()
-        with self._client.stream("GET", url) as response:
+        with self._client.stream(
+            "GET", url, headers={"User-Agent": self._agent_for(url)}
+        ) as response:
             status_code = response.status_code
             request = response.request
             headers = response.headers.copy()

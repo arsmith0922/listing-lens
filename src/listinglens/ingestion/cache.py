@@ -10,6 +10,7 @@ from urllib.parse import urlsplit
 import httpx
 
 from listinglens.core.errors import InputValidationError
+from listinglens.ingestion.allowlist import NASDAQ_TRADER_HOST
 from listinglens.ingestion.throttle import Clock, RealClock
 from listinglens.ingestion.transport import EdgarTransport
 
@@ -20,6 +21,8 @@ _TICKER_MAP_PATH = "/files/company_tickers.json"
 
 _SHORT_TTL_SECONDS = 900.0
 _CONDITIONAL_TTL_SECONDS = 86400.0
+# Nasdaq says its directory files are updated throughout each day, so an hour, not a day.
+_DIRECTORY_TTL_SECONDS = 3600.0
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS http_cache (
@@ -40,6 +43,7 @@ class CacheTtlClass(Enum):
     IMMUTABLE = "immutable"
     SHORT = "short"
     CONDITIONAL = "conditional"
+    DIRECTORY = "directory"
 
 
 def classify_ttl(url: str) -> CacheTtlClass:
@@ -49,13 +53,19 @@ def classify_ttl(url: str) -> CacheTtlClass:
         return CacheTtlClass.IMMUTABLE
     if host == _TICKER_MAP_HOST and parts.path == _TICKER_MAP_PATH:
         return CacheTtlClass.CONDITIONAL
+    if host == NASDAQ_TRADER_HOST:
+        return CacheTtlClass.DIRECTORY
     return CacheTtlClass.SHORT
 
 
 def _is_fresh(ttl_class: CacheTtlClass, fetched_at: float, now: float) -> bool:
     if ttl_class is CacheTtlClass.IMMUTABLE:
         return True
-    ttl = _SHORT_TTL_SECONDS if ttl_class is CacheTtlClass.SHORT else _CONDITIONAL_TTL_SECONDS
+    ttl = {
+        CacheTtlClass.SHORT: _SHORT_TTL_SECONDS,
+        CacheTtlClass.CONDITIONAL: _CONDITIONAL_TTL_SECONDS,
+        CacheTtlClass.DIRECTORY: _DIRECTORY_TTL_SECONDS,
+    }[ttl_class]
     return (now - fetched_at) <= ttl
 
 

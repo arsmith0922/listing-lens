@@ -6,11 +6,12 @@ from urllib.parse import urlencode
 
 from listinglens.core.errors import InputValidationError
 from listinglens.domain.identifiers import AccessionNumber, Cik
-from listinglens.ingestion.allowlist import assert_allowed
+from listinglens.ingestion.allowlist import NASDAQ_TRADER_HOST, assert_allowed
 
 _DATA_SEC_GOV = "https://data.sec.gov"
 _WWW_SEC_GOV = "https://www.sec.gov"
 _EFTS_SEC_GOV = "https://efts.sec.gov"
+_NASDAQ_TRADER = "https://" + NASDAQ_TRADER_HOST
 
 _DOCUMENT_NAME_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 
@@ -38,6 +39,13 @@ def company_facts_url(cik: Cik) -> str:
 
 def company_tickers_url() -> str:
     url = f"{_WWW_SEC_GOV}/files/company_tickers.json"
+    assert_allowed(url)
+    return url
+
+
+def nasdaq_listed_url() -> str:
+    """Nasdaq's listed-securities directory. A fixed URL: no argument can reach it."""
+    url = f"{_NASDAQ_TRADER}/dynamic/SymDir/nasdaqlisted.txt"
     assert_allowed(url)
     return url
 

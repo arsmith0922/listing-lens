@@ -4,6 +4,7 @@ it is outside testpaths and is never collected or run in CI.
 
     record_fixtures.py              the original submissions / tickers / archives / EFTS set
     record_fixtures.py companyfacts the companyfacts set
+    record_fixtures.py nasdaq       the Nasdaq directory and the Nasdaq-listed company (AIXI)
 
 manifest.json is merged by file name, so recording one set never drops the other's entries.
 """
@@ -22,12 +23,15 @@ from pydantic import JsonValue
 
 from listinglens.core.config import Settings
 from listinglens.domain.identifiers import Cik
-from listinglens.ingestion.endpoints import company_facts_url
+from listinglens.ingestion.endpoints import company_facts_url, nasdaq_listed_url, submissions_url
 from listinglens.ingestion.throttle import RealClock
 from listinglens.ingestion.transport import EdgarTransport
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "edgar"
 MANIFEST_PATH = FIXTURES_DIR / "manifest.json"
+# Organized by source: the Nasdaq directory is not EDGAR, so it has its own folder.
+NASDAQ_DIR = FIXTURES_DIR.parent / "nasdaq"
+NASDAQ_MANIFEST_PATH = NASDAQ_DIR / "manifest.json"
 TRIM_ROW_COUNT = 40
 
 # Verified live during chunk 6 planning: real S-1/F-1/overflow/EFTS-boundary cases.
@@ -35,6 +39,7 @@ TRANS_AMERICAN_CIK = "0001990446"
 LUCKIN_CIK = "0001767582"
 GE_CIK = "0000040545"
 APPLE_CIK = "0000320193"
+AIXI_CIK = "0001935172"  # Xiao-I, a Nasdaq-listed US-GAAP 20-F filer
 APPLE_ACCESSION_BARE = "000032019323000106"
 
 # companyfacts trim (chunk 11): keep the shape-bearing parts of a large document, deterministically.
@@ -44,9 +49,10 @@ MAX_UNCOMMON_UNIT_CONCEPTS = 40
 MAX_NULL_FY_CONCEPTS = 25
 KEEP_LEADING_FACTS = 3
 
-SELECTORS = ("chunk6", "companyfacts")
+SELECTORS = ("chunk6", "companyfacts", "nasdaq")
 
 MANIFEST: list[dict[str, JsonValue]] = []
+NASDAQ_MANIFEST: list[dict[str, JsonValue]] = []
 
 
 def trim_filing_index_page(page: dict[str, JsonValue]) -> dict[str, JsonValue]:
@@ -171,35 +177,33 @@ def write_fixture(
     print(f"wrote {filename} ({len(text)} bytes){' [trimmed]' if trimmed else ''}")
 
 
-def write_raw_fixture(filename: str, body: bytes, url: str) -> None:
+def write_raw_fixture(filename: str, body: bytes, url: str, *, nasdaq: bool = False) -> None:
     """Write the exact response bytes, so the manifest hash verifies the fetch itself."""
-    (FIXTURES_DIR / filename).write_bytes(body)
+    (NASDAQ_DIR if nasdaq else FIXTURES_DIR).joinpath(filename).write_bytes(body)
     digest = hashlib.sha256(body).hexdigest()
-    MANIFEST.append(_manifest_entry(filename, url, digest, trimmed=False))
+    (NASDAQ_MANIFEST if nasdaq else MANIFEST).append(_manifest_entry(filename, url, digest, False))
     print(f"wrote {filename} ({len(body)} bytes) [raw]")
 
 
 def write_manifest() -> None:
-    """Merge this run's entries into manifest.json by file name, keeping every other entry."""
-    existing: list[dict[str, JsonValue]] = []
-    if MANIFEST_PATH.exists():
-        existing = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
-    by_file = {str(entry["file"]): entry for entry in MANIFEST}
-    merged = [by_file.pop(str(entry["file"]), entry) for entry in existing]
-    merged.extend(by_file.values())
-    text = json.dumps(merged, indent=2, sort_keys=True)
-    MANIFEST_PATH.write_text(text, encoding="utf-8", newline="\n")
-    print(f"wrote manifest.json ({len(merged)} entries, {len(MANIFEST)} from this run)")
+    """Merge this run's entries into each manifest by file name, keeping every other entry."""
+    for path, entries in ((MANIFEST_PATH, MANIFEST), (NASDAQ_MANIFEST_PATH, NASDAQ_MANIFEST)):
+        if not entries and path != MANIFEST_PATH:
+            continue
+        existing = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+        by_file = {str(entry["file"]): entry for entry in entries}
+        merged = [by_file.pop(str(entry["file"]), entry) for entry in existing]
+        merged.extend(by_file.values())
+        text = json.dumps(merged, indent=2, sort_keys=True)
+        path.write_text(text, encoding="utf-8", newline="\n")
+        print(f"wrote {path.parent.name}/manifest.json ({len(merged)} entries, {len(entries)} new)")
 
 
 def record_chunk6(transport: EdgarTransport) -> None:
     submissions_base = "https://data.sec.gov/submissions"
-
-    # Domestic S-1, full, no trim.
+    # Domestic S-1 and FPI F-1 filers, both full, no trim.
     url = f"{submissions_base}/CIK{TRANS_AMERICAN_CIK}.json"
     write_fixture("submissions_trans_american.json", transport.get(url).json(), url, trimmed=False)
-
-    # FPI F-1, full, no trim.
     url = f"{submissions_base}/CIK{LUCKIN_CIK}.json"
     write_fixture("submissions_luckin.json", transport.get(url).json(), url, trimmed=False)
 
@@ -254,6 +258,18 @@ def record_companyfacts(transport: EdgarTransport) -> None:
     )
 
 
+def record_nasdaq(transport: EdgarTransport) -> None:
+    """One run, one day, exact bytes; the transport picks the contact-free agent for Nasdaq."""
+    cik = Cik.parse(AIXI_CIK)
+    for filename, url, is_nasdaq in (
+        ("nasdaqlisted.txt", nasdaq_listed_url(), True),
+        ("submissions_aixi.json", submissions_url(cik), False),
+        ("companyfacts_aixi.json", company_facts_url(cik), False),
+    ):
+        body = transport.get(url).raise_for_status().content
+        write_raw_fixture(filename, body, url, nasdaq=is_nasdaq)
+
+
 def main(argv: Sequence[str] = ()) -> None:
     if os.environ.get("LISTINGLENS_ALLOW_NETWORK") != "1":
         print(
@@ -268,10 +284,13 @@ def main(argv: Sequence[str] = ()) -> None:
         raise SystemExit(2)
 
     FIXTURES_DIR.mkdir(parents=True, exist_ok=True)
+    NASDAQ_DIR.mkdir(parents=True, exist_ok=True)
     settings = Settings()
     transport = EdgarTransport(settings.sec_edgar_contact, clock=RealClock())
     if selector == "companyfacts":
         record_companyfacts(transport)
+    elif selector == "nasdaq":
+        record_nasdaq(transport)
     else:
         record_chunk6(transport)
     write_manifest()

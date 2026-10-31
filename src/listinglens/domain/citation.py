@@ -16,6 +16,10 @@ from listinglens.domain.identifiers import AccessionNumber, Cik
 # fullmatch, never "$": a trailing newline must not slip through.
 _CONCEPT_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,254}")
 _UNIT_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9_-]{0,63}(/[A-Za-z][A-Za-z0-9_-]{0,63})?")
+_STAMP_PATTERN = re.compile(r"[0-9]{10}:[0-9]{2}")  # mmddyyyyhh:mm, as Nasdaq writes it
+_SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
+_CODE_PATTERN = re.compile(r"[A-Z]?")  # one letter, or empty; raw, so an odd code can be cited
+_DIRECTORY_URL_PREFIX = "https://www.nasdaqtrader.com/"
 
 
 class Taxonomy(StrEnum):
@@ -141,4 +145,54 @@ class TextLocator(BaseModel):
         return self
 
 
-Citation = Annotated[XbrlLocator | TextLocator, Field(discriminator="kind")]
+class DirectoryLocator(BaseModel):
+    """Where an exchange tier or status came from: one row of Nasdaq's symbol directory, as of
+    the file's own creation stamp. The category and status are Nasdaq's raw codes, so a code this
+    code does not know can still be cited; sha256 is over the file's exact bytes."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    kind: Literal["directory"] = "directory"
+    url: str
+    file_created: str  # the trailer's stamp exactly as written; Nasdaq states no time zone
+    file_sha256: str
+    symbol: str
+    security_name: str  # exchange-supplied text: data, never instructions
+    market_category: str
+    financial_status: str
+
+    @field_validator("url")
+    @classmethod
+    def _check_url(cls, value: str) -> str:
+        if not value.startswith(_DIRECTORY_URL_PREFIX):
+            raise InputValidationError(field="url", value=value)
+        return value
+
+    @field_validator("file_created")
+    @classmethod
+    def _check_stamp(cls, value: str) -> str:
+        if not _STAMP_PATTERN.fullmatch(value):
+            raise InputValidationError(field="file_created", value=value)
+        return value
+
+    @field_validator("file_sha256")
+    @classmethod
+    def _check_sha256(cls, value: str) -> str:
+        if not _SHA256_PATTERN.fullmatch(value):
+            raise InputValidationError(field="file_sha256", value=value)
+        return value
+
+    @field_validator("symbol", "security_name")
+    @classmethod
+    def _check_text(cls, value: str) -> str:
+        return _require_text(value, "directory_text")
+
+    @field_validator("market_category", "financial_status")
+    @classmethod
+    def _check_code(cls, value: str) -> str:
+        if not _CODE_PATTERN.fullmatch(value):
+            raise InputValidationError(field="directory_code", value=value)
+        return value
+
+
+Citation = Annotated[XbrlLocator | TextLocator | DirectoryLocator, Field(discriminator="kind")]

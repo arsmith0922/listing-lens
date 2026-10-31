@@ -4,7 +4,10 @@ from urllib.parse import urlsplit
 
 from listinglens.core.errors import AllowlistReason, AllowlistViolation
 
-ALLOWED_HOSTS = frozenset({"data.sec.gov", "www.sec.gov", "efts.sec.gov"})
+# The SEC hosts are the only ones that ever see the contact in the User-Agent (transport.py).
+SEC_HOSTS = frozenset({"data.sec.gov", "www.sec.gov", "efts.sec.gov"})
+NASDAQ_TRADER_HOST = "www.nasdaqtrader.com"
+ALLOWED_HOSTS = SEC_HOSTS | {NASDAQ_TRADER_HOST}
 _ALLOWED_SCHEME = "https"
 _ALLOWED_PORT = 443
 
