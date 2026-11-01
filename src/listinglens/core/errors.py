@@ -273,3 +273,12 @@ class MarginConfigError(MarginError):
         self.rule_id = rule_id
         self.detail = detail
         super().__init__(f"Margin check cannot honor rule {rule_id!r}: {detail}")
+
+
+class UnrepresentableNumber(ListingLensError):
+    """A number that cannot be shown as an exact decimal string within the output's limits
+    (non-finite, or far larger or smaller than any real figure). Internal: never the caller's."""
+
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+        super().__init__(f"A number cannot be shown as an exact decimal string: {reason}")
