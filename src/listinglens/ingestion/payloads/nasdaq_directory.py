@@ -6,6 +6,7 @@ from datetime import datetime
 
 from listinglens.core.errors import MalformedPayload
 from listinglens.domain.directory import DirectoryStamp, NasdaqListing
+from listinglens.domain.directory_shapes import CODE_PATTERN, is_blank
 
 # Nasdaq's nasdaqlisted.txt, parsed strictly (D43). The header must match the live one exactly,
 # never by position: Nasdaq's definitions page lists fewer columns than the file carries, and a
@@ -30,7 +31,6 @@ _FIELDS = len(HEADER)
 _LINE_END = re.compile(r"\r?\n")
 _SYMBOL = re.compile(r"[^\s|]{1,15}")
 _NAME = re.compile(r"[^\x00-\x1f\x7f]{1,300}")
-_CODE = re.compile(r"[A-Z]?")
 _ROUND_LOT = re.compile(r"[0-9]{1,6}")
 _TRAILER_MARK = "File Creation Time"
 # mmddyyyyhh:mm then seven empty fields, as observed live (the definitions page omits the colon).
@@ -62,10 +62,10 @@ def _listing(fields: list[str], row: int, url: str) -> NasdaqListing:
     symbol, name, category, test, status, lot, etf, shares = fields
     if not _SYMBOL.fullmatch(symbol):
         raise _refuse(url, where, "Symbol is empty, too long, or holds whitespace")
-    if not _NAME.fullmatch(name):
-        raise _refuse(url, where, "Security Name is empty, too long, or holds a control character")
+    if not _NAME.fullmatch(name) or is_blank(name):
+        raise _refuse(url, where, "Security Name is blank, too long, or holds a control character")
     for label, code in (("Market Category", category), ("Financial Status", status)):
-        if not _CODE.fullmatch(code):
+        if not CODE_PATTERN.fullmatch(code):
             raise _refuse(url, where, f"{label} must be one uppercase letter or empty")
     if not _ROUND_LOT.fullmatch(lot):
         raise _refuse(url, where, "Round Lot Size must be digits")

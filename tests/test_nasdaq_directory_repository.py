@@ -119,3 +119,67 @@ def test_a_failed_parse_is_not_remembered_as_a_good_answer(edgar_stack: StackBui
     for _ in range(2):
         with pytest.raises(MalformedPayload):
             repository.fetch()
+
+
+class _Forgets:
+    """A forget hook that remembers which urls it was asked to drop."""
+
+    def __init__(self) -> None:
+        self.urls: list[str] = []
+
+    def __call__(self, url: str) -> None:
+        self.urls.append(url)
+
+
+def test_a_malformed_download_is_evicted_so_the_next_call_fetches_again(
+    edgar_stack: StackBuilder,
+) -> None:
+    """A CDN challenge page served as a 200 must cost one failed call, not an hour of them."""
+    routes: dict[str, bytes] = {URL: b"<html>challenge</html>"}
+    client, routed = edgar_stack(routes)
+    repository = NasdaqDirectoryRepository(client, forget=client.forget)
+    with pytest.raises(MalformedPayload):
+        repository.fetch()
+    routes[URL] = directory_bytes()  # the next request gets the real file
+    assert repository.fetch().created.raw == RECORDED_STAMP_RAW  # no wait for the hour
+    assert routed.requested == [URL, URL]
+
+
+def test_without_the_hook_a_malformed_download_stays_cached(edgar_stack: StackBuilder) -> None:
+    routes: dict[str, bytes] = {URL: b"<html>challenge</html>"}
+    client, routed = edgar_stack(routes)
+    repository = NasdaqDirectoryRepository(client)
+    with pytest.raises(MalformedPayload):
+        repository.fetch()
+    routes[URL] = directory_bytes()
+    with pytest.raises(MalformedPayload):  # the cached bad body is served again
+        repository.fetch()
+    assert routed.requested == [URL]
+
+
+def test_a_good_download_is_not_evicted(edgar_stack: StackBuilder) -> None:
+    forgets = _Forgets()
+    client, _ = edgar_stack({URL: directory_bytes()})
+    NasdaqDirectoryRepository(client, forget=forgets).fetch()
+    assert forgets.urls == []
+
+
+def test_an_upstream_failure_is_not_evicted_because_it_was_never_cached(
+    edgar_stack: StackBuilder,
+) -> None:
+    forgets = _Forgets()
+    client, _ = edgar_stack({})  # 404
+    with pytest.raises(UpstreamError):
+        NasdaqDirectoryRepository(client, forget=forgets).fetch()
+    assert forgets.urls == []
+
+
+def test_the_eviction_names_the_directory_url_and_the_error_still_surfaces(
+    edgar_stack: StackBuilder,
+) -> None:
+    forgets = _Forgets()
+    client, _ = edgar_stack({URL: b"broken"})
+    with pytest.raises(MalformedPayload) as caught:
+        NasdaqDirectoryRepository(client, forget=forgets).fetch()
+    assert forgets.urls == [URL]
+    assert caught.value.url == URL

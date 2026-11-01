@@ -198,3 +198,40 @@ def test_write_failure_is_swallowed_and_fetched_response_still_returned(
 
     assert result.content == b"real body"
     assert recorder.call_count == 1
+
+
+def test_forget_drops_one_cached_response_so_the_next_get_fetches_again(
+    tmp_path: Path, fake_clock: FakeClock
+) -> None:
+    transport, recorder = _edgar_transport(
+        fake_clock,
+        httpx.Response(200, content=b"one"),
+        httpx.Response(200, content=b"two"),
+        httpx.Response(200, content=b"other"),
+    )
+    with CachedEdgarClient(transport, tmp_path / "cache.db", tmp_path, clock=fake_clock) as cache:
+        assert cache.get(_SUBMISSIONS_URL).content == b"one"
+        assert cache.get(_ARCHIVES_URL).content == b"two"
+        cache.forget(_SUBMISSIONS_URL)
+        assert cache.get(_ARCHIVES_URL).content == b"two"  # a different url is untouched
+        assert cache.get(_SUBMISSIONS_URL).content == b"other"
+    assert recorder.call_count == 3
+
+
+def test_forget_of_an_unknown_url_is_a_no_op(tmp_path: Path, fake_clock: FakeClock) -> None:
+    transport, recorder = _edgar_transport(fake_clock, httpx.Response(200, content=b"one"))
+    with CachedEdgarClient(transport, tmp_path / "cache.db", tmp_path, clock=fake_clock) as cache:
+        cache.forget(_SUBMISSIONS_URL)
+        assert cache.get(_SUBMISSIONS_URL).content == b"one"
+        cache.forget(_TICKER_MAP_URL)
+        assert cache.get(_SUBMISSIONS_URL).content == b"one"
+    assert recorder.call_count == 1
+
+
+def test_forget_fails_open_when_the_database_is_unusable(
+    tmp_path: Path, fake_clock: FakeClock
+) -> None:
+    transport, _ = _edgar_transport(fake_clock, httpx.Response(200, content=b"one"))
+    cache = CachedEdgarClient(transport, tmp_path / "cache.db", tmp_path, clock=fake_clock)
+    cache.close()
+    cache.forget(_SUBMISSIONS_URL)  # a closed connection raises sqlite3.Error inside; none escapes

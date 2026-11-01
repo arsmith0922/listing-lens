@@ -1,12 +1,17 @@
 from __future__ import annotations
 
-import re
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from listinglens.core.errors import InputValidationError
 from listinglens.domain.citation import DirectoryLocator
+from listinglens.domain.directory_shapes import (
+    CODE_PATTERN,
+    SHA256_PATTERN,
+    URL_PREFIX,
+    is_blank,
+)
 
 # Nasdaq's listed-securities directory (nasdaqlisted.txt), parsed and validated by
 # ingestion/payloads/nasdaq_directory.py. Built from already-validated rows (D18): strict
@@ -14,10 +19,6 @@ from listinglens.domain.citation import DirectoryLocator
 # means, and which tier a category selects, is decided where it is used and cited there.
 
 CONFIG = ConfigDict(frozen=True, strict=True, extra="forbid")
-
-# One letter, or empty. An unrecognized letter is carried, not refused, so one odd row cannot
-# break every lookup; anything else is a changed format.
-CODE_PATTERN = re.compile(r"[A-Z]?")
 
 
 class DirectoryStamp(BaseModel):
@@ -33,6 +34,7 @@ class DirectoryStamp(BaseModel):
     def _raw_matches_value(self) -> DirectoryStamp:
         v = self.value
         written = f"{v.month:02d}{v.day:02d}{v.year:04d}{v.hour:02d}:{v.minute:02d}"
+        # written always has the shape STAMP_PATTERN demands, so equality with raw is the check.
         if v.tzinfo is not None or v.second or v.microsecond or written != self.raw:
             raise InputValidationError(field="directory_stamp", value=self.raw)
         return self
@@ -61,8 +63,8 @@ class NasdaqListing(BaseModel):
 
     @field_validator("symbol", "security_name")
     @classmethod
-    def _non_empty(cls, value: str) -> str:
-        if not value:
+    def _has_text(cls, value: str) -> str:
+        if is_blank(value):
             raise InputValidationError(field="directory_text", value=value)
         return value
 
@@ -77,6 +79,20 @@ class NasdaqDirectory(BaseModel):
     sha256: str
     created: DirectoryStamp
     listings: tuple[NasdaqListing, ...]
+
+    @field_validator("url")
+    @classmethod
+    def _nasdaq_trader_url(cls, value: str) -> str:
+        if not value.startswith(URL_PREFIX):
+            raise InputValidationError(field="url", value=value)
+        return value
+
+    @field_validator("sha256")
+    @classmethod
+    def _hex_digest(cls, value: str) -> str:
+        if not SHA256_PATTERN.fullmatch(value):
+            raise InputValidationError(field="sha256", value=value)
+        return value
 
     @model_validator(mode="after")
     def _unique_symbols(self) -> NasdaqDirectory:

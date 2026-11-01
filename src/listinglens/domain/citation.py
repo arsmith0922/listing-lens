@@ -8,6 +8,13 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from listinglens.core.errors import InputValidationError
+from listinglens.domain.directory_shapes import (
+    CODE_PATTERN,
+    SHA256_PATTERN,
+    STAMP_PATTERN,
+    URL_PREFIX,
+    is_blank,
+)
 from listinglens.domain.identifiers import AccessionNumber, Cik
 
 # Built from already-validated inputs (D18): strict constructors, no parse(). The untrusted
@@ -16,10 +23,6 @@ from listinglens.domain.identifiers import AccessionNumber, Cik
 # fullmatch, never "$": a trailing newline must not slip through.
 _CONCEPT_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9_]{0,254}")
 _UNIT_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9_-]{0,63}(/[A-Za-z][A-Za-z0-9_-]{0,63})?")
-_STAMP_PATTERN = re.compile(r"[0-9]{10}:[0-9]{2}")  # mmddyyyyhh:mm, as Nasdaq writes it
-_SHA256_PATTERN = re.compile(r"[0-9a-f]{64}")
-_CODE_PATTERN = re.compile(r"[A-Z]?")  # one letter, or empty; raw, so an odd code can be cited
-_DIRECTORY_URL_PREFIX = "https://www.nasdaqtrader.com/"
 
 
 class Taxonomy(StrEnum):
@@ -164,33 +167,35 @@ class DirectoryLocator(BaseModel):
     @field_validator("url")
     @classmethod
     def _check_url(cls, value: str) -> str:
-        if not value.startswith(_DIRECTORY_URL_PREFIX):
+        if not value.startswith(URL_PREFIX):
             raise InputValidationError(field="url", value=value)
         return value
 
     @field_validator("file_created")
     @classmethod
     def _check_stamp(cls, value: str) -> str:
-        if not _STAMP_PATTERN.fullmatch(value):
+        if not STAMP_PATTERN.fullmatch(value):
             raise InputValidationError(field="file_created", value=value)
         return value
 
     @field_validator("file_sha256")
     @classmethod
     def _check_sha256(cls, value: str) -> str:
-        if not _SHA256_PATTERN.fullmatch(value):
+        if not SHA256_PATTERN.fullmatch(value):
             raise InputValidationError(field="file_sha256", value=value)
         return value
 
     @field_validator("symbol", "security_name")
     @classmethod
     def _check_text(cls, value: str) -> str:
-        return _require_text(value, "directory_text")
+        if is_blank(value):
+            raise InputValidationError(field="directory_text", value=value)
+        return value
 
     @field_validator("market_category", "financial_status")
     @classmethod
     def _check_code(cls, value: str) -> str:
-        if not _CODE_PATTERN.fullmatch(value):
+        if not CODE_PATTERN.fullmatch(value):
             raise InputValidationError(field="directory_code", value=value)
         return value
 

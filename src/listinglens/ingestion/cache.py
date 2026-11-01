@@ -116,6 +116,15 @@ class CachedEdgarClient:
             self._write(url, response)
         return response
 
+    def forget(self, url: str) -> None:
+        """Drop a cached response, so the next get fetches again. Fails open like the rest of
+        the cache: if the delete fails the entry simply ages out."""
+        try:
+            self._conn.execute("DELETE FROM http_cache WHERE method = ? AND url = ?", ("GET", url))
+            self._conn.commit()
+        except sqlite3.Error:
+            return
+
     def _read(self, url: str) -> httpx.Response | None:
         try:
             row = self._conn.execute(
