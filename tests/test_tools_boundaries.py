@@ -36,7 +36,7 @@ def test_the_lower_layers_import_neither_tools_nor_server() -> None:
 
 
 def test_tools_imports_no_mcp_and_no_server() -> None:
-    assert _layer_violations("tools", ("mcp", "listinglens.server")) == {}
+    assert _layer_violations("tools", ("mcp", "mcp_types", "listinglens.server")) == {}
 
 
 def test_nothing_in_the_product_imports_the_second_http_stack() -> None:

@@ -9,12 +9,19 @@ from listinglens.domain.company import CompanyRef
 from listinglens.domain.identifiers import Cik, Ticker
 from listinglens.domain.pathway import Pathway
 from listinglens.standards.enums import ListingType, Tier
+from listinglens.tools import arg_text
 
-# What a caller may send to a tool (D46). Strict where a coercion would hide a mistake (a string
-# stays a string, an integer an integer), the enums accept only their exact values, and extra
-# fields are refused. Structural problems are Pydantic constraints, so they raise ValidationError
-# before the service runs; the only domain-level refusal is ToolArgumentError (company_ref_of),
-# never the base InputValidationError, which the server masks as an internal failure.
+# What a caller may send to a tool (D46, D47). Strict where a coercion would hide a mistake (a
+# string stays a string, an integer an integer), the enums accept only their exact values, and
+# extra fields are refused. Structural problems are Pydantic constraints, so they raise
+# ValidationError before the service runs; the only domain-level refusal is ToolArgumentError
+# (company_ref_of), never the base InputValidationError, which the server masks as an internal
+# failure.
+#
+# The annotated aliases below are the single definition of each argument: the models use them,
+# and the server's tool signatures use the very same ones, so what the SDK validates and
+# publishes is what these models validate. (The SDK offers no way to forbid extra argument keys,
+# so a stray key on a tool call is dropped by the SDK; these models still refuse it.)
 #
 # Nothing here can carry a market price, a market value, a holder count or a market-maker count,
 # and there is no as_of: the rules in force today are measured against the latest figures.
@@ -32,6 +39,15 @@ FormText = Annotated[
     Field(strict=True, min_length=1, max_length=20, pattern=r"^[A-Za-z0-9][A-Za-z0-9 ./-]*$"),
 ]
 
+CikArg = Annotated[Cik10 | None, Field(description=arg_text.CIK)]
+TickerArg = Annotated[Ticker10 | None, Field(description=arg_text.TICKER)]
+NameArg = Annotated[Name200 | None, Field(description=arg_text.NAME)]
+FormsArg = Annotated[tuple[FormText, ...], Field(max_length=MAX_FORMS, description=arg_text.FORMS)]
+LimitArg = Annotated[int, Field(strict=True, ge=1, le=MAX_LIMIT, description=arg_text.LIMIT)]
+ListingTypeArg = Annotated[ListingType, Field(description=arg_text.LISTING_TYPE)]
+PathwayArg = Annotated[Pathway, Field(description=arg_text.PATHWAY)]
+TierArg = Annotated[Tier | None, Field(description=arg_text.TIER)]
+
 
 class CompanySelector(BaseModel):
     """Exactly one of cik, ticker or name. Never one free string classified by its shape: a
@@ -39,14 +55,9 @@ class CompanySelector(BaseModel):
 
     model_config = ARGUMENTS
 
-    cik: Cik10 | None = Field(default=None, description="The SEC CIK, digits only.")
-    ticker: Ticker10 | None = Field(
-        default=None, description="A ticker symbol, as the SEC lists it."
-    )
-    name: Name200 | None = Field(
-        default=None,
-        description="The exact company name as the SEC lists it; case and spacing are ignored.",
-    )
+    cik: CikArg = None
+    ticker: TickerArg = None
+    name: NameArg = None
 
 
 class ResolveCompanyArgs(CompanySelector):
@@ -58,24 +69,14 @@ class ExtractFinancialsArgs(CompanySelector):
 
 
 class ListFilingsArgs(CompanySelector):
-    forms: Annotated[tuple[FormText, ...], Field(max_length=MAX_FORMS)] = Field(
-        default=(),
-        description="Keep only filings whose form type equals one of these. Case is ignored; "
-        "there are no wildcards or prefixes, so 10-K does not include 10-K/A.",
-    )
-    limit: Annotated[int, Field(strict=True, ge=1, le=MAX_LIMIT)] = Field(
-        default=DEFAULT_LIMIT, description="The most filings to return, newest first."
-    )
+    forms: FormsArg = ()
+    limit: LimitArg = DEFAULT_LIMIT
 
 
 class CheckStandardsArgs(CompanySelector):
-    listing_type: ListingType = Field(
-        description="initial: a company registering. continued: listed."
-    )
-    pathway: Pathway = Field(description="How the company is entering or entered the market.")
-    tier: Tier | None = Field(
-        default=None, description="Assess this tier only. Leave out to let the rules decide."
-    )
+    listing_type: ListingTypeArg
+    pathway: PathwayArg
+    tier: TierArg = None
 
 
 def company_ref_of(selector: CompanySelector) -> CompanyRef:

@@ -7,10 +7,14 @@ requires-python = ">=3.12,<3.13"
 license = { text = "MIT" }
 dependencies = [
     "httpx==0.28.1",
+    "mcp==2.3.0",
     "pydantic==2.13.5",
     "pydantic-settings==2.15.0",
     "pyyaml==6.0.3",
 ]
+
+[project.scripts]
+listinglens-server = "listinglens.server.startup:main"
 
 [build-system]
 requires = ["hatchling"]

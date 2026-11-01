@@ -55,8 +55,8 @@ def recorded_routes() -> dict[str, Route]:
     return routes
 
 
-def settings_in(tmp_path: Path) -> ToolSettings:
-    return ToolSettings(sec_edgar_contact="test@example.com", listinglens_cache_dir=tmp_path / "c")
+def settings_in(tmp_path: Path, contact: str = "test@example.com") -> ToolSettings:
+    return ToolSettings(sec_edgar_contact=contact, listinglens_cache_dir=tmp_path / "c")
 
 
 @contextmanager
@@ -65,11 +65,12 @@ def recorded_service(
     *,
     overrides: MutableMapping[str, Route] | None = None,
     start: datetime = NOW,
+    contact: str = "test@example.com",
 ) -> Iterator[tuple[ToolService, RoutedTransport, FakeClock]]:
     # A ChainMap, so a test that keeps its overrides dict can change a route between calls.
     routed = RoutedTransport(ChainMap({} if overrides is None else overrides, recorded_routes()))
     clock = FakeClock(start=start.timestamp())
     with open_tool_service(
-        settings_in(tmp_path), http_transport=routed.transport, clock=clock
+        settings_in(tmp_path, contact), http_transport=routed.transport, clock=clock
     ) as service:
         yield service, routed, clock

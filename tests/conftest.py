@@ -19,6 +19,7 @@ from listinglens.ingestion.search_repository import FullTextSearchRepository
 from listinglens.ingestion.service import IngestionService
 from listinglens.ingestion.transport import EdgarTransport
 from tests.baseline import RunSelection, diff_baseline, is_full_suite, read_baseline
+from tests.network_support import deny, loopback_only
 
 EDGAR_FIXTURES_DIR = Path(__file__).parent / "fixtures" / "edgar"
 
@@ -31,22 +32,12 @@ DETERMINISTIC_TEST_ENV = {
 KNOWN_FAILING_PATH = Path(__file__).parent / "known_failing.txt"
 
 
-class NetworkAccessDenied(RuntimeError):
-    """Raised when test code attempts a real network connection."""
-
-
-def _deny(*_args: object, **_kwargs: object) -> None:
-    raise NetworkAccessDenied(
-        "Real network access is denied in tests. Inject a transport or fixture instead."
-    )
-
-
 @pytest.fixture(autouse=True)
 def _deny_network_access(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(socket.socket, "connect", _deny)
-    monkeypatch.setattr(socket.socket, "connect_ex", _deny)
-    monkeypatch.setattr(socket, "create_connection", _deny)
-    monkeypatch.setattr(socket, "getaddrinfo", _deny)
+    monkeypatch.setattr(socket.socket, "connect", loopback_only(socket.socket.connect))
+    monkeypatch.setattr(socket.socket, "connect_ex", loopback_only(socket.socket.connect_ex))
+    monkeypatch.setattr(socket, "create_connection", deny)
+    monkeypatch.setattr(socket, "getaddrinfo", deny)
 
 
 @pytest.fixture(autouse=True)
@@ -274,3 +265,9 @@ def pytest_sessionfinish(session: pytest.Session) -> None:
     if reporter is not None:
         reporter.write_line(message, red=True)
     session.exitstatus = 1
+
+
+@pytest.fixture
+def anyio_backend() -> str:
+    """The server tests run on asyncio only (the SDK's default; trio is not installed)."""
+    return "asyncio"
