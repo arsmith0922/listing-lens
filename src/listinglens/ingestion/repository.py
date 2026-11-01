@@ -13,6 +13,7 @@ from listinglens.core.errors import (
 from listinglens.domain.company import CompanyRef, ResolvedCompany
 from listinglens.domain.filing import FilingDocument, FilingRef, SourceText
 from listinglens.domain.identifiers import AccessionNumber, Cik
+from listinglens.domain.profile import CompanyProfile
 from listinglens.ingestion import endpoints
 from listinglens.ingestion.client import EdgarClient
 from listinglens.ingestion.company_index import CompanyIndex
@@ -36,6 +37,17 @@ class EdgarRepository:
         cik = self._cik_for(ref)
         document = self._submissions(cik)
         return ResolvedCompany(cik=cik, issuer_name=document.name, ref=ref)
+
+    def company_profile(self, company: ResolvedCompany) -> CompanyProfile:
+        """The company's tickers and exchanges, from the same submissions the resolution read."""
+        document = self._submissions(company.cik)
+        return CompanyProfile(
+            cik=company.cik,
+            name=document.name,
+            entity_type=document.entity_type,
+            tickers=tuple(document.tickers),
+            exchanges=tuple(document.exchanges),
+        )
 
     def list_filings(self, company: ResolvedCompany) -> list[FilingRef]:
         """All filings, newest first: filings.recent, then each overflow page in listed order."""

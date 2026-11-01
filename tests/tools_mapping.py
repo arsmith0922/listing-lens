@@ -17,6 +17,7 @@ from listinglens.domain.financials import (
     ReportedTwin,
     RestatementDiagnostic,
 )
+from listinglens.domain.profile import CompanyProfile
 from listinglens.margin.models import (
     MeasuredResult,
     NotEvaluableReason,
@@ -119,6 +120,13 @@ MAPPING: dict[type[BaseModel], dict[str, str]] = {
         "cik": "ResolvedFrom.kind, ResolvedFrom.value",
         "ticker": "ResolvedFrom.kind, ResolvedFrom.value",
         "name": "ResolvedFrom.kind, ResolvedFrom.value",
+    },
+    CompanyProfile: {
+        "cik": "omitted: the company echo carries it",
+        "name": "omitted: the company echo carries the issuer name the resolution read",
+        "entity_type": "ResolveCompanyResult.entity_type",
+        "tickers": "ResolveCompanyResult.tickers, TierSourceReport.tickers_tried",
+        "exchanges": "ResolveCompanyResult.exchanges, TierSourceReport.sec_exchanges",
     },
     FilingRef: {
         "accession_no": "FilingView.accession_no",

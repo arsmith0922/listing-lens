@@ -16,6 +16,25 @@ _CACHE_FILE_NAME = "http_cache.db"
 
 
 @contextmanager
+def open_cached_client(
+    settings: Settings,
+    *,
+    cache_dir: Path,
+    http_transport: httpx.BaseTransport | None = None,
+    clock: Clock | None = None,
+) -> Iterator[CachedEdgarClient]:
+    """Settings -> EdgarTransport -> CachedEdgarClient, closed on exit. The one client that every
+    repository of a service shares, so there is one throttle, one cache and one connection."""
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    transport = EdgarTransport(settings.sec_edgar_contact, transport=http_transport, clock=clock)
+    client = CachedEdgarClient(transport, cache_dir / _CACHE_FILE_NAME, cache_dir, clock=clock)
+    try:
+        yield client
+    finally:
+        client.close()
+
+
+@contextmanager
 def open_ingestion_service(
     settings: Settings | None = None,
     *,
@@ -29,10 +48,7 @@ def open_ingestion_service(
     http_transport and clock are test seams; production callers leave them unset.
     """
     resolved = Settings() if settings is None else settings
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    transport = EdgarTransport(resolved.sec_edgar_contact, transport=http_transport, clock=clock)
-    client = CachedEdgarClient(transport, cache_dir / _CACHE_FILE_NAME, cache_dir, clock=clock)
-    try:
+    with open_cached_client(
+        resolved, cache_dir=cache_dir, http_transport=http_transport, clock=clock
+    ) as client:
         yield IngestionService(client)
-    finally:
-        client.close()
