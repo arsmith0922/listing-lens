@@ -24,6 +24,7 @@ import anyio
 import smoke_mcp_checks as checks
 import smoke_mcp_flows as flows
 import smoke_mcp_run as calls
+import smoke_mcp_tiers as tiers
 from mcp import Client
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
@@ -73,7 +74,7 @@ async def amain(settings: Settings) -> int:
         )
         with open_cached_client(settings, cache_dir=root / "direct") as direct:
             directory = NasdaqDirectoryRepository(direct).fetch()
-        age = checks.stamp_age_days(directory.created.raw, today)
+        age = tiers.stamp_age_days(directory.created.raw, today)
         rep.out(
             f"directory stamp {directory.created.raw}, {age} days old, "
             f"{len(directory.listings)} rows"

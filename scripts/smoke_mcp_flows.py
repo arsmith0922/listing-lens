@@ -9,6 +9,7 @@ from datetime import date
 
 import smoke_mcp_checks as checks
 import smoke_mcp_run as calls
+import smoke_mcp_tiers as tiers
 from mcp import Client
 
 from listinglens.domain.directory import NasdaqDirectory
@@ -172,10 +173,10 @@ async def _check(
     if check is None:
         return
     rep.check(
-        f"{t.key} check plausible", checks.check_problems(check, t.row if t.hard else None, today)
+        f"{t.key} check plausible", tiers.check_problems(check, t.row if t.hard else None, today)
     )
     source = check.tier_source
-    row = checks.tier_row("continued", None, source.how)
+    row = tiers.tier_row("continued", None, source.how)
     rep.out(
         f"        tier-table row {row} (how={source.how}), tiers "
         f"{[x.tier.value for x in check.tiers]}, verdicts "
@@ -196,13 +197,13 @@ async def _check(
         listing = directory.find(match.ticker)
         if listing is None:
             continue
-        rep.out(f"        directory row: {checks.row_evidence(listing)}")
-        if checks.not_common_equity(listing):
+        rep.out(f"        directory row: {tiers.row_evidence(listing)}")
+        if tiers.not_common_equity(listing):
             rep.finding(
                 "L3",
                 "new",
                 f"{t.key}: tier chosen from a matched row that is not "
-                f"common equity: {checks.row_evidence(listing)}",
+                f"common equity: {tiers.row_evidence(listing)}",
             )
 
 
@@ -240,7 +241,7 @@ async def smoke_extras(rep: calls.Report, client: Client, today: date) -> None:
         )
         if res is None:
             continue
-        rep.check(f"{label} plausible", checks.check_problems(res, row, today))
+        rep.check(f"{label} plausible", tiers.check_problems(res, row, today))
         if label.startswith("SPY"):
             reasons = [r.gap_reason for m in res.tiers[0].not_measured for r in m.reasons]
             ran_empty = (

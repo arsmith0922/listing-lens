@@ -7,10 +7,11 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Iterable, Sequence
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 
-from listinglens.domain.directory import NasdaqListing
+from smoke_mcp_tiers import near
+
 from listinglens.tools.models_basic import ListFilingsResult, ResolveCompanyResult
 from listinglens.tools.models_check import CheckStandardsResult
 from listinglens.tools.models_financials import ExtractFinancialsResult, FigureView
@@ -36,9 +37,6 @@ PERIODIC_FORMS = frozenset(
     {"10-K", "10-K/A", "10-Q", "10-Q/A", "20-F", "20-F/A", "40-F", "40-F/A", "6-K"}
 )
 ACCESSION = re.compile(r"^\d{10}-\d{2}-\d{6}$")
-STAMP = re.compile(r"^\d{10}:\d{2}$")  # mmddyyyyhh:mm, as Nasdaq writes it
-SHA256 = re.compile(r"^[0-9a-f]{64}$")
-NOT_COMMON_EQUITY = re.compile(r"\b(ETN|ETF|Exchange[- ]Traded|Notes? due)\b", re.I)
 
 
 def wire_bytes(text: str, structured: dict[str, object]) -> int:
@@ -138,37 +136,6 @@ def odd_source_figures(figures: Sequence[FigureView]) -> list[str]:
     ]
 
 
-def tier_row(listing_type: str, requested_tier: str | None, how: str) -> int | None:
-    """The row of D46's tier table a result sits in (rows 9 and 10 are about the directory
-    being down and cannot be reached live)."""
-    if requested_tier is not None:
-        return 2 if listing_type == "initial" else 3
-    if listing_type == "initial":
-        return 1
-    return {
-        "no_tickers": 4,
-        "no_match": 5,
-        "directory": 6,
-        "directory_mixed": 7,
-        "directory_unrecognized_category": 8,
-    }.get(how)
-
-
-def stamp_age_days(raw: str, today: date) -> int | None:
-    """Days between Nasdaq's file stamp (mmddyyyyhh:mm) and today, or None if it is malformed."""
-    if not STAMP.match(raw):
-        return None
-    try:
-        written = datetime.strptime(raw[:8], "%m%d%Y").date()
-    except ValueError:
-        return None
-    return (today - written).days
-
-
-def _near(day: date, today: date) -> bool:
-    return abs((today - day).days) <= 1  # tolerate a call that straddles midnight UTC
-
-
 def resolve_problems(
     result: ResolveCompanyResult, cik: str, name_word: str, ticker: str | None, today: date
 ) -> list[str]:
@@ -179,7 +146,7 @@ def resolve_problems(
         found.append(f"issuer name {result.company.issuer_name!r} lacks {name_word!r}")
     if ticker is not None and ticker not in result.tickers:
         found.append(f"ticker {ticker} not among {list(result.tickers)}")
-    if not _near(result.evaluated_on, today):
+    if not near(result.evaluated_on, today):
         found.append(f"evaluated_on {result.evaluated_on} is not today")
     return found
 
@@ -198,7 +165,7 @@ def filings_problems(
     wanted = {form.casefold() for form in forms}
     if wanted and any(f.form_type.casefold() not in wanted for f in result.filings):
         found.append("a filing does not match the form filter exactly")
-    if not _near(result.evaluated_on, today):
+    if not near(result.evaluated_on, today):
         found.append(f"evaluated_on {result.evaluated_on} is not today")
     return found
 
@@ -217,35 +184,9 @@ def extract_problems(
         found.append("no_xbrl_facts but figures or gaps are present")
     if any(not ACCESSION.match(f.citation.accession_no) for f in result.figures):
         found.append("a citation accession is not in dashed form")
-    if not _near(result.evaluated_on, today):
+    if not near(result.evaluated_on, today):
         found.append(f"evaluated_on {result.evaluated_on} is not today")
     return found
-
-
-def check_problems(
-    result: CheckStandardsResult, expected_row: int | None, today: date
-) -> list[str]:
-    found: list[str] = []
-    row = tier_row(result.listing_type.value, _tier_name(result), result.tier_source.how)
-    if expected_row is not None and row != expected_row:
-        found.append(f"tier-table row {row}, expected {expected_row}")
-    directory = result.tier_source.directory
-    if directory.available:
-        if directory.stamp is None or not STAMP.match(directory.stamp.raw):
-            found.append("the directory stamp is not mmddyyyyhh:mm")
-        if directory.file_sha256 is None or not SHA256.match(directory.file_sha256):
-            found.append("the directory hash is not 64 hex digits")
-    if not _near(result.evaluated_on, today):
-        found.append(f"evaluated_on {result.evaluated_on} is not today")
-    if result.listing_type.value == "initial" and result.tier_source.how == "all_tiers_initial":
-        order = [t.tier.value for t in result.tiers]
-        if order != ["global_select", "global", "capital"]:
-            found.append(f"initial tiers out of order: {order}")
-    return found
-
-
-def _tier_name(result: CheckStandardsResult) -> str | None:
-    return None if result.requested_tier is None else result.requested_tier.value
 
 
 def finding_mismatches(check: CheckStandardsResult, extract: ExtractFinancialsResult) -> list[str]:
@@ -260,16 +201,3 @@ def finding_mismatches(check: CheckStandardsResult, extract: ExtractFinancialsRe
             if shown is not None and shown != item.measured:
                 found.append(f"{item.rule_id}: measured {item.measured}, extract shows {shown}")
     return found
-
-
-def not_common_equity(row: NasdaqListing) -> bool:
-    """L3: a matched directory row that looks like a fund or a structured product."""
-    return row.etf or bool(NOT_COMMON_EQUITY.search(row.security_name))
-
-
-def row_evidence(row: NasdaqListing) -> str:
-    return (
-        f"{row.symbol} | name {row.security_name!r} | category {row.market_category!r} | "
-        f"status {row.financial_status!r} | etf {row.etf} | test {row.test_issue} | "
-        f"next_shares {row.next_shares}"
-    )

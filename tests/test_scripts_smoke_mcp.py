@@ -33,6 +33,12 @@ def checks(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
 
 
 @pytest.fixture
+def tiers(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
+    monkeypatch.syspath_prepend(str(SCRIPTS))
+    return importlib.import_module("smoke_mcp_tiers")
+
+
+@pytest.fixture
 def smoke(monkeypatch: pytest.MonkeyPatch) -> ModuleType:
     monkeypatch.syspath_prepend(str(SCRIPTS))
     return importlib.import_module("smoke_mcp")
@@ -131,15 +137,15 @@ def test_each_call_is_judged_against_its_own_ceiling(
     ],
 )
 def test_the_tier_table_row_of_a_result(
-    checks: ModuleType, listing: str, tier: str | None, how: str, row: int
+    tiers: ModuleType, listing: str, tier: str | None, how: str, row: int
 ) -> None:
-    assert checks.tier_row(listing, tier, how) == row
+    assert tiers.tier_row(listing, tier, how) == row
 
 
-def test_the_directory_stamp_age(checks: ModuleType) -> None:
-    assert checks.stamp_age_days("1030202618:01", date(2026, 11, 5)) == 6
-    assert checks.stamp_age_days("1030202618", date(2026, 11, 5)) is None
-    assert checks.stamp_age_days("1330202618:01", date(2026, 11, 5)) is None  # no month 13
+def test_the_directory_stamp_age(tiers: ModuleType) -> None:
+    assert tiers.stamp_age_days("1030202618:01", date(2026, 11, 5)) == 6
+    assert tiers.stamp_age_days("1030202618", date(2026, 11, 5)) is None
+    assert tiers.stamp_age_days("1330202618:01", date(2026, 11, 5)) is None  # no month 13
 
 
 def _listing(name: str, *, etf: bool) -> NasdaqListing:
@@ -168,15 +174,15 @@ def _listing(name: str, *, etf: bool) -> NasdaqListing:
     ],
 )
 def test_a_matched_row_that_is_not_common_equity_is_noticed(
-    checks: ModuleType, name: str, etf: bool, flagged: bool
+    tiers: ModuleType, name: str, etf: bool, flagged: bool
 ) -> None:
-    assert checks.not_common_equity(_listing(name, etf=etf)) is flagged
-    assert f"etf {etf}" in checks.row_evidence(_listing(name, etf=etf))
-    assert repr(name) in checks.row_evidence(_listing(name, etf=etf))
+    assert tiers.not_common_equity(_listing(name, etf=etf)) is flagged
+    assert f"etf {etf}" in tiers.row_evidence(_listing(name, etf=etf))
+    assert repr(name) in tiers.row_evidence(_listing(name, etf=etf))
 
 
 def test_the_rules_accept_a_real_recorded_result_and_refuse_a_damaged_one(
-    checks: ModuleType, tmp_path: Path
+    checks: ModuleType, tiers: ModuleType, tmp_path: Path
 ) -> None:
     with recorded_service(tmp_path) as (service, _, _):
         resolved = service.resolve_company(ResolveCompanyArgs(cik="1935172"))
@@ -208,9 +214,9 @@ def test_the_rules_accept_a_real_recorded_result_and_refuse_a_damaged_one(
     assert checks.extract_problems(
         extract.model_copy(update={"facts_status": "no_xbrl_facts"}), TODAY
     )
-    assert checks.check_problems(check, 6, TODAY) == []
-    assert checks.check_problems(check, 5, TODAY)  # the wrong row is refused
-    assert checks.check_problems(initial, 1, TODAY) == []
+    assert tiers.check_problems(check, 6, TODAY) == []
+    assert tiers.check_problems(check, 5, TODAY)  # the wrong row is refused
+    assert tiers.check_problems(initial, 1, TODAY) == []
     assert checks.finding_mismatches(check, extract) == []
     changed = [f.model_copy(update={"value": "1"}) for f in extract.figures]
     assert checks.finding_mismatches(check, extract.model_copy(update={"figures": tuple(changed)}))
