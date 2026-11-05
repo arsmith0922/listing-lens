@@ -5,6 +5,7 @@ it is outside testpaths and is never collected or run in CI.
     record_fixtures.py              the original submissions / tickers / archives / EFTS set
     record_fixtures.py companyfacts the companyfacts set
     record_fixtures.py nasdaq       the Nasdaq directory and the Nasdaq-listed company (AIXI)
+    record_fixtures.py aacg         ATA Creativity (AACG): untrimmed submissions and companyfacts
 
 manifest.json is merged by file name, so recording one set never drops the other's entries.
 """
@@ -45,6 +46,7 @@ LUCKIN_CIK = "0001767582"
 GE_CIK = "0000040545"
 APPLE_CIK = "0000320193"
 AIXI_CIK = "0001935172"  # Xiao-I, a Nasdaq-listed US-GAAP 20-F filer
+AACG_CIK = "0001420529"  # ATA Creativity Global, a US-GAAP 20-F filer with a stale tag (F-live-1)
 APPLE_ACCESSION_BARE = "000032019323000106"
 
 # companyfacts trim (chunk 11): keep the shape-bearing parts of a large document, deterministically.
@@ -53,7 +55,7 @@ KEEP_FIRST_CONCEPTS = 5
 MAX_UNCOMMON_UNIT_CONCEPTS = 40
 MAX_NULL_FY_CONCEPTS = 25
 
-SELECTORS = ("chunk6", "companyfacts", "nasdaq")
+SELECTORS = ("chunk6", "companyfacts", "nasdaq", "aacg")
 
 MANIFEST: list[dict[str, JsonValue]] = []
 NASDAQ_MANIFEST: list[dict[str, JsonValue]] = []
@@ -217,6 +219,19 @@ def record_nasdaq(transport: EdgarTransport) -> None:
         write_raw_fixture(filename, body, url, nasdaq=is_nasdaq)
 
 
+def record_aacg(transport: EdgarTransport) -> None:
+    """Exact bytes, never trimmed: the trim drops the income tags this fixture exists to show."""
+    cik = Cik.parse(AACG_CIK)
+    wanted = (
+        ("submissions_aacg.json", submissions_url(cik)),
+        ("companyfacts_aacg.json", company_facts_url(cik)),
+    )
+    # Both fetched before either is written, so a failed second fetch leaves no orphan file.
+    fetched = [(name, url, transport.get(url).raise_for_status().content) for name, url in wanted]
+    for filename, url, body in fetched:
+        write_raw_fixture(filename, body, url)
+
+
 def main(argv: Sequence[str] = ()) -> None:
     if os.environ.get("LISTINGLENS_ALLOW_NETWORK") != "1":
         print(
@@ -238,6 +253,8 @@ def main(argv: Sequence[str] = ()) -> None:
         record_companyfacts(transport)
     elif selector == "nasdaq":
         record_nasdaq(transport)
+    elif selector == "aacg":
+        record_aacg(transport)
     else:
         record_chunk6(transport)
     write_manifest()

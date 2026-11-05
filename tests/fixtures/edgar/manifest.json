@@ -92,5 +92,17 @@
     "file": "companyfacts_aixi.json",
     "sha256": "f8696ef38bcd2264820340a5b245ead04e7ffaba854340b706f0803a5eacf064",
     "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001935172.json"
+  },
+  {
+    "fetched_at": "2026-11-05T20:32:01.927610+00:00",
+    "file": "submissions_aacg.json",
+    "sha256": "65dccb3d1aba3886241f6929dcba537e42f4917be23d87f5d3b14b331fedd2ac",
+    "url": "https://data.sec.gov/submissions/CIK0001420529.json"
+  },
+  {
+    "fetched_at": "2026-11-05T20:32:01.932485+00:00",
+    "file": "companyfacts_aacg.json",
+    "sha256": "4f6bb41b117f1b6ddfe60e6803fa08b1607e1b9975b68829038a613f9746ca99",
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001420529.json"
   }
 ]
