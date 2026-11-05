@@ -20,6 +20,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from pydantic import JsonValue
+from record_trim import (
+    has_null_fy_fact,
+    has_uncommon_unit,
+    trim_concept,
+    trim_filing_index_page,
+)
 
 from listinglens.core.config import Settings
 from listinglens.domain.identifiers import Cik
@@ -32,7 +38,6 @@ MANIFEST_PATH = FIXTURES_DIR / "manifest.json"
 # Organized by source: the Nasdaq directory is not EDGAR, so it has its own folder.
 NASDAQ_DIR = FIXTURES_DIR.parent / "nasdaq"
 NASDAQ_MANIFEST_PATH = NASDAQ_DIR / "manifest.json"
-TRIM_ROW_COUNT = 40
 
 # Verified live during chunk 6 planning: real S-1/F-1/overflow/EFTS-boundary cases.
 TRANS_AMERICAN_CIK = "0001990446"
@@ -43,73 +48,15 @@ AIXI_CIK = "0001935172"  # Xiao-I, a Nasdaq-listed US-GAAP 20-F filer
 APPLE_ACCESSION_BARE = "000032019323000106"
 
 # companyfacts trim (chunk 11): keep the shape-bearing parts of a large document, deterministically.
-COMMON_UNITS = frozenset({"USD", "shares", "pure", "USD/shares"})
+# The per-fact helpers and their constants are in record_trim.py.
 KEEP_FIRST_CONCEPTS = 5
 MAX_UNCOMMON_UNIT_CONCEPTS = 40
 MAX_NULL_FY_CONCEPTS = 25
-KEEP_LEADING_FACTS = 3
 
 SELECTORS = ("chunk6", "companyfacts", "nasdaq")
 
 MANIFEST: list[dict[str, JsonValue]] = []
 NASDAQ_MANIFEST: list[dict[str, JsonValue]] = []
-
-
-def trim_filing_index_page(page: dict[str, JsonValue]) -> dict[str, JsonValue]:
-    """Select the same row indices across every parallel array, so lengths stay
-    equal by construction rather than by hand-editing each array separately."""
-    accession = page["accessionNumber"]
-    if not isinstance(accession, list):
-        raise ValueError("accessionNumber is not an array")
-    indices = list(range(min(TRIM_ROW_COUNT, len(accession))))
-    trimmed: dict[str, JsonValue] = {}
-    for key, value in page.items():
-        if isinstance(value, list) and len(value) == len(accession):
-            trimmed[key] = [value[i] for i in indices]
-        else:
-            trimmed[key] = value
-    return trimmed
-
-
-def _has_null_fy(fact: JsonValue) -> bool:
-    return isinstance(fact, dict) and "fy" in fact and fact["fy"] is None
-
-
-def _trim_unit_facts(facts: list[JsonValue]) -> list[JsonValue]:
-    """Keep the first few facts, the first null-fy fact, and the last fact, by index."""
-    keep = set(range(min(KEEP_LEADING_FACTS, len(facts))))
-    first_null = next((i for i, fact in enumerate(facts) if _has_null_fy(fact)), None)
-    if first_null is not None:
-        keep.add(first_null)
-    if facts:
-        keep.add(len(facts) - 1)
-    return [facts[i] for i in sorted(keep)]
-
-
-def _has_uncommon_unit(concept: dict[str, JsonValue]) -> bool:
-    units = concept.get("units")
-    return isinstance(units, dict) and any(unit not in COMMON_UNITS for unit in units)
-
-
-def _has_null_fy_fact(concept: dict[str, JsonValue]) -> bool:
-    units = concept.get("units")
-    if not isinstance(units, dict):
-        return False
-    return any(
-        isinstance(facts, list) and any(_has_null_fy(fact) for fact in facts)
-        for facts in units.values()
-    )
-
-
-def _trim_concept(concept: dict[str, JsonValue]) -> dict[str, JsonValue]:
-    trimmed = dict(concept)
-    units = concept.get("units")
-    if isinstance(units, dict):
-        trimmed["units"] = {
-            unit: _trim_unit_facts(facts) if isinstance(facts, list) else facts
-            for unit, facts in units.items()
-        }
-    return trimmed
 
 
 def trim_companyfacts(doc: dict[str, JsonValue]) -> dict[str, JsonValue]:
@@ -136,13 +83,13 @@ def trim_companyfacts(doc: dict[str, JsonValue]) -> dict[str, JsonValue]:
                 if not isinstance(concept, dict):
                     continue
                 if rank >= KEEP_FIRST_CONCEPTS:
-                    if _has_uncommon_unit(concept) and uncommon < MAX_UNCOMMON_UNIT_CONCEPTS:
+                    if has_uncommon_unit(concept) and uncommon < MAX_UNCOMMON_UNIT_CONCEPTS:
                         uncommon += 1
-                    elif _has_null_fy_fact(concept) and null_fy < MAX_NULL_FY_CONCEPTS:
+                    elif has_null_fy_fact(concept) and null_fy < MAX_NULL_FY_CONCEPTS:
                         null_fy += 1
                     else:
                         continue
-                kept[name] = _trim_concept(concept)
+                kept[name] = trim_concept(concept)
             kept_facts[taxonomy] = kept
     out["facts"] = kept_facts
     return out

@@ -4,6 +4,7 @@ import copy
 import hashlib
 import importlib.util
 import json
+import sys
 from pathlib import Path
 from types import ModuleType
 
@@ -17,7 +18,14 @@ def _load_script_module() -> ModuleType:
     assert spec is not None
     assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    # The script imports its sibling record_trim by bare name, as it does when run: its directory
+    # is on sys.path then, so the tests put it there for the load (the smoke tests do the same).
+    scripts = str(SCRIPT_PATH.parent)
+    sys.path.insert(0, scripts)
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.remove(scripts)
     return module
 
 
