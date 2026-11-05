@@ -6,6 +6,7 @@ figure travels up once; and the financial signal is kept apart from the verdict.
 
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal as D
 
 from listinglens.domain.financials import TargetConcept
@@ -13,7 +14,7 @@ from listinglens.margin.models import MeasuredResult
 from listinglens.margin.rollup import rollup_set
 from listinglens.margin.verdicts import FinancialSignal
 from listinglens.standards.quantities import InputKind
-from tests.margin_factory import figure, inputs
+from tests.margin_factory import anchor, figure, inputs
 from tests.margin_scenarios import (
     C1,
     CANNOT,
@@ -221,3 +222,43 @@ def test_a_two_year_window_is_a_multi_year_need_not_a_year_end_balance() -> None
     caveat = rollup_set(selected, bag, POLICY).caveat
     assert caveat.needs_multi_year is True
     assert caveat.needs_year_end_balance == ()
+
+
+def test_a_stale_figure_lands_in_stale_concepts_and_never_in_needs_year_end_balance() -> None:
+    old = date(2021, 12, 31)
+    selected = standard_set(
+        (plain(absent_rule("rev")), plain(year_end_rule("assets"))),
+        (),
+    )
+    bag = inputs(
+        [
+            figure(TargetConcept.STOCKHOLDERS_EQUITY, 100),
+            figure(TargetConcept.REVENUE, 5, end=old),
+            figure(TargetConcept.TOTAL_ASSETS, 5, end=old),  # fiscal-year-end label, but old
+        ],
+        fiscal_year=anchor(),
+    )
+    caveat = rollup_set(selected, bag, POLICY).caveat
+    assert caveat.stale_concepts == (TargetConcept.TOTAL_ASSETS, TargetConcept.REVENUE)
+    assert caveat.needs_year_end_balance == () and caveat.absent_concepts == ()
+    assert not caveat.is_empty()
+
+
+def test_a_fresh_quarter_end_balance_is_still_a_year_end_need_and_not_stale() -> None:
+    selected = standard_set((plain(year_end_rule("assets")),), ())
+    quarter = figure(TargetConcept.TOTAL_ASSETS, 5, end=date(2025, 9, 30), fiscal_period="Q3")
+    caveat = rollup_set(selected, inputs([quarter], fiscal_year=anchor()), POLICY).caveat
+    assert caveat.needs_year_end_balance == (TargetConcept.TOTAL_ASSETS,)
+    assert caveat.stale_concepts == ()
+
+
+def test_a_stale_figure_in_a_standard_that_is_already_decided_is_not_in_the_caveat() -> None:
+    old = date(2021, 12, 31)
+    decided = standard("x", plain(clear_rule("holds")), plain(absent_rule("rev")))
+    selected = standard_set((), (decided, standard("y", plain(clear_rule("also")))))
+    bag = inputs(
+        [figure(TargetConcept.STOCKHOLDERS_EQUITY, 100), figure(TargetConcept.REVENUE, 5, end=old)],
+        fiscal_year=anchor(),
+    )
+    result = rollup_set(selected, bag, POLICY)
+    assert result.caveat.is_empty() and result.caveat.stale_concepts == ()

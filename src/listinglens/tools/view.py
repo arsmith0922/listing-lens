@@ -126,6 +126,7 @@ def project_tier(
                 absent_concepts=caveat.absent_concepts,
                 needs_multi_year=caveat.needs_multi_year,
                 needs_year_end_balance=caveat.needs_year_end_balance,
+                stale_concepts=caveat.stale_concepts,
             ),
         ),
     )

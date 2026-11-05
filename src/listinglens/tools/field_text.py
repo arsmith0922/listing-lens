@@ -62,10 +62,12 @@ WINDOW = (
 LATEST_FISCAL_YEAR = (
     "The end of the company's latest fiscal year, from its own filings: the newest full-year USD "
     "income or revenue period it has reported, cited to the filing that reported it. Compare "
-    "each figure's period end with this date: a figure ending well before it is from an earlier "
-    "fiscal year, not the latest one. Public float is dated at the end of the second fiscal "
-    "quarter by rule, so it normally ends about six months earlier and is not stale. Null when "
-    "the filings hold no full-year USD income or revenue figure."
+    "each figure's period end with this date: a figure ending more than 183 days before it is "
+    "from an earlier fiscal year, and check_standards never measures it as current (the rule "
+    "reads stale_figure). Public float is dated at the end of the second fiscal quarter by rule, "
+    "so it normally ends about six months earlier and is exempt, as is the share count. Null "
+    "when the filings hold no full-year USD income or revenue figure, and then no figure is "
+    "checked for staleness."
 )
 
 # Shown on a tier whose selection has no rule in force.

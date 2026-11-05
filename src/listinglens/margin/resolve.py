@@ -17,7 +17,7 @@ from listinglens.margin.models import (
     TranslationNote,
 )
 from listinglens.margin.states import NotEvaluableKind
-from listinglens.margin.windows import window_problem
+from listinglens.margin.windows import stale_problem, window_problem
 from listinglens.standards.enums import ProxyPolicy, TranslationPolicy
 from listinglens.standards.metrics import ConceptMetric, ExternalMetric
 from listinglens.standards.quantities import InputKind
@@ -63,6 +63,7 @@ def _not_evaluable(
     absent: NotEvaluableReason | None,
     missing: tuple[InputKind, ...],
     window: str | None,
+    stale: str | None = None,
 ) -> NotEvaluableResult:
     reasons: list[NotEvaluableReason] = []
     if absent is not None:
@@ -76,6 +77,8 @@ def _not_evaluable(
         reasons.append(
             NotEvaluableReason(kind=NotEvaluableKind.WINDOW_MISMATCH, detail=_clip(window))
         )
+    if stale is not None:
+        reasons.append(NotEvaluableReason(kind=NotEvaluableKind.STALE_FIGURE, detail=_clip(stale)))
     return NotEvaluableResult(
         rule_id=rule.rule_id,
         rule_section=rule.citation.rule_section,
@@ -132,9 +135,14 @@ def _concept(
         figure,
         inputs.annual_periods(concept),
     )
-    if figure is None or problem is not None:
+    # Only a figure that fits the window is judged for staleness, so a kind or label problem is
+    # always reported as itself.
+    stale = None
+    if problem is None:
+        stale = stale_problem(rule.window, concept, figure, inputs.latest_fiscal_year)
+    if figure is None or problem is not None or stale is not None:
         absent = _absence(concept, inputs.gap(concept)) if figure is None else None
-        return _not_evaluable(rule, absent, (), problem)
+        return _not_evaluable(rule, absent, (), problem, stale)
     notes = tuple(
         TranslationNote(unit=twin.unit, value=twin.value, implied_rate=twin.implied_rate)
         for twin in figure.reported_twins

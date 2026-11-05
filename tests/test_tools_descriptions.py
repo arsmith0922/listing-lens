@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from listinglens.margin.windows import STALE_AFTER_DAYS
 from listinglens.tools import field_text
 from listinglens.tools.models_rule import FindingView, NotMeasuredView
 from listinglens.tools.models_source import TierSourceReport
@@ -119,10 +120,12 @@ CUSHION_RATIO = (
 LATEST_FISCAL_YEAR = (
     "The end of the company's latest fiscal year, from its own filings: the newest full-year USD "
     "income or revenue period it has reported, cited to the filing that reported it. Compare "
-    "each figure's period end with this date: a figure ending well before it is from an earlier "
-    "fiscal year, not the latest one. Public float is dated at the end of the second fiscal "
-    "quarter by rule, so it normally ends about six months earlier and is not stale. Null when "
-    "the filings hold no full-year USD income or revenue figure."
+    "each figure's period end with this date: a figure ending more than 183 days before it is "
+    "from an earlier fiscal year, and check_standards never measures it as current (the rule "
+    "reads stale_figure). Public float is dated at the end of the second fiscal quarter by rule, "
+    "so it normally ends about six months earlier and is exempt, as is the share count. Null "
+    "when the filings hold no full-year USD income or revenue figure, and then no figure is "
+    "checked for staleness."
 )
 REPORTED_FINANCIALS = (
     "How the conditions testable from SEC XBRL figures look, with every condition that needs a "
@@ -228,6 +231,21 @@ def test_the_text_constants_are_the_approved_texts() -> None:
     assert field_text.EVALUATED_ON == EVALUATED_ON
     assert field_text.WINDOW == WINDOW
     assert field_text.LATEST_FISCAL_YEAR == LATEST_FISCAL_YEAR
+
+
+def test_the_stale_figure_descriptions_say_what_the_engine_does() -> None:
+    kind = _described("ReasonView", "kind") or ""
+    assert kind.endswith(
+        "stale_figure: the only figure on hand ends more than 183 days before the end of the "
+        "company's latest fiscal year, so it is not measured as current."
+    )
+    assert _described("CaveatView", "stale_concepts") == (
+        "Figures whose only value on hand is from an earlier fiscal year than the company's "
+        "latest, so the undecided conditions could not measure them as current. "
+        "extract_financials shows each beside latest_fiscal_year."
+    )
+    assert f"more than {STALE_AFTER_DAYS} days" in kind
+    assert f"more than {STALE_AFTER_DAYS} days" in field_text.LATEST_FISCAL_YEAR
 
 
 def test_no_published_description_carries_a_typographic_character() -> None:

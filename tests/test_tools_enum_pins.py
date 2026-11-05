@@ -24,7 +24,7 @@ ENUMS: dict[type[StrEnum], list[str]] = {
     FinancialSignal: ["clear", "at_risk", "breached", "undetermined"],
     Verdict: ["meets", "at_risk", "does_not_meet", "cannot_determine"],
     MarginState: ["clear", "at_risk", "breached", "not_evaluable"],
-    NotEvaluableKind: ["concept_absent", "input_required", "window_mismatch"],
+    NotEvaluableKind: ["concept_absent", "input_required", "window_mismatch", "stale_figure"],
     Comparison: ["gte", "gt", "lte", "lt"],
     ListingType: ["initial", "continued"],
     ThresholdUnit: ["usd", "usd_per_share", "shares", "count"],

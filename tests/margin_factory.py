@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from listinglens.domain.citation import (
@@ -24,6 +24,7 @@ from listinglens.domain.financials import (
     TargetConcept,
     translation_rate,
 )
+from listinglens.domain.fiscal_year import FiscalYearAnchor
 from listinglens.domain.identifiers import AccessionNumber, Cik
 from listinglens.extraction.aliases import ALIASES, PeriodKind
 from listinglens.margin.inputs import Inputs
@@ -48,9 +49,11 @@ def figure(
     fiscal_period: str | None = "FY",
     form_type: str = "10-K",
     twins: Sequence[tuple[str, int]] = (),
+    end: date = END,
+    accession: str = ACCESSION,
 ) -> FinancialValue:
     """A USD figure, with an optional home-currency twin for each (unit, reported value)."""
-    period = period_for(concept)
+    period = period_for(concept, end)
     usd = Decimal(value)
     citation = XbrlLocator(
         cik=Cik.parse(1),
@@ -58,7 +61,7 @@ def figure(
         concept="TestTag",
         unit="USD",
         period=period,
-        accession_no=AccessionNumber.parse(ACCESSION),
+        accession_no=AccessionNumber.parse(accession),
         form_type=form_type,
         fiscal_year=2025,
         fiscal_period=fiscal_period,
@@ -88,14 +91,30 @@ def gap(concept: TargetConcept, reason: GapReason = "concept_not_found") -> Conc
     return ConceptGap(concept=concept, reason=reason, detail=f"{concept.value} detail")
 
 
+ANCHOR_ACCESSION = "0000000001-26-000009"
+
+
+def anchor(end: date = END, accession: str = ANCHOR_ACCESSION) -> FiscalYearAnchor:
+    return FiscalYearAnchor(
+        end=end, accession_no=AccessionNumber.parse(accession), form_type="20-F"
+    )
+
+
+def days_before(day: date, days: int) -> date:
+    return day - timedelta(days=days)
+
+
 def snapshot(
-    figures: Sequence[FinancialValue] = (), gaps: Sequence[ConceptGap] = ()
+    figures: Sequence[FinancialValue] = (),
+    gaps: Sequence[ConceptGap] = (),
+    fiscal_year: FiscalYearAnchor | None = None,
 ) -> FinancialSnapshot:
     return FinancialSnapshot(
         cik=Cik.parse(1),
         entity_name="TEST CO",
         figures=tuple(ExtractedFigure(value=f, diagnostics=()) for f in figures),
         gaps=tuple(gaps),
+        latest_fiscal_year=fiscal_year,
     )
 
 
@@ -103,8 +122,9 @@ def inputs(
     figures: Sequence[FinancialValue] = (),
     gaps: Sequence[ConceptGap] = (),
     external: Mapping[InputKind, Decimal] | None = None,
+    fiscal_year: FiscalYearAnchor | None = None,
 ) -> Inputs:
-    return Inputs.from_snapshot(snapshot(figures, gaps), external)
+    return Inputs.from_snapshot(snapshot(figures, gaps, fiscal_year), external)
 
 
 # One round, hand-picked value per concept. Every figure is a fiscal-year-end one.

@@ -27,6 +27,7 @@ class _Needs:
     inputs: set[InputKind] = field(default_factory=set)
     absent: set[TargetConcept] = field(default_factory=set)
     year_end: set[TargetConcept] = field(default_factory=set)
+    stale: set[TargetConcept] = field(default_factory=set)
     multi_year: bool = False
 
 
@@ -47,6 +48,8 @@ def _leaf(result: NotEvaluableResult, rule: StandardRule, needs: _Needs) -> None
                 needs.multi_year = True
             else:
                 needs.year_end.add(_concept_of(rule))
+        elif reason.kind is NotEvaluableKind.STALE_FIGURE:
+            needs.stale.add(_concept_of(rule))
 
 
 def _requirement(
@@ -90,4 +93,5 @@ def build_caveat(
         absent_concepts=tuple(sorted(needs.absent, key=_CONCEPT_ORDER.index)),
         needs_multi_year=needs.multi_year,
         needs_year_end_balance=tuple(sorted(needs.year_end, key=_CONCEPT_ORDER.index)),
+        stale_concepts=tuple(sorted(needs.stale, key=_CONCEPT_ORDER.index)),
     )

@@ -22,6 +22,7 @@ class NotEvaluableKind(StrEnum):
     CONCEPT_ABSENT = "concept_absent"  # the figure was not extracted
     INPUT_REQUIRED = "input_required"  # an external input is not on hand
     WINDOW_MISMATCH = "window_mismatch"  # a figure or series does not fit the rule's window
+    STALE_FIGURE = "stale_figure"  # the only figure on hand is from an earlier fiscal year (D49)
 
 
 # The order reasons are listed in. The first is the primary one.
@@ -29,4 +30,5 @@ REASON_ORDER: tuple[NotEvaluableKind, ...] = (
     NotEvaluableKind.CONCEPT_ABSENT,
     NotEvaluableKind.INPUT_REQUIRED,
     NotEvaluableKind.WINDOW_MISMATCH,
+    NotEvaluableKind.STALE_FIGURE,
 )

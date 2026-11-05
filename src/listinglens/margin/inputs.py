@@ -12,6 +12,7 @@ from listinglens.domain.financials import (
     FinancialValue,
     TargetConcept,
 )
+from listinglens.domain.fiscal_year import FiscalYearAnchor
 from listinglens.standards.quantities import InputKind
 
 # What the engine has on hand to measure a rule with (D39). Today that is the snapshot's latest
@@ -26,6 +27,7 @@ class Inputs:
     gaps: Mapping[TargetConcept, ConceptGap]
     external: Mapping[InputKind, Decimal]
     periods: Mapping[TargetConcept, int]  # annual periods on hand per concept
+    latest_fiscal_year: FiscalYearAnchor | None = None  # the company's own latest year (D49)
 
     @classmethod
     def from_snapshot(
@@ -49,6 +51,7 @@ class Inputs:
             gaps=MappingProxyType(gaps),
             external=MappingProxyType(dict(external or {})),
             periods=MappingProxyType({concept: 1 for concept in figures}),
+            latest_fiscal_year=snapshot.latest_fiscal_year,
         )
 
     def figure(self, concept: TargetConcept) -> FinancialValue | None:

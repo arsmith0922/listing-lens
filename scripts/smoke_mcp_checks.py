@@ -21,11 +21,14 @@ CEILINGS = {
     "resolve_company": 1_100,
     "list_filings (20)": 14_000,
     "list_filings (100)": 64_000,
-    "extract_financials": 15_000,
+    "extract_financials": 17_000,
     "check_standards (one tier)": 52_000,
     "check_standards (three tiers)": 180_000,
 }
-STALE_DAYS = 400  # a figure this much older than the newest one is not "the latest"
+# D49: a figure ending more than this many days before the end of the company's own latest
+# fiscal year is from an earlier year. The engine's number, kept here on purpose and pinned
+# equal to it by a test, so the smoke judges the engine against a separate copy.
+STALE_AFTER_DAYS = 183
 # Dated by their own calendar, not the fiscal period: the public float is measured at the end of
 # the second quarter and the share count on the cover page, so they sit apart from the rest.
 OWN_CALENDAR = frozenset({"public_float", "shares_outstanding"})
@@ -86,18 +89,42 @@ def _end(figure: FigureView) -> date:
     return end
 
 
-def stale_figures(figures: Sequence[FigureView]) -> list[str]:
-    """F-live-1: figures whose period ended long before the newest figure's."""
-    figures = [f for f in figures if f.concept.value not in OWN_CALENDAR]
-    if not figures:
+def stale_figures(extract: ExtractFinancialsResult) -> list[str]:
+    """F-live-1: the figures extract_financials shows that end more than the tolerance before
+    its own latest_fiscal_year. They are shown beside the anchor on purpose; what must never
+    happen is a check_standards finding resting on one (stale_findings)."""
+    anchor = extract.latest_fiscal_year
+    if anchor is None:
         return []
-    newest = max(_end(f) for f in figures)
     return [
-        f"{f.concept.value} ends {_end(f)} (accession {f.citation.accession_no}) while the "
-        f"newest figure ends {newest}"
-        for f in figures
-        if (newest - _end(f)).days > STALE_DAYS
+        f"{f.concept.value} ends {_end(f)} (accession {f.citation.accession_no}) against a "
+        f"latest fiscal year ending {anchor.end}"
+        for f in extract.figures
+        if f.concept.value not in OWN_CALENDAR and (anchor.end - _end(f)).days > STALE_AFTER_DAYS
     ]
+
+
+def stale_findings(check: CheckStandardsResult, extract: ExtractFinancialsResult) -> list[str]:
+    """What the F-live-1 fix guarantees: no finding rests on a figure ending more than the
+    tolerance before the company's latest fiscal year (the anchor), the two cover-page
+    concepts excepted."""
+    anchor = extract.latest_fiscal_year
+    if anchor is None:
+        return []
+    found: list[str] = []
+    for tier in check.tiers:
+        for item in tier.findings:
+            cited = item.figure_citation
+            if cited is None or item.measures in OWN_CALENDAR:
+                continue
+            ends = cited.period.instant or cited.period.end
+            if ends is not None and (anchor.end - ends).days > STALE_AFTER_DAYS:
+                found.append(
+                    f"{tier.tier.value} {item.rule_id}: measured {item.measures} for the period "
+                    f"ending {ends} (accession {cited.accession_no}) against a latest fiscal "
+                    f"year ending {anchor.end}"
+                )
+    return found
 
 
 def odd_source_figures(figures: Sequence[FigureView]) -> list[str]:

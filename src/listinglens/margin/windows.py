@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from listinglens.core.errors import MarginConfigError
-from listinglens.domain.financials import FinancialValue
-from listinglens.extraction.aliases import PeriodKind
+from listinglens.domain.citation import InstantPeriod
+from listinglens.domain.financials import FinancialValue, TargetConcept
+from listinglens.domain.fiscal_year import FiscalYearAnchor
+from listinglens.extraction.aliases import COVER_PAGE_CONCEPTS, PeriodKind
 from listinglens.standards.metrics import (
     AggregateOverFiscalYears,
     Instant,
@@ -16,6 +18,11 @@ from listinglens.standards.metrics import (
 # mismatch, which the caller reports as not evaluable. It is never a breach.
 
 FISCAL_YEAR_LABEL = "FY"  # the filer's fiscal-period label on a fiscal-year-end fact
+# A figure that ends more than this many days before the end of the company's latest fiscal year
+# is from an earlier fiscal year (D49). A year is about 365 days, a half year about 182, so a
+# figure from the previous year is at least about 350 days behind and a fresh one is never behind
+# at all; 183 sits between with room for 52 and 53 week years and for odd year ends.
+STALE_AFTER_DAYS = 183
 
 
 def periods_required(window: Window) -> int:
@@ -52,3 +59,29 @@ def window_problem(
         return None
     seen = "no fiscal-period label" if label is None else f"the label {label}"
     return f"the window needs the fiscal-year-end balance and the one on hand has {seen}"
+
+
+def stale_problem(
+    window: Window,
+    concept: TargetConcept,
+    figure: FinancialValue | None,
+    fiscal_year: FiscalYearAnchor | None,
+) -> str | None:
+    """Why the figure is from an earlier fiscal year than the company's latest, or None. Only a
+    single-period window is guarded (a multi-year one reads a series, not this figure), and the
+    two cover-page concepts are exempt. No anchor, no guard: nothing is guessed. A figure that
+    ends on or after the anchor, or within the tolerance before it, is current."""
+    if fiscal_year is None or figure is None or concept in COVER_PAGE_CONCEPTS:
+        return None
+    if periods_required(window) > 1:
+        return None
+    period = figure.period
+    ends = period.instant if isinstance(period, InstantPeriod) else period.end
+    if (fiscal_year.end - ends).days <= STALE_AFTER_DAYS:
+        return None
+    return (
+        f"the figure on hand is for the period ending {ends} "
+        f"(accession {figure.citation.accession_no.dashed}) but the company's latest fiscal "
+        f"year ended {fiscal_year.end} (accession {fiscal_year.accession_no.dashed}); "
+        "an earlier fiscal year is never measured as the latest"
+    )

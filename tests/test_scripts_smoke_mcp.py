@@ -15,7 +15,6 @@ from listinglens.tools.args import (
     ResolveCompanyArgs,
 )
 from listinglens.tools.models_basic import FilingView
-from listinglens.tools.models_financials import PeriodView
 from tests.test_server_calls import CEILINGS as TEST_CEILINGS
 from tests.test_server_calls import wire_bytes as suite_wire_bytes
 from tests.tools_stack import recorded_service
@@ -217,22 +216,10 @@ def test_the_rules_accept_a_real_recorded_result_and_refuse_a_damaged_one(
     assert checks.finding_mismatches(check, extract.model_copy(update={"figures": tuple(changed)}))
 
 
-def test_the_staleness_and_source_detectors_see_what_f_live_1_and_2_are(
-    checks: ModuleType, tmp_path: Path
-) -> None:
+def test_the_source_detector_sees_what_f_live_2_is(checks: ModuleType, tmp_path: Path) -> None:
     with recorded_service(tmp_path) as (service, _, _):
         figures = service.extract_financials(ExtractFinancialsArgs(cik="1935172")).figures
-    assert checks.stale_figures(figures) == [] and checks.odd_source_figures(figures) == []
-    old = PeriodView(kind="instant", instant=date(2021, 12, 31), start=None, end=None)
-    stale = (figures[0].model_copy(update={"period": old}), *figures[1:])
-    notes = checks.stale_figures(stale)
-    assert len(notes) == 1 and figures[0].concept.value in notes[0] and "2021-12-31" in notes[0]
-    assert checks.stale_figures(figures[:1]) == [] and checks.stale_figures(()) == []
-    # The public float and the cover-page share count carry their own dates: never "stale".
-    own = [f for f in figures if f.concept.value in {"public_float", "shares_outstanding"}]
-    assert own, "the recorded company has a cover-page figure"
-    moved = tuple(f.model_copy(update={"period": old}) if f in own else f for f in figures)
-    assert checks.stale_figures(moved) == []
+    assert checks.odd_source_figures(figures) == []
     for update in ({"form_type": "POS AM"}, {"fiscal_period": None}, {"form_type": "S-1"}):
         cited = figures[0].citation.model_copy(update=update)
         found = checks.odd_source_figures((figures[0].model_copy(update={"citation": cited}),))

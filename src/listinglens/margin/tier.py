@@ -38,6 +38,7 @@ class Caveat(BaseModel):
     absent_concepts: tuple[TargetConcept, ...] = ()
     needs_multi_year: bool = False  # a window waits on a multi-year series
     needs_year_end_balance: tuple[TargetConcept, ...] = ()  # only a quarter-end balance on hand
+    stale_concepts: tuple[TargetConcept, ...] = ()  # the only figure is from an earlier year
 
     @model_validator(mode="after")
     def _ordered_and_unique(self) -> Caveat:
@@ -46,6 +47,7 @@ class Caveat(BaseModel):
         for name, concepts in (
             ("absent_concepts", self.absent_concepts),
             ("needs_year_end_balance", self.needs_year_end_balance),
+            ("stale_concepts", self.stale_concepts),
         ):
             if not _in_declared_order(concepts, _CONCEPT_ORDER):
                 raise InputValidationError(field=name, value="order or repeat")
@@ -57,6 +59,7 @@ class Caveat(BaseModel):
             or self.absent_concepts
             or self.needs_multi_year
             or self.needs_year_end_balance
+            or self.stale_concepts
         )
 
 

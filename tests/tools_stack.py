@@ -29,6 +29,7 @@ CIKS = {
     "luckin": 1767582,
     "ge": 40545,
     "aixi": 1935172,
+    "aacg": 1420529,
 }
 GE_OVERFLOW = ("CIK0000040545-submissions-001.json", "CIK0000040545-submissions-002.json")
 
@@ -44,6 +45,7 @@ def recorded_routes() -> dict[str, Route]:
         "luckin": ("submissions_luckin.json", "companyfacts_luckin.json"),
         "ge": ("submissions_ge.json", "companyfacts_ge_edge.json"),
         "aixi": ("submissions_aixi.json", "companyfacts_aixi.json"),
+        "aacg": ("submissions_aacg.json", "companyfacts_aacg.json"),
     }
     for key, (submissions, facts) in files.items():
         cik = Cik.parse(CIKS[key])

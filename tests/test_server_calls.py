@@ -26,15 +26,15 @@ COMPANIES = [str(cik) for cik in CIKS.values()]
 ISO_TODAY = date(2026, 10, 31).isoformat()
 
 # The wire size ceilings, per tool: content text plus structuredContent plus isError, compact
-# JSON-RPC encoding, the largest of the four recorded companies (D47). The measured maxima with
-# a compact text copy were 970, 12,884, 59,718, 13,666, 47,818 and 162,912 bytes; with the SDK's
-# indented text they would be 1,071, 14,479, 67,313, 17,426, 63,657 and 214,599, which every
-# ceiling below rejects.
+# JSON-RPC encoding, the largest of the recorded companies (D47). Regression guards, not budgets.
+# The measured maxima with a compact text copy over the five companies (D49 added ATA Creativity,
+# which sets four of them) are 970, 12,986, 59,718, 15,934, 49,692 and 163,238 bytes; with the
+# SDK's indented text they would be larger still, which every ceiling below rejects.
 CEILINGS = {
     "resolve_company": 1_100,
     "list_filings (20)": 14_000,
     "list_filings (100)": 64_000,
-    "extract_financials": 15_000,
+    "extract_financials": 17_000,  # ATA Creativity 15,934 (D49)
     "check_standards (one tier)": 52_000,
     "check_standards (three tiers)": 180_000,
 }

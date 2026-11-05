@@ -21,7 +21,10 @@ from tests.recorded_companies import (
 # Xiao-I, recorded in C2 (D43): US-GAAP, a 20-F filer, Nasdaq Global Market. Its fixtures are
 # untrimmed, and the D41 tests keep their three-company COMPANIES unchanged.
 AIXI = Recorded("Xiao-I", 1935172, "companyfacts_aixi.json", "Xiao-I Corp")
-ALL_RECORDED = (*COMPANIES, AIXI)
+# ATA Creativity (D49), recorded untrimmed: its income from continuing operations is a 2021 figure
+# while every other figure ends in 2025. It joins the sweeps, not D41's hand-worked matrix.
+AACG = Recorded("ATA Creativity", 1420529, "companyfacts_aacg.json", "ATA Creativity Global")
+ALL_RECORDED = (*COMPANIES, AIXI, AACG)
 
 
 def extract_all(

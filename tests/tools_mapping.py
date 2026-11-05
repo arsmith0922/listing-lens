@@ -192,7 +192,13 @@ MAPPING: dict[type[BaseModel], dict[str, str]] = {
     },
     Caveat: {
         k: f"CaveatView.{k}"
-        for k in ("missing_inputs", "absent_concepts", "needs_multi_year", "needs_year_end_balance")
+        for k in (
+            "missing_inputs",
+            "absent_concepts",
+            "needs_multi_year",
+            "needs_year_end_balance",
+            "stale_concepts",
+        )
     },
     TranslatedFigure: {
         "figure_citation": "TranslatedFigureView.figure_citation",

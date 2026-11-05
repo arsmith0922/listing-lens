@@ -86,6 +86,14 @@ def _dei(tag: str) -> Candidate:
     return Candidate(Taxonomy.DEI, tag)
 
 
+# The two concepts dated by their own calendar, not by the fiscal year (D49): the public float
+# is measured at the end of the second fiscal quarter, so it normally ends about six months
+# before the fiscal year does, and the share count is the cover page's, dated after the year
+# end. Neither is ever "from an earlier fiscal year", so the stale-figure guard skips them.
+COVER_PAGE_CONCEPTS: frozenset[TargetConcept] = frozenset(
+    {TargetConcept.SHARES_OUTSTANDING, TargetConcept.PUBLIC_FLOAT}
+)
+
 _MONEY = UnitKind.MONETARY
 
 ALIASES: Mapping[TargetConcept, ConceptSpec] = MappingProxyType(

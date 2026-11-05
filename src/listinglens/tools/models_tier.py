@@ -77,6 +77,11 @@ class CaveatView(BaseModel):
         description="Balances for which only a quarter-end figure is on hand but a fiscal "
         "year-end one is needed."
     )
+    stale_concepts: tuple[TargetConcept, ...] = Field(
+        description="Figures whose only value on hand is from an earlier fiscal year than the "
+        "company's latest, so the undecided conditions could not measure them as current. "
+        "extract_financials shows each beside latest_fiscal_year."
+    )
 
 
 class VerdictView(BaseModel):

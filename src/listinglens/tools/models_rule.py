@@ -88,7 +88,9 @@ class ReasonView(BaseModel):
     kind: NotEvaluableKind = Field(
         description="concept_absent: the figure was not extracted. input_required: it needs an "
         "input ListingLens does not have (a price, a holder count, a market-maker count). "
-        "window_mismatch: the figure does not fit the rule's period, or a series is needed."
+        "window_mismatch: the figure does not fit the rule's period, or a series is needed. "
+        "stale_figure: the only figure on hand ends more than 183 days before the end of the "
+        "company's latest fiscal year, so it is not measured as current."
     )
     detail: str = Field(description="What stopped the measurement.")
     gap_reason: GapReason | None = Field(

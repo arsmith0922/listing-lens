@@ -164,6 +164,7 @@ def _check_cell(result: TierResult, view: TierView) -> None:
     assert view.verdict.caveat.absent_concepts == caveat.absent_concepts
     assert view.verdict.caveat.needs_multi_year is caveat.needs_multi_year
     assert view.verdict.caveat.needs_year_end_balance == caveat.needs_year_end_balance
+    assert view.verdict.caveat.stale_concepts == caveat.stale_concepts
     assert len(view.translated_figures) == len(result.translated_figures)
     if not result.rules_in_force:
         assert not (view.findings or view.not_measured or view.common or view.standards)
@@ -185,8 +186,8 @@ def test_every_rule_result_of_every_recorded_cell_is_in_exactly_one_bucket(
                     _check_cell(result, view)
                     cells += 1
                     in_force += result.rules_in_force
-    assert cells == 4 * 2 * 3 * 5 == 120
-    assert in_force == 4 * 18  # the 18 non-empty sets of D40, for each company
+    assert cells == 5 * 2 * 3 * 5 == 150
+    assert in_force == 5 * 18  # the 18 non-empty sets of D40, for each company
 
 
 def test_a_set_with_no_rule_in_force_is_an_empty_view_that_says_it_is_not_a_pass(

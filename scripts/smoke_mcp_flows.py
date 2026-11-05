@@ -93,8 +93,14 @@ async def _extract(
         f"        {len(result.figures)} figures, gaps {[g.concept.value for g in result.gaps]}, "
         f"period ends {ends[:1]}..{ends[-1:]}, forms {forms}"
     )
-    for note in checks.stale_figures(result.figures):
-        rep.finding("F-live-1", "reproduced" if t.key == "AACG" else "new", f"{t.key}: {note}")
+    old = checks.stale_figures(result)
+    anchor = result.latest_fiscal_year
+    rep.out(
+        f"        latest fiscal year ends {None if anchor is None else anchor.end}; "
+        f"{len(old)} figure(s) shown from an earlier year"
+    )
+    for note in old:
+        rep.out(f"          {note}")
     for note in checks.odd_source_figures(result.figures):
         rep.finding("F-live-2", "reproduced" if t.key == "AGMH" else "new", f"{t.key}: {note}")
     if t.key == "Royal Bank of Canada":
@@ -181,6 +187,10 @@ async def _check(
         rep.check(
             f"{t.key} findings equal the extracted figures",
             checks.finding_mismatches(check, extract),
+        )
+        rep.check(
+            f"{t.key} no finding rests on a figure from an earlier fiscal year (F-live-1)",
+            checks.stale_findings(check, extract),
         )
     for match in source.matches:
         listing = directory.find(match.ticker)
