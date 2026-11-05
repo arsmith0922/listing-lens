@@ -23,7 +23,7 @@ from listinglens.tools.facts import load_snapshot
 from listinglens.tools.models_basic import ListFilingsResult, ResolveCompanyResult
 from listinglens.tools.models_check import CheckStandardsResult
 from listinglens.tools.models_financials import ExtractFinancialsResult
-from listinglens.tools.project_financials import filing_view, snapshot_views
+from listinglens.tools.project_financials import filing_view, fiscal_year_view, snapshot_views
 
 
 class ToolService:
@@ -89,6 +89,7 @@ class ToolService:
             company=echo_of(company),
             evaluated_on=today_utc(self._clock),
             facts_status=status,
+            latest_fiscal_year=fiscal_year_view(snapshot.latest_fiscal_year),
             figures=figures,
             gaps=gaps,
         )

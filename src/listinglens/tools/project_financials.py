@@ -13,12 +13,14 @@ from listinglens.domain.financials import (
     ReportedTwin,
     RestatementDiagnostic,
 )
+from listinglens.domain.fiscal_year import FiscalYearAnchor
 from listinglens.ingestion.endpoints import filing_directory_url
 from listinglens.tools.models_basic import FilingView
 from listinglens.tools.models_financials import (
     CrossTagView,
     DiagnosticView,
     FigureView,
+    FiscalYearView,
     GapView,
     IdentityEvidenceView,
     ObservationView,
@@ -123,6 +125,14 @@ def figure_view(extracted: ExtractedFigure) -> FigureView:
 
 def gap_view(gap: ConceptGap) -> GapView:
     return GapView(concept=gap.concept, reason=gap.reason, detail=gap.detail)
+
+
+def fiscal_year_view(anchor: FiscalYearAnchor | None) -> FiscalYearView | None:
+    if anchor is None:
+        return None
+    return FiscalYearView(
+        end=anchor.end, accession_no=anchor.accession_no.dashed, form_type=anchor.form_type
+    )
 
 
 def snapshot_views(

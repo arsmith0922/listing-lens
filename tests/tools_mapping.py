@@ -17,6 +17,7 @@ from listinglens.domain.financials import (
     ReportedTwin,
     RestatementDiagnostic,
 )
+from listinglens.domain.fiscal_year import FiscalYearAnchor
 from listinglens.domain.profile import CompanyProfile
 from listinglens.margin.models import (
     MeasuredResult,
@@ -50,7 +51,9 @@ MAPPING: dict[type[BaseModel], dict[str, str]] = {
         "can differ in case and punctuation",
         "figures": "ExtractFinancialsResult.figures",
         "gaps": "ExtractFinancialsResult.gaps",
+        "latest_fiscal_year": "ExtractFinancialsResult.latest_fiscal_year",
     },
+    FiscalYearAnchor: {k: f"FiscalYearView.{k}" for k in ("end", "accession_no", "form_type")},
     ExtractedFigure: {"value": "FigureView.*", "diagnostics": "FigureView.diagnostics"},
     FinancialValue: {
         "concept": "FigureView.concept",

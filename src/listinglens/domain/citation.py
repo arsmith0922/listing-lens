@@ -35,7 +35,7 @@ class XbrlSource(StrEnum):
     FRAMES = "frames"
 
 
-def _require_text(value: str, field: str) -> str:
+def require_text(value: str, field: str) -> str:
     if not value.strip():
         raise InputValidationError(field=field, value=value)
     return value
@@ -102,12 +102,12 @@ class XbrlLocator(BaseModel):
     @field_validator("form_type")
     @classmethod
     def _check_form_type(cls, value: str) -> str:
-        return _require_text(value, "form_type")
+        return require_text(value, "form_type")
 
     @field_validator("fiscal_period")
     @classmethod
     def _check_fiscal_period(cls, value: str | None) -> str | None:
-        return None if value is None else _require_text(value, "fiscal_period")
+        return None if value is None else require_text(value, "fiscal_period")
 
 
 class TextLocator(BaseModel):
@@ -127,17 +127,17 @@ class TextLocator(BaseModel):
     @field_validator("document_name")
     @classmethod
     def _check_document_name(cls, value: str) -> str:
-        return _require_text(value, "document_name")
+        return require_text(value, "document_name")
 
     @field_validator("section_label")
     @classmethod
     def _check_section_label(cls, value: str) -> str:
-        return _require_text(value, "section_label")
+        return require_text(value, "section_label")
 
     @field_validator("anchor_text")
     @classmethod
     def _check_anchor_text(cls, value: str) -> str:
-        return _require_text(value, "anchor_text")
+        return require_text(value, "anchor_text")
 
     @model_validator(mode="after")
     def _check_span(self) -> TextLocator:

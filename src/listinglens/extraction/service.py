@@ -14,6 +14,7 @@ from listinglens.domain.financials import (
     GapReason,
     TargetConcept,
 )
+from listinglens.extraction.anchor import latest_fiscal_year
 from listinglens.extraction.figures import figure_for
 from listinglens.ingestion import endpoints
 from listinglens.ingestion.facts_repository import CompanyFactsRepository
@@ -55,4 +56,5 @@ class ExtractionService:
             entity_name=document.entity_name,
             figures=tuple(figures),
             gaps=tuple(gaps),
+            latest_fiscal_year=latest_fiscal_year(document),
         )

@@ -59,6 +59,15 @@ WINDOW = (
     "fiscal years."
 )
 
+LATEST_FISCAL_YEAR = (
+    "The end of the company's latest fiscal year, from its own filings: the newest full-year USD "
+    "income or revenue period it has reported, cited to the filing that reported it. Compare "
+    "each figure's period end with this date: a figure ending well before it is from an earlier "
+    "fiscal year, not the latest one. Public float is dated at the end of the second fiscal "
+    "quarter by rule, so it normally ends about six months earlier and is not stale. Null when "
+    "the filings hold no full-year USD income or revenue figure."
+)
+
 # Shown on a tier whose selection has no rule in force.
 NOT_IN_FORCE_NOTE = (
     "No Nasdaq rule is in force for this selection on this date. That is not a pass: there was "

@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from listinglens.core.errors import InputValidationError
 from listinglens.domain.citation import XbrlLocator, XbrlPeriod
+from listinglens.domain.fiscal_year import FiscalYearAnchor
 from listinglens.domain.identifiers import AccessionNumber, Cik
 
 # Built by extraction from already-validated facts (D18): strict constructors, no parse().
@@ -228,3 +229,4 @@ class FinancialSnapshot(BaseModel):
     entity_name: str
     figures: tuple[ExtractedFigure, ...]
     gaps: tuple[ConceptGap, ...]
+    latest_fiscal_year: FiscalYearAnchor | None = None  # D49; None when no full-year USD flow

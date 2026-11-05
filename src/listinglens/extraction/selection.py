@@ -40,9 +40,10 @@ class _Usable:
     evidence: Mapping[Key, IdentityEvidence] | None = None  # set for corroborated candidates
 
 
-def _latest(facts: Iterable[XbrlFact]) -> XbrlFact:
+def latest_filed(facts: Iterable[XbrlFact]) -> XbrlFact:
     """The most recently filed fact; the accession breaks same-day ties, so the choice never
-    depends on input order."""
+    depends on input order. The one order every cited choice uses: a figure's fact and the
+    fiscal-year anchor's (anchor.py), so a change to it reaches both."""
     return max(facts, key=lambda fact: (fact.filed, fact.accn))
 
 
@@ -62,7 +63,7 @@ def _reported_twins(
             if other.accn == fact.accn and other.start == fact.start and other.end == fact.end
         ]
         if matches:
-            found.append((other_unit, _latest(matches)))
+            found.append((other_unit, latest_filed(matches)))
     return tuple(found)
 
 
@@ -131,14 +132,14 @@ def select_figure(
         if item.key > best.key:
             best = item
     same_period = tuple(f for f in best.eligible if period_key(f) == best.key)
-    fact = _latest(same_period)
+    fact = latest_filed(same_period)
     others: list[tuple[Candidate, XbrlFact]] = []
     for item in usable:
         if item is best or item.evidence is not None:
             continue
         at_period = [f for f in item.eligible if period_key(f) == best.key]
         if at_period:
-            others.append((item.candidate, _latest(at_period)))
+            others.append((item.candidate, latest_filed(at_period)))
     evidence = None if best.evidence is None else best.evidence[(fact.accn, fact.start, fact.end)]
     twins = _reported_twins(best.concept, unit, fact) if spec.unit_kind is UnitKind.MONETARY else ()
     return Selection(
