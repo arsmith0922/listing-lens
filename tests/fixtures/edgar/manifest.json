@@ -104,5 +104,193 @@
     "file": "companyfacts_aacg.json",
     "sha256": "4f6bb41b117f1b6ddfe60e6803fa08b1607e1b9975b68829038a613f9746ca99",
     "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001420529.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.500894+00:00",
+    "file": "submissions_credit_suisse.json",
+    "sha256": "1310a001c1fc55be8e582a381864d43dabbbb2aa35ac3f88b9927c1b8aeb85b5",
+    "url": "https://data.sec.gov/submissions/CIK0001053092.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.504888+00:00",
+    "file": "companyfacts_credit_suisse.json",
+    "sha256": "51458b3b98bd0169c235c9056f6b29009a784edd7c461f192c70df0631106a78",
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001053092.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.505995+00:00",
+    "file": "CIK0001053092-submissions-001.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "a9e0bcac221f8dca81aa44dfba83086168b8bf4315793c9a492c64464d0e81df",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-001.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.507504+00:00",
+    "file": "CIK0001053092-submissions-002.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "d5ba2e2c25bd226cceb820f06d37b15936e9439c7b52178dd47c13b44b948799",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-002.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.509054+00:00",
+    "file": "CIK0001053092-submissions-003.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "9b75d1ef52d4217e24f4dfb9cb97f942ad31a6b411b608a31eda57a9f5adbfc2",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-003.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.516296+00:00",
+    "file": "CIK0001053092-submissions-004.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "bbaa3aebf38b997939bf3e88a88c19ab54b653993c661285e00f9410901ea98c",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-004.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.516296+00:00",
+    "file": "CIK0001053092-submissions-005.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "6b7add6000ade0db05b049392841dc9a324bc465d7a940c7627133938c61a3e4",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-005.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.517286+00:00",
+    "file": "CIK0001053092-submissions-006.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "f284cbaaf03dc6ecb3164f0a0294772664dfc36b83a6da305d2269810719a149",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-006.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.520389+00:00",
+    "file": "CIK0001053092-submissions-007.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "2aa2f4b9166df3bf4d597f27830bfedfcbe88cf124e707ceb2796b4391e9127c",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-007.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.521285+00:00",
+    "file": "CIK0001053092-submissions-008.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "417d7d9e8c3e6d919a1258c5b163aab47d8c7a7aa8aceddf7fce4d046931e836",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-008.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.522284+00:00",
+    "file": "CIK0001053092-submissions-009.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "3b16bc4a2cd1d8bfaa4836de503f649acddf79147dffcbd37bdd021f03b87b2b",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-009.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.523285+00:00",
+    "file": "CIK0001053092-submissions-010.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "6d2e4225a918a64ead461340932c87d18f3eebddba058f6fc7e6151046897e0c",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-010.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.524288+00:00",
+    "file": "CIK0001053092-submissions-011.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "1772c2df6ca683346238a8427225f0e99e7c33b7b84e7cf5469cbe9a29d0bf9e",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-011.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.525286+00:00",
+    "file": "CIK0001053092-submissions-012.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "1a7df1af26f3d92ae6934dba798cfdc87caa395a79117dc241186fe516f21b33",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-012.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.525286+00:00",
+    "file": "CIK0001053092-submissions-013.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "f8d15b6f51f5fc715b03375b28ff3b69b9f44e2179059d385e1a65d952b274d3",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-013.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.526296+00:00",
+    "file": "CIK0001053092-submissions-014.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "83cc64d34a98ac32a5d29a87a2c0d3c1e7db52b2773adf4e7f1989c34527c231",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-014.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.527295+00:00",
+    "file": "CIK0001053092-submissions-015.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "62c3b2d5514770f262f24c20fe12aa9e63c2e4d4e884ac9f782e29b22916ca06",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-015.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.528295+00:00",
+    "file": "CIK0001053092-submissions-016.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "80521c8712f18948b3805cda77b6760eee6406cccb5aeeab120d738e10104f28",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-016.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.529294+00:00",
+    "file": "CIK0001053092-submissions-017.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "f6de4734bc10c0fe82c879a96128fcf426482518de76588f56fdc7924d21bbf4",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-017.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.530294+00:00",
+    "file": "CIK0001053092-submissions-018.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "6fd35dbbe86c0ea802141bfa89b7b36de4c4444478b761bf9f9d0869dd2473bc",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-018.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.531294+00:00",
+    "file": "CIK0001053092-submissions-019.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "adb362a695eab572585538ddbc40e831aaba3edf529c916e7094e606d13e1fde",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-019.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.532306+00:00",
+    "file": "CIK0001053092-submissions-020.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "7d5dbf478430dff60eaf0b44516a6f478b427aa0caea9b40f68a48272455d08b",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-020.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.534299+00:00",
+    "file": "CIK0001053092-submissions-021.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "5cfbfae862cde107a39bc7f2907d7ad903a9eab8bc11064e2dae2c116dfc4ae5",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-021.json"
+  },
+  {
+    "fetched_at": "2026-11-05T22:45:02.537298+00:00",
+    "file": "CIK0001053092-submissions-022.json",
+    "note": "sha256 verifies the committed (trimmed) file, not a fresh fetch of url",
+    "sha256": "4638e7c7d33f286c3d36d80a3ca98690019febf6eb0c05310a90790edc85a368",
+    "trimmed": true,
+    "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-022.json"
   }
 ]

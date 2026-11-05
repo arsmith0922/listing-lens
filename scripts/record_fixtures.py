@@ -6,6 +6,7 @@ it is outside testpaths and is never collected or run in CI.
     record_fixtures.py companyfacts the companyfacts set
     record_fixtures.py nasdaq       the Nasdaq directory and the Nasdaq-listed company (AIXI)
     record_fixtures.py aacg         ATA Creativity (AACG): untrimmed submissions and companyfacts
+    record_fixtures.py creditsuisse Credit Suisse AG: untrimmed pair plus trimmed overflow pages
 
 manifest.json is merged by file name, so recording one set never drops the other's entries.
 """
@@ -30,7 +31,12 @@ from record_trim import (
 
 from listinglens.core.config import Settings
 from listinglens.domain.identifiers import Cik
-from listinglens.ingestion.endpoints import company_facts_url, nasdaq_listed_url, submissions_url
+from listinglens.ingestion.endpoints import (
+    company_facts_url,
+    nasdaq_listed_url,
+    submissions_overflow_url,
+    submissions_url,
+)
 from listinglens.ingestion.throttle import RealClock
 from listinglens.ingestion.transport import EdgarTransport
 
@@ -47,6 +53,7 @@ GE_CIK = "0000040545"
 APPLE_CIK = "0000320193"
 AIXI_CIK = "0001935172"  # Xiao-I, a Nasdaq-listed US-GAAP 20-F filer
 AACG_CIK = "0001420529"  # ATA Creativity Global, a US-GAAP 20-F filer with a stale tag (F-live-1)
+CREDIT_SUISSE_CIK = "0001053092"  # Credit Suisse AG, three Nasdaq rows flagged ETF=Y (L3)
 APPLE_ACCESSION_BARE = "000032019323000106"
 
 # companyfacts trim (chunk 11): keep the shape-bearing parts of a large document, deterministically.
@@ -55,7 +62,14 @@ KEEP_FIRST_CONCEPTS = 5
 MAX_UNCOMMON_UNIT_CONCEPTS = 40
 MAX_NULL_FY_CONCEPTS = 25
 
-SELECTORS = ("chunk6", "companyfacts", "nasdaq", "aacg")
+SELECTORS = ("chunk6", "companyfacts", "nasdaq", "aacg", "creditsuisse")
+# selector -> (CIK, file stem, whether to also record its overflow pages trimmed): the companies
+# recorded as an untrimmed pair of documents. list_filings reads every overflow page, and
+# Credit Suisse lists 22 of about 345 KB each, so its pages are trimmed like GE's.
+UNTRIMMED_PAIRS = {
+    "aacg": (AACG_CIK, "aacg", False),
+    "creditsuisse": (CREDIT_SUISSE_CIK, "credit_suisse", True),
+}
 
 MANIFEST: list[dict[str, JsonValue]] = []
 NASDAQ_MANIFEST: list[dict[str, JsonValue]] = []
@@ -219,17 +233,28 @@ def record_nasdaq(transport: EdgarTransport) -> None:
         write_raw_fixture(filename, body, url, nasdaq=is_nasdaq)
 
 
-def record_aacg(transport: EdgarTransport) -> None:
-    """Exact bytes, never trimmed: the trim drops the income tags this fixture exists to show."""
-    cik = Cik.parse(AACG_CIK)
+def record_untrimmed_pair(
+    transport: EdgarTransport, cik_text: str, stem: str, trim_overflow: bool
+) -> None:
+    """One company's submissions and companyfacts as the exact bytes the SEC sent, never trimmed
+    (the trim drops the tags a fixture like this exists to show). With trim_overflow, the
+    submissions' overflow pages too, each trimmed like GE's, because list_filings reads them all."""
+    cik = Cik.parse(cik_text)
     wanted = (
-        ("submissions_aacg.json", submissions_url(cik)),
-        ("companyfacts_aacg.json", company_facts_url(cik)),
+        (f"submissions_{stem}.json", submissions_url(cik)),
+        (f"companyfacts_{stem}.json", company_facts_url(cik)),
     )
-    # Both fetched before either is written, so a failed second fetch leaves no orphan file.
+    # Everything fetched before anything is written, so a failed fetch leaves no orphan file.
     fetched = [(name, url, transport.get(url).raise_for_status().content) for name, url in wanted]
+    pages: list[tuple[str, str, dict[str, JsonValue]]] = []
+    if trim_overflow:
+        for item in json.loads(fetched[0][2])["filings"]["files"]:
+            url = submissions_overflow_url(cik, item["name"])
+            pages.append((item["name"], url, transport.get(url).raise_for_status().json()))
     for filename, url, body in fetched:
         write_raw_fixture(filename, body, url)
+    for name, url, page in pages:
+        write_fixture(name, trim_filing_index_page(page), url, trimmed=True, compact=True)
 
 
 def main(argv: Sequence[str] = ()) -> None:
@@ -253,8 +278,8 @@ def main(argv: Sequence[str] = ()) -> None:
         record_companyfacts(transport)
     elif selector == "nasdaq":
         record_nasdaq(transport)
-    elif selector == "aacg":
-        record_aacg(transport)
+    elif selector in UNTRIMMED_PAIRS:
+        record_untrimmed_pair(transport, *UNTRIMMED_PAIRS[selector])
     else:
         record_chunk6(transport)
     write_manifest()
