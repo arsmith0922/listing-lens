@@ -22,6 +22,7 @@ from listinglens.ingestion.transport import EdgarTransport
 
 AACG_CIK = "0001420529"  # ATA Creativity Global, a US-GAAP 20-F filer with a stale tag (F-live-1)
 CREDIT_SUISSE_CIK = "0001053092"  # Credit Suisse AG, three Nasdaq rows flagged ETF=Y (L3)
+AGMH_CIK = "0001705402"  # AGM Group, whose latest facts also sit in an unlabeled POS AM (F-live-2)
 
 # selector -> (CIK, file stem, whether to also record its overflow pages trimmed): the companies
 # recorded as an untrimmed pair of documents. list_filings reads every overflow page, and
@@ -29,6 +30,7 @@ CREDIT_SUISSE_CIK = "0001053092"  # Credit Suisse AG, three Nasdaq rows flagged 
 UNTRIMMED_PAIRS = {
     "aacg": (AACG_CIK, "aacg", False),
     "creditsuisse": (CREDIT_SUISSE_CIK, "credit_suisse", True),
+    "agmh": (AGMH_CIK, "agmh", False),
 }
 
 WriteRaw = Callable[[str, bytes, str], None]  # filename, exact bytes, url

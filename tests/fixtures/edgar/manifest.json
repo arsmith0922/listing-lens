@@ -292,5 +292,17 @@
     "sha256": "4638e7c7d33f286c3d36d80a3ca98690019febf6eb0c05310a90790edc85a368",
     "trimmed": true,
     "url": "https://data.sec.gov/submissions/CIK0001053092-submissions-022.json"
+  },
+  {
+    "fetched_at": "2026-11-06T17:15:15.698966+00:00",
+    "file": "submissions_agmh.json",
+    "sha256": "8041ac2543a7728cacf9d9c0a133bad225bdd99511c3170a4713889789564fb5",
+    "url": "https://data.sec.gov/submissions/CIK0001705402.json"
+  },
+  {
+    "fetched_at": "2026-11-06T17:15:15.700609+00:00",
+    "file": "companyfacts_agmh.json",
+    "sha256": "c46f1909570ff5276bec7efdd07b45c92a342bc6f10c25bd60c4b98d066fb4e5",
+    "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001705402.json"
   }
 ]

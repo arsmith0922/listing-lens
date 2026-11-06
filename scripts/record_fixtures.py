@@ -7,6 +7,7 @@ it is outside testpaths and is never collected or run in CI.
     record_fixtures.py nasdaq       the Nasdaq directory and the Nasdaq-listed company (AIXI)
     record_fixtures.py aacg         ATA Creativity (AACG): untrimmed submissions and companyfacts
     record_fixtures.py creditsuisse Credit Suisse AG: untrimmed pair plus trimmed overflow pages
+    record_fixtures.py agmh         AGM Group (AGMH): untrimmed submissions and companyfacts
 
 manifest.json is merged by file name, so recording one set never drops the other's entries.
 """
