@@ -82,6 +82,7 @@ LITERALS: dict[str, tuple[object, list[str]]] = {
             "directory",
             "directory_mixed",
             "directory_unrecognized_category",
+            "directory_funds_only",
         ],
     ),
 }

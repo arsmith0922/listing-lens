@@ -29,6 +29,7 @@ def tier_row(listing_type: str, requested_tier: str | None, how: str) -> int | N
         "directory": 6,
         "directory_mixed": 7,
         "directory_unrecognized_category": 8,
+        "directory_funds_only": 11,
     }.get(how)
 
 
@@ -66,6 +67,26 @@ def check_problems(
         order = [t.tier.value for t in result.tiers]
         if order != ["global_select", "global", "capital"]:
             found.append(f"initial tiers out of order: {order}")
+    return found + fund_problems(result)
+
+
+def fund_problems(result: CheckStandardsResult) -> list[str]:
+    """D50: a row flagged ETF=Y never selects a tier. A continued listing with no tier named whose
+    every matched row is flagged is row 11 and assesses nothing; row 11 means exactly that; and no
+    tier chosen from the directory names a flagged ticker as its selector."""
+    source = result.tier_source
+    flagged = {m.ticker for m in source.matches if m.etf}
+    every = bool(source.matches) and len(flagged) == len(source.matches)
+    found: list[str] = []
+    undirected = result.listing_type.value == "continued" and result.requested_tier is None
+    if undirected and every and (source.how != "directory_funds_only" or result.tiers):
+        found.append("every matched row is flagged ETF=Y but a tier was assessed")
+    if source.how == "directory_funds_only" and not (undirected and every and not result.tiers):
+        found.append("directory_funds_only without every matched row flagged and no tier")
+    if source.how in {"directory", "directory_mixed"}:
+        chosen = {ticker for tier in result.tiers for ticker in tier.selected_by_tickers}
+        if chosen & flagged:
+            found.append(f"a row flagged ETF=Y selected a tier: {sorted(chosen & flagged)}")
     return found
 
 
@@ -74,8 +95,10 @@ def _tier_name(result: CheckStandardsResult) -> str | None:
 
 
 def not_common_equity(row: NasdaqListing) -> bool:
-    """L3: a matched directory row that looks like a fund or a structured product."""
-    return row.etf or bool(NOT_COMMON_EQUITY.search(row.security_name))
+    """L6, informational: a matched row NOT flagged ETF=Y whose name reads as a note or a fund.
+    A flagged row is handled by tier-table row 11 and is no finding; ListingLens decides nothing
+    on a name, so this only tells the reader where a tier may not come from common equity."""
+    return not row.etf and bool(NOT_COMMON_EQUITY.search(row.security_name))
 
 
 def row_evidence(row: NasdaqListing) -> str:

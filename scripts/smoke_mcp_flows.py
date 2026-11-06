@@ -42,7 +42,7 @@ TARGETS = (
     Target("SPY", "884394", "spdr", "SPY", 5, False, False),
     Target("Silvergate", "1312109", "silvergate", None, 4, True, True),
     Target("Citigroup", "831001", "citigroup", "C", 5, False, True),
-    Target("Credit Suisse AG", "1053092", "credit suisse", None, 6, False, None),
+    Target("Credit Suisse AG", "1053092", "credit suisse", None, 11, True, None),
     Target("BMO", "927971", "bank of montreal", "BMO", 5, False, None),
     Target("Royal Bank of Canada", "1000275", "royal bank", "RY", 5, False, None),
 )
@@ -200,10 +200,10 @@ async def _check(
         rep.out(f"        directory row: {tiers.row_evidence(listing)}")
         if tiers.not_common_equity(listing):
             rep.finding(
-                "L3",
+                "L6",
                 "new",
-                f"{t.key}: tier chosen from a matched row that is not "
-                f"common equity: {tiers.row_evidence(listing)}",
+                f"{t.key}: a matched row not flagged ETF=Y reads as a note or fund, so a tier "
+                f"may not come from common equity: {tiers.row_evidence(listing)}",
             )
 
 

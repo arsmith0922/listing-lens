@@ -19,6 +19,7 @@ TierHow = Literal[
     "directory",
     "directory_mixed",
     "directory_unrecognized_category",
+    "directory_funds_only",
 ]
 
 
@@ -76,6 +77,10 @@ class DirectoryMatchView(BaseModel):
     ticker: str = Field(description="A ticker the SEC lists for the company, matched exactly.")
     category_code: str = Field(description="Nasdaq's raw Market Category code of the matched row.")
     tier: Tier | None = Field(description="The tier the code selects; null if not recognized.")
+    etf: bool = Field(
+        description="true when Nasdaq's directory flags the matched row ETF=Y, as exchange-traded "
+        "funds and notes are. A flagged row is shown but never selects a tier."
+    )
 
 
 class DirectoryOutcomeView(BaseModel):
@@ -106,7 +111,8 @@ class TierSourceReport(BaseModel):
     how: TierHow = Field(
         description="How the tier was selected: named by the caller; all three for an initial "
         "listing; or from the directory (one tier, several tiers, or a category not "
-        "recognized); or no tier because the company has no ticker or none is in the directory."
+        "recognized); or no tier because the company has no ticker, none is in the directory, "
+        "or every matched row is flagged ETF=Y."
     )
     tickers_tried: tuple[str, ...] = Field(
         description="The SEC tickers matched exactly against the directory's Symbol column. "

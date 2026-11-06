@@ -6,6 +6,7 @@ from types import ModuleType
 import pytest
 from pydantic import BaseModel
 
+from listinglens.domain.directory import NasdaqListing
 from listinglens.tools import (
     echo,
     models_basic,
@@ -76,3 +77,7 @@ def test_the_table_covers_the_models_the_views_read_and_nothing_else() -> None:
 def test_the_registry_finds_every_view_model() -> None:
     for name in ("TierView", "FindingView", "NotMeasuredView", "FigureView", "NasdaqStatusView"):
         assert name in VIEWS
+
+
+def test_the_etf_flag_is_mapped_to_the_match_view_and_not_omitted() -> None:
+    assert MAPPING[NasdaqListing]["etf"] == "DirectoryMatchView.etf"

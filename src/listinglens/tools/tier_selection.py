@@ -32,6 +32,11 @@ from listinglens.tools.models_source import (
 #   8 continued, none named, a category not recognized -> none   directory_unrecognized_category
 #   9 continued, none named, a ticker, directory failed -> the error is raised
 #  10 rows 1 to 4 with the directory failed -> proceed, directory.available false
+#  11 continued, none named, a match, every match flagged ETF=Y -> none   directory_funds_only
+# Evaluated in this order: 2 and 3, then 1, 4, 9, 5, 11, 8, and last 6 and 7. A row the directory
+# flags ETF=Y never selects a tier (D50): rows 8, 6 and 7 look only at the other matches, and a
+# flagged row stays in the matches and the statuses. Rows 1 to 3 are the caller's own what-if and
+# do not change.
 
 ALL_TIERS = tuple(Tier)  # global_select, global, capital: most to least stringent
 
@@ -47,10 +52,22 @@ _NOTES: dict[TierHow, str] = {
     "companies; name a tier for a what-if.",
     "directory": "The tier is the one Nasdaq's directory gives for the matched ticker.",
     "directory_mixed": "Tickers of the company sit in different tiers in Nasdaq's directory, so "
-    "each tier is assessed and labeled with the tickers that selected it.",
+    "each tier is assessed and labeled with the tickers that selected it. The directory does not "
+    "mark which row is the company's common equity, so a tier here may come only from its "
+    "notes, preferred shares, warrants or units; check each selecting ticker's security name in "
+    "nasdaq_status.",
     "directory_unrecognized_category": "A matched row has a Market Category this tool does not "
     "recognize, so no tier is chosen rather than guessed. Name a tier to assess one.",
+    "directory_funds_only": "Every non-test row in Nasdaq's directory for this company's tickers "
+    "is flagged ETF=Y, as exchange-traded funds and notes are. The Nasdaq operating-company "
+    "standards ListingLens checks do not govern exchange-traded products, so no tier is "
+    "assessed. Name a tier for a what-if.",
 }
+# Appended when a flagged row was set aside and a tier was still chosen (or refused) from the rest.
+_SET_ASIDE = " Matched rows flagged ETF=Y are shown and did not select a tier."
+_SET_ASIDE_HOW: frozenset[TierHow] = frozenset(
+    {"directory", "directory_mixed", "directory_unrecognized_category"}
+)
 
 
 @dataclass(frozen=True)
@@ -109,7 +126,8 @@ def _report(
         directory=outcome,
         matches=matches,
         test_issues_ignored=test_only,
-        note=_NOTES[how],
+        note=_NOTES[how]
+        + (_SET_ASIDE if how in _SET_ASIDE_HOW and any(m.etf for m in matches) else ""),
     )
 
 
@@ -135,6 +153,7 @@ def select_tiers(
             ticker=ticker,
             category_code=row.market_category,
             tier=tier_of_category(row.market_category),
+            etf=row.etf,
         )
         for ticker, row in found
     )
@@ -155,10 +174,13 @@ def select_tiers(
         raise read  # row 9: a tier cannot be taken from a directory that could not be read
     if not matches:
         return done("no_match", ())
-    if any(match.tier is None for match in matches):
+    operating = tuple(match for match in matches if not match.etf)
+    if not operating:
+        return done("directory_funds_only", ())  # row 11: every match is flagged ETF=Y
+    if any(match.tier is None for match in operating):
         return done("directory_unrecognized_category", ())
     by: dict[Tier, list[str]] = {}
-    for match in matches:
+    for match in operating:
         if match.tier is not None:
             by.setdefault(match.tier, []).append(match.ticker)
     tiers = tuple(tier for tier in ALL_TIERS if tier in by)

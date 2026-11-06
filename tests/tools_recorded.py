@@ -24,7 +24,12 @@ AIXI = Recorded("Xiao-I", 1935172, "companyfacts_aixi.json", "Xiao-I Corp")
 # ATA Creativity (D49), recorded untrimmed: its income from continuing operations is a 2021 figure
 # while every other figure ends in 2025. It joins the sweeps, not D41's hand-worked matrix.
 AACG = Recorded("ATA Creativity", 1420529, "companyfacts_aacg.json", "ATA Creativity Global")
-ALL_RECORDED = (*COMPANIES, AIXI, AACG)
+# Credit Suisse AG (D50): US GAAP tags in CHF, so one figure and eight gaps, and the one recorded
+# issuer whose Nasdaq rows are all flagged ETF=Y.
+CREDIT_SUISSE = Recorded(
+    "Credit Suisse", 1053092, "companyfacts_credit_suisse.json", "CREDIT SUISSE AG"
+)
+ALL_RECORDED = (*COMPANIES, AIXI, AACG, CREDIT_SUISSE)
 
 
 def extract_all(

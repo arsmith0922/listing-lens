@@ -30,8 +30,12 @@ CIKS = {
     "ge": 40545,
     "aixi": 1935172,
     "aacg": 1420529,
+    "credit_suisse": 1053092,
 }
 GE_OVERFLOW = ("CIK0000040545-submissions-001.json", "CIK0000040545-submissions-002.json")
+# Credit Suisse AG lists 22 overflow pages, each recorded trimmed to 40 rows (D50): list_filings
+# reads every one of them on every call.
+CS_OVERFLOW = tuple(f"CIK0001053092-submissions-{n:03d}.json" for n in range(1, 23))
 
 
 def _bytes(name: str) -> bytes:
@@ -46,6 +50,7 @@ def recorded_routes() -> dict[str, Route]:
         "ge": ("submissions_ge.json", "companyfacts_ge_edge.json"),
         "aixi": ("submissions_aixi.json", "companyfacts_aixi.json"),
         "aacg": ("submissions_aacg.json", "companyfacts_aacg.json"),
+        "credit_suisse": ("submissions_credit_suisse.json", "companyfacts_credit_suisse.json"),
     }
     for key, (submissions, facts) in files.items():
         cik = Cik.parse(CIKS[key])
@@ -54,6 +59,9 @@ def recorded_routes() -> dict[str, Route]:
     ge = Cik.parse(CIKS["ge"])
     for name in GE_OVERFLOW:
         routes[submissions_overflow_url(ge, name)] = _bytes(name)
+    cs = Cik.parse(CIKS["credit_suisse"])
+    for name in CS_OVERFLOW:
+        routes[submissions_overflow_url(cs, name)] = _bytes(name)
     return routes
 
 

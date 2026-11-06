@@ -154,7 +154,7 @@ MAPPING: dict[type[BaseModel], dict[str, str]] = {
         "test_issue": "omitted: a test issue never matches; only a count of ignored ones is shown",
         "financial_status": "NasdaqStatusView.status_code",
         "round_lot": "omitted: not part of any assessment",
-        "etf": "omitted: not part of any assessment",
+        "etf": "DirectoryMatchView.etf",
         "next_shares": "omitted: not part of any assessment",
     },
     DirectoryStamp: {

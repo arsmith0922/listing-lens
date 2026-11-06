@@ -270,3 +270,16 @@ def test_the_meaning_fields_exist_where_the_texts_are_expected() -> None:
         "note",
         "reported_financials",
     ]
+
+
+def test_the_how_and_etf_descriptions_are_the_approved_texts_word_for_word() -> None:
+    assert _described("TierSourceReport", "how") == (
+        "How the tier was selected: named by the caller; all three for an initial listing; or "
+        "from the directory (one tier, several tiers, or a category not recognized); or no tier "
+        "because the company has no ticker, none is in the directory, or every matched row is "
+        "flagged ETF=Y."
+    )
+    assert _described("DirectoryMatchView", "etf") == (
+        "true when Nasdaq's directory flags the matched row ETF=Y, as exchange-traded funds and "
+        "notes are. A flagged row is shown but never selects a tier."
+    )

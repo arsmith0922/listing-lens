@@ -186,8 +186,8 @@ def test_every_rule_result_of_every_recorded_cell_is_in_exactly_one_bucket(
                     _check_cell(result, view)
                     cells += 1
                     in_force += result.rules_in_force
-    assert cells == 5 * 2 * 3 * 5 == 150
-    assert in_force == 5 * 18  # the 18 non-empty sets of D40, for each company
+    assert cells == 6 * 2 * 3 * 5 == 180
+    assert in_force == 6 * 18  # the 18 non-empty sets of D40, for each company
 
 
 def test_a_set_with_no_rule_in_force_is_an_empty_view_that_says_it_is_not_a_pass(

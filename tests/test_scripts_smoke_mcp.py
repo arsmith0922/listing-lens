@@ -134,6 +134,7 @@ def test_each_call_is_judged_against_its_own_ceiling(
         ("continued", None, "directory", 6),
         ("continued", None, "directory_mixed", 7),
         ("continued", None, "directory_unrecognized_category", 8),
+        ("continued", None, "directory_funds_only", 11),
     ],
 )
 def test_the_tier_table_row_of_a_result(
@@ -169,8 +170,8 @@ def _listing(name: str, *, etf: bool) -> NasdaqListing:
         ("Northern Trust Corporation - Common Stock", False, False),
         ("Credit Suisse X-Links Gold Shares Covered Call ETN due 2038", False, True),
         ("Some Exchange Traded Note", False, True),
-        ("Pacer Barings CLO Market Flex ETF", True, True),
-        ("Plain Name", True, True),
+        ("Pacer Barings CLO Market Flex ETF", True, False),  # flagged: tier-table row 11
+        ("Plain Name", True, False),
     ],
 )
 def test_a_matched_row_that_is_not_common_equity_is_noticed(
@@ -239,5 +240,8 @@ def test_the_smoke_covers_the_briefed_companies_once_each(smoke: ModuleType) -> 
     briefed = {"1990446", "1767582", "40545", "1935172", "1420529", "1705402"}
     assert briefed <= set(ciks)
     assert {"884394", "1312109", "831001", "1053092", "927971", "1000275"} <= set(ciks)
-    assert all(4 <= t.row <= 6 for t in flows.TARGETS)
-    assert {t.key for t in flows.TARGETS if t.hard} >= {"Luckin", "GE", "Xiao-I", "Silvergate"}
+    assert all(t.row in {4, 5, 6, 11} for t in flows.TARGETS)
+    hard = {t.key for t in flows.TARGETS if t.hard}
+    assert hard >= {"Luckin", "GE", "Xiao-I", "Silvergate", "Credit Suisse AG"}
+    (fund,) = [t for t in flows.TARGETS if t.key == "Credit Suisse AG"]
+    assert (fund.row, fund.hard) == (11, True)  # D50: all three rows are flagged ETF=Y
