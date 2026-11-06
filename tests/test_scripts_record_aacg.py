@@ -97,7 +97,7 @@ def test_the_run_asks_the_sec_for_ata_creativity_and_nothing_else(
 ) -> None:
     harness = run(_served())
     harness.module.main(["aacg"])
-    assert harness.module.AACG_CIK == "0001420529"
+    assert harness.module.pairs.AACG_CIK == "0001420529"
     assert [(r.url.host, r.url.path) for r in harness.seen] == [
         ("data.sec.gov", "/submissions/CIK0001420529.json"),
         ("data.sec.gov", "/api/xbrl/companyfacts/CIK0001420529.json"),

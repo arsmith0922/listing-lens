@@ -126,7 +126,7 @@ def test_the_run_asks_for_the_company_and_its_listed_pages_and_nothing_else(
 ) -> None:
     harness = run(_served())
     harness.module.main(["creditsuisse"])
-    assert harness.module.CREDIT_SUISSE_CIK == "0001053092"
+    assert harness.module.pairs.CREDIT_SUISSE_CIK == "0001053092"
     assert [(r.url.host, r.url.path) for r in harness.seen] == [
         ("data.sec.gov", "/submissions/CIK0001053092.json"),
         ("data.sec.gov", "/api/xbrl/companyfacts/CIK0001053092.json"),
