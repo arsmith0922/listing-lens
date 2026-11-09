@@ -31,6 +31,7 @@ CIKS = {
     "aixi": 1935172,
     "aacg": 1420529,
     "credit_suisse": 1053092,
+    "agmh": 1705402,
 }
 GE_OVERFLOW = ("CIK0000040545-submissions-001.json", "CIK0000040545-submissions-002.json")
 # Credit Suisse AG lists 22 overflow pages, each recorded trimmed to 40 rows (D50): list_filings
@@ -51,6 +52,7 @@ def recorded_routes() -> dict[str, Route]:
         "aixi": ("submissions_aixi.json", "companyfacts_aixi.json"),
         "aacg": ("submissions_aacg.json", "companyfacts_aacg.json"),
         "credit_suisse": ("submissions_credit_suisse.json", "companyfacts_credit_suisse.json"),
+        "agmh": ("submissions_agmh.json", "companyfacts_agmh.json"),
     }
     for key, (submissions, facts) in files.items():
         cik = Cik.parse(CIKS[key])

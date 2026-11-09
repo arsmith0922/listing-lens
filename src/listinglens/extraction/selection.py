@@ -9,6 +9,7 @@ from listinglens.core.errors import ConceptNotFound, PeriodUnavailable, UnitUnav
 from listinglens.domain.financials import IdentityEvidence, TargetConcept
 from listinglens.extraction.aliases import ALIASES, Candidate, ConceptSpec, UnitKind
 from listinglens.extraction.corroboration import Key, corroborate
+from listinglens.extraction.forms import is_periodic
 from listinglens.extraction.periods import is_eligible, period_key
 from listinglens.ingestion.payloads.companyfacts import CompanyFactsDocument, XbrlConcept, XbrlFact
 
@@ -45,6 +46,20 @@ def latest_filed(facts: Iterable[XbrlFact]) -> XbrlFact:
     depends on input order. The one order every cited choice uses: a figure's fact and the
     fiscal-year anchor's (anchor.py), so a change to it reaches both."""
     return max(facts, key=lambda fact: (fact.filed, fact.accn))
+
+
+def cite(facts: Iterable[XbrlFact]) -> XbrlFact:
+    """The fact a figure is cited to. Its value is always the latest-filed fact's (D31); when that
+    fact is not a periodic report and a periodic report in the same facts carries the same value,
+    the citation goes to the latest-filed such report, which has the fiscal-year label and the
+    form a reader expects (D51). The facts are one tag's at one period, so a corroborated
+    figure's evidence and its currency twins exist at the cited accession."""
+    pool = tuple(facts)
+    top = latest_filed(pool)
+    if is_periodic(top.form):
+        return top
+    same = [fact for fact in pool if is_periodic(fact.form) and fact.val == top.val]
+    return latest_filed(same) if same else top
 
 
 def _reported_twins(
@@ -132,7 +147,7 @@ def select_figure(
         if item.key > best.key:
             best = item
     same_period = tuple(f for f in best.eligible if period_key(f) == best.key)
-    fact = latest_filed(same_period)
+    fact = cite(same_period)
     others: list[tuple[Candidate, XbrlFact]] = []
     for item in usable:
         if item is best or item.evidence is not None:

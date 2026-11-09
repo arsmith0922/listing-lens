@@ -33,8 +33,23 @@ STALE_AFTER_DAYS = 183
 # Dated by their own calendar, not the fiscal period: the public float is measured at the end of
 # the second quarter and the share count on the cover page, so they sit apart from the rest.
 OWN_CALENDAR = frozenset({"public_float", "shares_outstanding"})
+# The engine's list (D51), kept here on purpose and pinned equal to it by a test; 6-K is a current
+# report and is not periodic.
 PERIODIC_FORMS = frozenset(
-    {"10-K", "10-K/A", "10-Q", "10-Q/A", "20-F", "20-F/A", "40-F", "40-F/A", "6-K"}
+    {
+        "10-K",
+        "10-K/A",
+        "10-KT",
+        "10-KT/A",
+        "10-Q",
+        "10-Q/A",
+        "10-QT",
+        "10-QT/A",
+        "20-F",
+        "20-F/A",
+        "40-F",
+        "40-F/A",
+    }
 )
 ACCESSION = re.compile(r"^\d{10}-\d{2}-\d{6}$")
 

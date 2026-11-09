@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date
 
 from listinglens.extraction.aliases import PeriodKind
+from listinglens.extraction.forms import EXCERPT_FORMS
 from listinglens.ingestion.payloads.companyfacts import XbrlFact
 
 # Every near-annual duration in the recorded fixtures is 364 or 365 days (2,213 facts); 371 is
@@ -14,8 +15,11 @@ ANNUAL_MAX_DAYS = 380
 
 
 def is_eligible(fact: XbrlFact, kind: PeriodKind) -> bool:
-    """Whether a fact is a usable instant or full-year flow. Reads dates only: fy and fp are
-    null on some facts (D26, D27), so they never decide anything."""
+    """Whether a fact is a usable instant or full-year flow. Reads the dates and the form (D51: a
+    proxy-statement excerpt is never a source), and still never fy or fp, which are null on some
+    facts (D26, D27), so they never decide anything."""
+    if fact.form in EXCERPT_FORMS:
+        return False
     if kind is PeriodKind.INSTANT:
         return fact.start is None
     if fact.start is None:

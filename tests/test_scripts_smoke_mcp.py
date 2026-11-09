@@ -8,6 +8,7 @@ from types import ModuleType
 import pytest
 
 from listinglens.domain.directory import NasdaqListing
+from listinglens.extraction.forms import PERIODIC_FORMS
 from listinglens.tools.args import (
     CheckStandardsArgs,
     ExtractFinancialsArgs,
@@ -245,3 +246,10 @@ def test_the_smoke_covers_the_briefed_companies_once_each(smoke: ModuleType) -> 
     assert hard >= {"Luckin", "GE", "Xiao-I", "Silvergate", "Credit Suisse AG"}
     (fund,) = [t for t in flows.TARGETS if t.key == "Credit Suisse AG"]
     assert (fund.row, fund.hard) == (11, True)  # D50: all three rows are flagged ETF=Y
+
+
+def test_the_smokes_periodic_forms_are_the_engines_and_6k_is_not_periodic(
+    checks: ModuleType,
+) -> None:
+    assert checks.PERIODIC_FORMS == PERIODIC_FORMS  # D51: a separate copy, pinned equal
+    assert "6-K" not in checks.PERIODIC_FORMS

@@ -29,7 +29,9 @@ AACG = Recorded("ATA Creativity", 1420529, "companyfacts_aacg.json", "ATA Creati
 CREDIT_SUISSE = Recorded(
     "Credit Suisse", 1053092, "companyfacts_credit_suisse.json", "CREDIT SUISSE AG"
 )
-ALL_RECORDED = (*COMPANIES, AIXI, AACG, CREDIT_SUISSE)
+# AGM Group (D51): every figure is reported by a 20-F and, equal and newer, by an unlabeled POS AM.
+AGMH = Recorded("AGM Group", 1705402, "companyfacts_agmh.json", "AGM GROUP HOLDINGS, INC.")
+ALL_RECORDED = (*COMPANIES, AIXI, AACG, CREDIT_SUISSE, AGMH)
 
 
 def extract_all(
