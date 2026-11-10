@@ -13,6 +13,11 @@ Python 3.12, FastAPI, Pydantic, Anthropic Claude API (tool use, Batch API), offi
 ## Workflow (non-negotiable)
 Architecture first: propose the design and surface decision points; wait for my explicit sign-off before generating code. Investigate in plan mode without making changes. Deliver in small, live-tested chunks; each chunk ends in one small reviewed commit with a conventional-commit message; pause for my approval before each commit. Verify every claim at the code layer before saying it is done; never fabricate; state the verification and the definition of done for each chunk.
 
+## End-of-session WIP push
+- **Session start:** fetch, read the latest commit on `wip` (if it exists) and on `main`, find the line starting `NEXT:`, and offer to start there.
+- **Wrapping up mid-chunk:** when I say I'm wrapping up, draft a WIP commit for the `wip` branch (never `main`) whose body ends with `NEXT: <first thing to do next session>`, show it to me, and push only after I approve. Squash `wip` work before it reaches `main` so history stays clean.
+- **Finished chunks:** the normal reviewed conventional commit, with a `NEXT:` line as the last line of the body.
+
 ## Hard constraints
 No `any` types. Files under 300 lines. Repository and service pattern with typed models and typed errors. Structured, schema-validated outputs (Pydantic), never free-text parsing. Token-based Tailwind and shadcn on any UI. No em dashes anywhere.
 
