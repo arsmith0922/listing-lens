@@ -14,6 +14,7 @@ from listinglens.tools.models_rule import FindingView, NotMeasuredView, Translat
 from listinglens.tools.models_tier import (
     BranchView,
     CaveatView,
+    FinancialCaveatView,
     RequirementView,
     StandardView,
     TierView,
@@ -100,12 +101,20 @@ def project_tier(
     common = tuple(_requirement(r, None, rule_for, out) for r in result.common)
     standards = tuple(_standard(s, rule_for, out) for s in result.standards)
     caveat = result.caveat
+    explained = result.financial_caveat
     return TierView(
         tier=result.tier,
         selected_by_tickers=selected_by_tickers,
         rules_in_force=result.rules_in_force,
         note=None if result.rules_in_force else NOT_IN_FORCE_NOTE,
         reported_financials=result.financial,
+        reported_financials_caveat=FinancialCaveatView(
+            absent_concepts=explained.absent_concepts,
+            needs_multi_year=explained.needs_multi_year,
+            needs_year_end_balance=explained.needs_year_end_balance,
+            stale_concepts=explained.stale_concepts,
+            tests_no_filed_figure=explained.tests_no_filed_figure,
+        ),
         findings=tuple(sorted(out.findings, key=lambda item: _RANK[item.state])),
         common=common,
         standards=standards,

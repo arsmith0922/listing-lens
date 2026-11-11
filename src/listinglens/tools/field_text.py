@@ -27,9 +27,18 @@ CUSHION_RATIO = (
 )
 REPORTED_FINANCIALS = (
     "How the conditions testable from SEC XBRL figures look, with every condition that needs a "
-    "market price, holder count, or market-maker count assumed met. undetermined means a figure "
-    "is absent or a rule needs a multi-year series; individual breaches are still listed in "
-    "findings. Figures are as reported, not verified."
+    "market price, holder count, or market-maker count assumed met. Undetermined means the "
+    "filed figures leave it open. For a tier, reported_financials_caveat says why. For a "
+    "standard, its branches and not_measured show why, and a standard whose rules all need "
+    "market inputs tests no filed figure, reads undetermined, and is left out of the tier's "
+    "signal. Individual breaches are still listed in findings. Figures are as reported, not "
+    "verified."
+)
+REPORTED_FINANCIALS_CAVEAT = (
+    "Why reported_financials is undetermined. It names the same gaps as the verdict's caveat, "
+    "except missing market inputs, which are assumed met here, and adds tests_no_filed_figure. "
+    "Empty unless reported_financials is undetermined with rules in force. Only conditions that "
+    "still decide the tier are named."
 )
 RULES_IN_FORCE = (
     "false means no Nasdaq rule applies to this selection (for example an initial listing on a "

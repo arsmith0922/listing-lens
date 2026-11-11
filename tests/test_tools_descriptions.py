@@ -129,9 +129,12 @@ LATEST_FISCAL_YEAR = (
 )
 REPORTED_FINANCIALS = (
     "How the conditions testable from SEC XBRL figures look, with every condition that needs a "
-    "market price, holder count, or market-maker count assumed met. undetermined means a figure "
-    "is absent or a rule needs a multi-year series; individual breaches are still listed in "
-    "findings. Figures are as reported, not verified."
+    "market price, holder count, or market-maker count assumed met. Undetermined means the "
+    "filed figures leave it open. For a tier, reported_financials_caveat says why. For a "
+    "standard, its branches and not_measured show why, and a standard whose rules all need "
+    "market inputs tests no filed figure, reads undetermined, and is left out of the tier's "
+    "signal. Individual breaches are still listed in findings. Figures are as reported, not "
+    "verified."
 )
 STANDARDS = (
     "Each standard holds if every one of its requirements holds. The tier is met if every common "
@@ -263,12 +266,13 @@ def test_the_meaning_fields_exist_where_the_texts_are_expected() -> None:
     assert "primary" in NotMeasuredView.model_fields
     assert "how" in TierSourceReport.model_fields
     assert list(TierView.model_fields)[-1] == "verdict"  # the verdict comes last
-    assert list(TierView.model_fields)[:5] == [
+    assert list(TierView.model_fields)[:6] == [
         "tier",
         "selected_by_tickers",
         "rules_in_force",
         "note",
         "reported_financials",
+        "reported_financials_caveat",
     ]
 
 

@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from datetime import date
 
 from listinglens.domain.pathway import Pathway
+from listinglens.margin.financial_view import build_financial_caveat, financial_leaf
 from listinglens.margin.findings import build_caveat
 from listinglens.margin.inputs import Inputs
 from listinglens.margin.kleene import (
@@ -14,10 +15,15 @@ from listinglens.margin.kleene import (
     standing_of_state,
     tier_standing,
 )
-from listinglens.margin.models import RuleResult
 from listinglens.margin.nodes import BranchResult, RequirementResult, StandardResult
 from listinglens.margin.resolve import measure_rule
-from listinglens.margin.tier import Caveat, TierResult, results_under, translated_figures_of
+from listinglens.margin.tier import (
+    Caveat,
+    FinancialCaveat,
+    TierResult,
+    results_under,
+    translated_figures_of,
+)
 from listinglens.margin.verdicts import FinancialSignal, Verdict, signal_for, verdict_for
 from listinglens.standards.enums import Exchange, ListingType, Tier
 from listinglens.standards.rules import RulesetPolicy, StandardRule
@@ -28,18 +34,12 @@ from listinglens.standards.ruleset import Branch, Requirement, Ruleset, Standard
 # walk: the real standing, and a financial view in which every rule that needs a non-EDGAR
 # input is assumed to be met, to show how the EDGAR-measurable conditions look on their own.
 
-_MET = Standing(Truth.TRUE, False)
-
-
-def _financial_leaf(rule: StandardRule, result: RuleResult) -> Standing:
-    return _MET if rule.requires else standing_of_state(result.state)
-
 
 def _branch(branch: Branch, inputs: Inputs, policy: RulesetPolicy) -> tuple[BranchResult, Standing]:
     results = [measure_rule(rule, inputs, policy) for rule in branch.rules]
     real = all_of(standing_of_state(result.state) for result in results)
     view = all_of(
-        _financial_leaf(r, result) for r, result in zip(branch.rules, results, strict=True)
+        financial_leaf(r, result) for r, result in zip(branch.rules, results, strict=True)
     )
     node = BranchResult(name=branch.name, value=real.value, thin=real.thin, rules=tuple(results))
     return node, view
@@ -119,6 +119,7 @@ def _empty(standard_set: StandardSet) -> TierResult:
         standards=(),
         caveat=Caveat(),
         financial=FinancialSignal.UNDETERMINED,
+        financial_caveat=FinancialCaveat(),
         translated_figures=(),
     )
 
@@ -141,6 +142,7 @@ def rollup_set(standard_set: StandardSet, inputs: Inputs, policy: RulesetPolicy)
     view = tier_standing((v for _, v in common), financial_standards)
     common_nodes = tuple(node for node, _ in common)
     standard_nodes = tuple(node for node, _ in standards)
+    rules = _rules_of(_requirements_of(standard_set))
     return TierResult(
         exchange=standard_set.exchange,
         tier=standard_set.tier,
@@ -153,10 +155,9 @@ def rollup_set(standard_set: StandardSet, inputs: Inputs, policy: RulesetPolicy)
         verdict=verdict_for(real, True),
         common=common_nodes,
         standards=standard_nodes,
-        caveat=build_caveat(
-            real.value, common_nodes, standard_nodes, _rules_of(_requirements_of(standard_set))
-        ),
+        caveat=build_caveat(real.value, common_nodes, standard_nodes, rules),
         financial=_financial(view, _requirements_of(standard_set)),
+        financial_caveat=build_financial_caveat(common_nodes, standard_nodes, rules),
         translated_figures=translated_figures_of(results_under(common_nodes, standard_nodes)),
     )
 

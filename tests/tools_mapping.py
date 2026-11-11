@@ -20,7 +20,7 @@ from listinglens.domain.financials import (
 from listinglens.domain.fiscal_year import FiscalYearAnchor
 from listinglens.domain.profile import CompanyProfile
 from listinglens.margin.nodes import BranchResult, RequirementResult, StandardResult
-from listinglens.margin.tier import Caveat, TierResult, TranslatedFigure
+from listinglens.margin.tier import Caveat, FinancialCaveat, TierResult, TranslatedFigure
 from tests.tools_mapping_rules import RULE_MAPPING, SELECTION
 
 # Every field of every domain or engine model the views read, and what became of it (D45):
@@ -175,7 +175,18 @@ MAPPING: dict[type[BaseModel], dict[str, str]] = {
         "standards": "TierView.standards",
         "caveat": "VerdictView.caveat",
         "financial": "TierView.reported_financials",
+        "financial_caveat": "TierView.reported_financials_caveat",
         "translated_figures": "TierView.translated_figures",
+    },
+    FinancialCaveat: {
+        k: f"FinancialCaveatView.{k}"
+        for k in (
+            "absent_concepts",
+            "needs_multi_year",
+            "needs_year_end_balance",
+            "stale_concepts",
+            "tests_no_filed_figure",
+        )
     },
     Caveat: {
         k: f"CaveatView.{k}"

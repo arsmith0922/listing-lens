@@ -22,7 +22,7 @@ class FinancialSignal(StrEnum):
     CLEAR = "clear"
     AT_RISK = "at_risk"
     BREACHED = "breached"
-    UNDETERMINED = "undetermined"  # an EDGAR figure is absent or needs a series
+    UNDETERMINED = "undetermined"  # the filed figures leave it open (see FinancialCaveat)
 
 
 def verdict_for(standing: Standing, rules_in_force: bool) -> Verdict:

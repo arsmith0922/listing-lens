@@ -63,6 +63,49 @@ class Caveat(BaseModel):
         )
 
 
+class FinancialCaveat(BaseModel):
+    """Why the financial signal is undetermined: the same gaps as the verdict's caveat, counted
+    over the financial view, where every market input is assumed met (so no missing_inputs), and
+    one more member for a tier that tests no filed figure. It is empty unless the financial
+    signal is undetermined with rules in force."""
+
+    model_config = CONFIG
+
+    absent_concepts: tuple[TargetConcept, ...] = ()
+    needs_multi_year: bool = False  # a window waits on a multi-year series
+    needs_year_end_balance: tuple[TargetConcept, ...] = ()  # only a quarter-end balance on hand
+    stale_concepts: tuple[TargetConcept, ...] = ()  # the only figure is from an earlier year
+    tests_no_filed_figure: bool = False  # no rule in the tier tests a filed figure
+
+    @model_validator(mode="after")
+    def _ordered_unique_and_alone(self) -> FinancialCaveat:
+        for name, concepts in (
+            ("absent_concepts", self.absent_concepts),
+            ("needs_year_end_balance", self.needs_year_end_balance),
+            ("stale_concepts", self.stale_concepts),
+        ):
+            if not _in_declared_order(concepts, _CONCEPT_ORDER):
+                raise InputValidationError(field=name, value="order or repeat")
+        gaps = (
+            self.absent_concepts
+            or self.needs_multi_year
+            or self.needs_year_end_balance
+            or self.stale_concepts
+        )
+        if self.tests_no_filed_figure and gaps:
+            raise InputValidationError(field="tests_no_filed_figure", value="with other members")
+        return self
+
+    def is_empty(self) -> bool:
+        return not (
+            self.absent_concepts
+            or self.needs_multi_year
+            or self.needs_year_end_balance
+            or self.stale_concepts
+            or self.tests_no_filed_figure
+        )
+
+
 class TranslatedFigure(BaseModel):
     """A measured figure that is a USD translation of one the filer reported in another
     currency, with the home-currency twin and the implied rate (D34, D39)."""
@@ -124,6 +167,7 @@ class TierResult(BaseModel):
     standards: tuple[StandardResult, ...]
     caveat: Caveat
     financial: FinancialSignal
+    financial_caveat: FinancialCaveat
     translated_figures: tuple[TranslatedFigure, ...]
 
     def standing(self) -> Standing:
@@ -147,6 +191,7 @@ class TierResult(BaseModel):
                 or not self.caveat.is_empty()
                 or self.translated_figures
                 or self.financial is not FinancialSignal.UNDETERMINED
+                or not self.financial_caveat.is_empty()
             ):
                 raise refuse("rules_in_force")
         else:
@@ -164,4 +209,8 @@ class TierResult(BaseModel):
         undecided = self.verdict is Verdict.CANNOT_DETERMINE and self.rules_in_force
         if undecided == self.caveat.is_empty():
             raise refuse("caveat")
+        # With rules in force the financial caveat explains exactly an undetermined signal.
+        unexplained = self.financial is FinancialSignal.UNDETERMINED
+        if self.rules_in_force and unexplained == self.financial_caveat.is_empty():
+            raise refuse("financial_caveat")
         return self

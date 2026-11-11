@@ -69,7 +69,7 @@ def test_every_destination_names_a_real_view_field_and_every_omission_says_why(
 
 def test_the_table_covers_the_models_the_views_read_and_nothing_else() -> None:
     names = sorted(m.__name__ for m in MAPPING)
-    assert len(names) == len(set(names)) == 37
+    assert len(names) == len(set(names)) == 38
     for expected in ("TierResult", "MeasuredResult", "NotEvaluableResult", "StandardRule"):
         assert expected in names
 
