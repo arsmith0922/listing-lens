@@ -27,6 +27,7 @@ from listinglens.core.errors.ingestion import (
     UndecodableDocument,
     UpstreamError,
 )
+from listinglens.core.errors.llm import ModelError, UnpricedUsage
 from listinglens.core.errors.margin import MarginConfigError, MarginError
 from listinglens.core.errors.representation import UnrepresentableNumber
 from listinglens.core.errors.standards import RuleNotFound, StandardsConfigError, StandardsError
@@ -48,6 +49,7 @@ __all__ = [
     "MarginConfigError",
     "MarginError",
     "MissingUserAgent",
+    "ModelError",
     "OutsideFullTextCoverage",
     "PeriodUnavailable",
     "RateLimited",
@@ -60,6 +62,7 @@ __all__ = [
     "ToolArgumentError",
     "UndecodableDocument",
     "UnitUnavailable",
+    "UnpricedUsage",
     "UnrepresentableNumber",
     "UpstreamError",
 ]

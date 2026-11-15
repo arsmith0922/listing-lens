@@ -80,7 +80,16 @@ def test_only_the_server_package_imports_the_sdk() -> None:
 
 
 def test_no_layer_below_the_server_imports_the_sdk_or_the_server() -> None:
-    for layer in ("core", "domain", "ingestion", "extraction", "standards", "margin", "tools"):
+    for layer in (
+        "core",
+        "domain",
+        "ingestion",
+        "extraction",
+        "standards",
+        "margin",
+        "tools",
+        "llm",
+    ):
         assert _layer_violations(layer, (*SDK, "listinglens.server")) == {}, layer
 
 
