@@ -27,7 +27,12 @@ from listinglens.core.errors.ingestion import (
     UndecodableDocument,
     UpstreamError,
 )
-from listinglens.core.errors.llm import ModelError, UnpricedUsage
+from listinglens.core.errors.llm import (
+    ModelError,
+    PriceTableInvalid,
+    UnknownModel,
+    UnpricedUsage,
+)
 from listinglens.core.errors.margin import MarginConfigError, MarginError
 from listinglens.core.errors.representation import UnrepresentableNumber
 from listinglens.core.errors.standards import RuleNotFound, StandardsConfigError, StandardsError
@@ -52,6 +57,7 @@ __all__ = [
     "ModelError",
     "OutsideFullTextCoverage",
     "PeriodUnavailable",
+    "PriceTableInvalid",
     "RateLimited",
     "ResponseTooLarge",
     "RuleNotFound",
@@ -62,6 +68,7 @@ __all__ = [
     "ToolArgumentError",
     "UndecodableDocument",
     "UnitUnavailable",
+    "UnknownModel",
     "UnpricedUsage",
     "UnrepresentableNumber",
     "UpstreamError",
