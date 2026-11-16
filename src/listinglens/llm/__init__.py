@@ -8,6 +8,7 @@ from __future__ import annotations
 from listinglens.llm.budget import Budget, Meter
 from listinglens.llm.client import ModelClient
 from listinglens.llm.cost import CostLines, price_usage, worst_case_cost
+from listinglens.llm.fake import FakeModelClient
 from listinglens.llm.fingerprint import (
     FINGERPRINT_FORMAT,
     canonical_request,
@@ -25,6 +26,14 @@ from listinglens.llm.models import (
     StopReason,
 )
 from listinglens.llm.prices import Band, ModelPrices, PriceTable, load_price_table
+from listinglens.llm.recording import (
+    Recording,
+    load_recording,
+    load_recordings,
+    make_recording,
+    write_manifest,
+    write_recording,
+)
 from listinglens.llm.schema import canonical_json, check_schema_text
 from listinglens.llm.usage import Usage, usage_from_counts
 
@@ -36,6 +45,7 @@ __all__ = [
     "CallRecord",
     "CostLines",
     "Effort",
+    "FakeModelClient",
     "Message",
     "Meter",
     "ModelClient",
@@ -43,6 +53,7 @@ __all__ = [
     "ModelRequest",
     "ModelResponse",
     "PriceTable",
+    "Recording",
     "ResponseFormat",
     "Role",
     "RunTotals",
@@ -52,8 +63,13 @@ __all__ = [
     "canonical_request",
     "check_schema_text",
     "load_price_table",
+    "load_recording",
+    "load_recordings",
+    "make_recording",
     "price_usage",
     "request_fingerprint",
     "usage_from_counts",
     "worst_case_cost",
+    "write_manifest",
+    "write_recording",
 ]

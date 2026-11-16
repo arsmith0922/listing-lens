@@ -82,3 +82,24 @@ class ServedModelMismatch(ModelError):
         super().__init__(
             f"The response came from model {self.served!r}, not the requested {self.requested!r}"
         )
+
+
+class RecordingMissing(ModelError):
+    """No recording has the request's fingerprint, so the fake client has nothing to replay. The
+    message carries the first characters of the fingerprint and the purpose slug only."""
+
+    def __init__(self, fingerprint: str, purpose: str) -> None:
+        self.fingerprint = fingerprint
+        self.purpose = purpose[:64]
+        super().__init__(f"No recording for request {fingerprint[:12]} (purpose {self.purpose!r})")
+
+
+class RecordingInvalid(ModelError):
+    """A recording file or folder is malformed. The detail is bounded and never echoes the
+    input, so a prompt or an answer cannot reach a log through it."""
+
+    def __init__(self, path: str, field: str, detail: str) -> None:
+        self.path = path
+        self.field = field
+        self.detail = detail
+        super().__init__(f"Invalid recording {path} (field {field!r}): {detail}")

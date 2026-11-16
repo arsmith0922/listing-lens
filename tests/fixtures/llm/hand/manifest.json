@@ -1,0 +1,11 @@
+[
+  {
+    "file": "hand.format_proof-168b127f9b5e.json",
+    "fingerprint": "168b127f9b5ed81ebced46c7e26f609054ef7c40dad9ec4e3d8f49f6dcdc370c",
+    "model": "claude-haiku-5-5",
+    "purpose": "hand.format_proof",
+    "recorded_at": "2026-11-16T12:00:00+00:00",
+    "sha256": "a9c1c99b79dd1d3f5ea21d16461f8951ac76104e5db750592e9991a8b5b74ada",
+    "source": "hand"
+  }
+]

@@ -1,0 +1,41 @@
+{
+  "bound": 150,
+  "fingerprint": "168b127f9b5ed81ebced46c7e26f609054ef7c40dad9ec4e3d8f49f6dcdc370c",
+  "fingerprint_format": "llm-request-v1",
+  "format": "llm-recording-v1",
+  "recorded_at": "2026-11-16T12:00:00+00:00",
+  "request": {
+    "effort": "low",
+    "max_tokens": 200,
+    "messages": [
+      {
+        "role": "user",
+        "text": "Does the section below say the shares are approved for listing on a Nasdaq market?\n\nSection: The shares have been approved for listing on the Nasdaq Capital Market."
+      }
+    ],
+    "model": "claude-haiku-5-5",
+    "purpose": "hand.format_proof",
+    "response_format": {
+      "name": "format_proof",
+      "schema_text": "{\"additionalProperties\":false,\"properties\":{\"listed_on_nasdaq\":{\"type\":\"boolean\"},\"quote\":{\"type\":\"string\"}},\"required\":[\"listed_on_nasdaq\",\"quote\"],\"type\":\"object\"}"
+    },
+    "system": "Answer with JSON only. Quote the sentence you rely on.",
+    "system_cache": "5m"
+  },
+  "response": {
+    "refusal_category": null,
+    "request_id": "hand-recording-1",
+    "served_model": "claude-haiku-5-5",
+    "stop": "completed",
+    "text": "{\"listed_on_nasdaq\":true,\"quote\":\"The shares have been approved for listing on the Nasdaq Capital Market.\"}",
+    "usage": {
+      "cache_read_tokens": 0,
+      "cache_write_1h_tokens": 0,
+      "cache_write_5m_tokens": 40,
+      "input_tokens": 88,
+      "output_tokens": 17,
+      "thinking_tokens": 0
+    }
+  },
+  "source": "hand"
+}
