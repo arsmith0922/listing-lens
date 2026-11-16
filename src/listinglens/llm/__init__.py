@@ -5,6 +5,7 @@ adapter file that implements ModelClient."""
 
 from __future__ import annotations
 
+from listinglens.llm.budget import Budget, Meter
 from listinglens.llm.client import ModelClient
 from listinglens.llm.cost import CostLines, price_usage, worst_case_cost
 from listinglens.llm.fingerprint import (
@@ -12,6 +13,7 @@ from listinglens.llm.fingerprint import (
     canonical_request,
     request_fingerprint,
 )
+from listinglens.llm.ledger import CallRecord, RunTotals
 from listinglens.llm.models import (
     CacheTtl,
     Effort,
@@ -29,10 +31,13 @@ from listinglens.llm.usage import Usage, usage_from_counts
 __all__ = [
     "FINGERPRINT_FORMAT",
     "Band",
+    "Budget",
     "CacheTtl",
+    "CallRecord",
     "CostLines",
     "Effort",
     "Message",
+    "Meter",
     "ModelClient",
     "ModelPrices",
     "ModelRequest",
@@ -40,6 +45,7 @@ __all__ = [
     "PriceTable",
     "ResponseFormat",
     "Role",
+    "RunTotals",
     "StopReason",
     "Usage",
     "canonical_json",

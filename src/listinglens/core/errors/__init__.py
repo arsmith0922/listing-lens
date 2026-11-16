@@ -28,8 +28,11 @@ from listinglens.core.errors.ingestion import (
     UpstreamError,
 )
 from listinglens.core.errors.llm import (
+    BoundBroken,
+    BudgetExceeded,
     ModelError,
     PriceTableInvalid,
+    ServedModelMismatch,
     UnknownModel,
     UnpricedUsage,
 )
@@ -42,6 +45,8 @@ __all__ = [
     "AllowlistReason",
     "AllowlistViolation",
     "AmbiguousCompany",
+    "BoundBroken",
+    "BudgetExceeded",
     "CompanyFactsNotFound",
     "CompanyNotFound",
     "ConceptNotFound",
@@ -62,6 +67,7 @@ __all__ = [
     "ResponseTooLarge",
     "RuleNotFound",
     "SectionNotFound",
+    "ServedModelMismatch",
     "StandardsConfigError",
     "StandardsError",
     "TooManyRedirects",
