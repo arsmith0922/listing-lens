@@ -69,7 +69,7 @@ macOS or Linux, using the module form:
 
 The two forms are interchangeable on either system: `listinglens-server` is a console script for `python -m listinglens.server`. If a variable is missing or wrong, the server exits with status 2 and says which one on stderr. Ask for `resolve_company` first, then pass the CIK it returns to the other tools.
 
-`.env.example` is a template for the planned agent, whose `ANTHROPIC_API_KEY` line the server does not use. To smoke-test the real server against the live services (manual, never run in CI):
+`.env.example` is a template for the planned agent, whose `LISTINGLENS_ANTHROPIC_API_KEY` line (the one name the key is read from, never a general `ANTHROPIC_API_KEY`) the server does not use. To smoke-test the real server against the live services (manual, never run in CI):
 
 ```
 LISTINGLENS_ALLOW_NETWORK=1 uv run python scripts/smoke_mcp.py

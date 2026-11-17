@@ -1,14 +1,15 @@
 """The boundary of the llm package (D57): it is pure. It imports only the standard library,
 pydantic and listinglens.core (and itself); no provider, no HTTP library, no MCP, no dotenv, no
 other ListingLens layer; it reads no environment variable and prints nothing. Nothing outside it
-may import the Anthropic SDK until the adapter commit names the one file that may."""
+may import the Anthropic SDK except the one adapter file, which has rules of its own (D61, see
+test_llm_adapter_boundaries.py)."""
 
 from __future__ import annotations
 
 import ast
 import sys
 
-from tests.test_repo_constraints import _rel, _repo_root, _tracked_files, find_forbidden_imports
+from tests.test_repo_constraints import _rel, _repo_root, find_forbidden_imports
 from tests.test_server_boundaries import find_environment_reads
 from tests.test_tools_boundaries import find_print_calls
 
@@ -39,6 +40,9 @@ def find_unapproved_imports(text: str) -> set[str]:
     return found
 
 
+ADAPTER = "src/listinglens/llm/anthropic_client.py"
+
+
 def _llm_files() -> list[tuple[str, str]]:
     root = _repo_root()
     found = [
@@ -49,13 +53,19 @@ def _llm_files() -> list[tuple[str, str]]:
     return found
 
 
+def _pure_llm_files() -> list[tuple[str, str]]:
+    return [(name, text) for name, text in _llm_files() if name != ADAPTER]
+
+
 def test_llm_imports_nothing_outside_the_standard_library_pydantic_and_core() -> None:
-    offenders = {name: sorted(find_unapproved_imports(text)) for name, text in _llm_files()}
+    offenders = {name: sorted(find_unapproved_imports(text)) for name, text in _pure_llm_files()}
     assert {name: mods for name, mods in offenders.items() if mods} == {}
 
 
 def test_llm_imports_none_of_the_banned_names() -> None:
-    offenders = {name: sorted(find_forbidden_imports(text, BANNED)) for name, text in _llm_files()}
+    offenders = {
+        name: sorted(find_forbidden_imports(text, BANNED)) for name, text in _pure_llm_files()
+    }
     assert {name: mods for name, mods in offenders.items() if mods} == {}
 
 
@@ -67,18 +77,6 @@ def test_llm_reads_no_environment_variable() -> None:
 def test_llm_prints_nothing() -> None:
     offenders = {name: find_print_calls(text) for name, text in _llm_files()}
     assert {name: lines for name, lines in offenders.items() if lines} == {}
-
-
-def test_nothing_outside_llm_imports_the_anthropic_sdk_yet() -> None:
-    root = _repo_root()
-    found = {
-        _rel(path, root): sorted(
-            find_forbidden_imports(path.read_text(encoding="utf-8"), ("anthropic",))
-        )
-        for path in _tracked_files()
-        if path.suffix == ".py" and _rel(path, root).startswith("src/")
-    }
-    assert {name: mods for name, mods in found.items() if mods} == {}
 
 
 def test_the_guards_see_what_they_are_meant_to() -> None:

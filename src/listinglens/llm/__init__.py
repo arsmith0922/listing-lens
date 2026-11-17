@@ -8,6 +8,7 @@ from __future__ import annotations
 from listinglens.llm.budget import Budget, Meter
 from listinglens.llm.client import ModelClient
 from listinglens.llm.cost import CostLines, price_usage, worst_case_cost
+from listinglens.llm.factory import open_model_client
 from listinglens.llm.fake import FakeModelClient
 from listinglens.llm.fingerprint import (
     FINGERPRINT_FORMAT,
@@ -66,6 +67,7 @@ __all__ = [
     "load_recording",
     "load_recordings",
     "make_recording",
+    "open_model_client",
     "price_usage",
     "request_fingerprint",
     "usage_from_counts",

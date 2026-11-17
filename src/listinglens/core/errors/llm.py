@@ -103,3 +103,78 @@ class RecordingInvalid(ModelError):
         self.field = field
         self.detail = detail
         super().__init__(f"Invalid recording {path} (field {field!r}): {detail}")
+
+
+class ModelNotConfigured(ModelError):
+    """No model key is configured. Names the variable that holds it, never a value."""
+
+    def __init__(self, variable: str) -> None:
+        self.variable = variable[:64]
+        super().__init__(f"No model key is configured: set {self.variable}")
+
+
+class ClientConfigurationRefused(ModelError):
+    """The model client was not built because its configuration is not the fixed one: a default
+    header beyond the pinned set, or a host that is not Anthropic's. Header names only, never
+    their values."""
+
+    def __init__(self, reason: str, names: tuple[str, ...]) -> None:
+        self.reason = reason[:200]
+        self.names = tuple(name[:64] for name in names[:10])
+        shown = f" ({', '.join(self.names)})" if self.names else ""
+        super().__init__(f"The model client was not built: {self.reason}{shown}")
+
+
+class RequestNotSupported(ModelError):
+    """The request asks for more than the adapter sends: an output limit over its ceiling."""
+
+    def __init__(self, limit: int, actual: int) -> None:
+        self.limit = limit
+        self.actual = actual
+        super().__init__(f"The output limit {actual} is over the adapter's ceiling of {limit}")
+
+
+class ProviderRejected(ModelError):
+    """The provider refused the request with a client error. Status, error type slug and request
+    id only; the provider's own message can quote the request and is never copied."""
+
+    def __init__(self, status: int, error_type: str, request_id: str | None) -> None:
+        self.status = status
+        self.error_type = error_type[:32]
+        self.request_id = request_id
+        super().__init__(
+            f"The provider rejected the request: status {status} ({self.error_type}), "
+            f"request {request_id}"
+        )
+
+
+class SchemaTooComplex(ModelError):
+    """The provider could not compile the response schema ("Schema is too complex for
+    compilation"). The fixed phrase is matched and never copied."""
+
+    def __init__(self, request_id: str | None) -> None:
+        self.request_id = request_id
+        super().__init__(
+            f"The provider could not compile the response schema, request {request_id}"
+        )
+
+
+class ProviderUnavailable(ModelError):
+    """The provider could not answer: rate limited, overloaded, a server error, a timeout or a
+    connection failure. Kind, status and request id only."""
+
+    def __init__(self, kind: str, status: int | None, request_id: str | None) -> None:
+        self.kind = kind
+        self.status = status
+        self.request_id = request_id
+        super().__init__(
+            f"The provider could not answer ({kind}): status {status}, request {request_id}"
+        )
+
+
+class UnexpectedModelResponse(ModelError):
+    """The provider's answer is not one this adapter can price or use. Fixed words only."""
+
+    def __init__(self, detail: str) -> None:
+        self.detail = detail[:200]
+        super().__init__(f"Unexpected response from the provider: {self.detail}")
