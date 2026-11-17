@@ -1,0 +1,38 @@
+[
+  {
+    "file": "live.cache_read-b4f28b74cde9.json",
+    "fingerprint": "b4f28b74cde9ab8fc22eeb112385251fb1c3060f07be2a78b461ad6ebe72ecb0",
+    "model": "claude-haiku-5-5",
+    "purpose": "live.cache_read",
+    "recorded_at": "2026-11-17T20:40:41+00:00",
+    "sha256": "91b41050f68dda79481df346f9852635c5b2bfd44315919fa320b90dc7b1476d",
+    "source": "live"
+  },
+  {
+    "file": "live.cache_write-3a3e35ebd3c1.json",
+    "fingerprint": "3a3e35ebd3c1519f6ba1ca6eaa1d75e9e7dad55a8ec5df99172bd4b636c5da86",
+    "model": "claude-haiku-5-5",
+    "purpose": "live.cache_write",
+    "recorded_at": "2026-11-17T20:40:40+00:00",
+    "sha256": "853d23683e397831b3fce6aba3e0de1907555a0e38a799613ca9e69893546ac6",
+    "source": "live"
+  },
+  {
+    "file": "live.haiku_structured-d3d244762286.json",
+    "fingerprint": "d3d2447622865722912af242be063a010a1482d4ac380f91298d94c97365041d",
+    "model": "claude-haiku-5-5",
+    "purpose": "live.haiku_structured",
+    "recorded_at": "2026-11-17T20:40:34+00:00",
+    "sha256": "80ea4d0b9a3ff4fd69619daddd1f091b0b9fa65f9cadc25e100e4f0d521d2016",
+    "source": "live"
+  },
+  {
+    "file": "live.sonnet_structured-76c5e1007ed8.json",
+    "fingerprint": "76c5e1007ed86b4fa1fe1018f85ed648d9c76f152d16a7b7400288cada2124f6",
+    "model": "claude-sonnet-5-5",
+    "purpose": "live.sonnet_structured",
+    "recorded_at": "2026-11-17T20:40:36+00:00",
+    "sha256": "b16958ef2b361c35db51690b74d870238ea565ce9b1340db20262e84a1e14c10",
+    "source": "live"
+  }
+]

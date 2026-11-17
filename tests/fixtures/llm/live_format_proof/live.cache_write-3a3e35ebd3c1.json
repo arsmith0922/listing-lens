@@ -1,0 +1,41 @@
+{
+  "bound": 2142,
+  "fingerprint": "3a3e35ebd3c1519f6ba1ca6eaa1d75e9e7dad55a8ec5df99172bd4b636c5da86",
+  "fingerprint_format": "llm-request-v1",
+  "format": "llm-recording-v1",
+  "recorded_at": "2026-11-17T20:40:40+00:00",
+  "request": {
+    "effort": "low",
+    "max_tokens": 1000,
+    "messages": [
+      {
+        "role": "user",
+        "text": "Is 2 plus 2 equal to 4?"
+      }
+    ],
+    "model": "claude-haiku-5-5",
+    "purpose": "live.cache_write",
+    "response_format": {
+      "name": "proof_answer",
+      "schema_text": "{\"additionalProperties\":false,\"properties\":{\"correct\":{\"type\":\"boolean\"}},\"required\":[\"correct\"],\"type\":\"object\"}"
+    },
+    "system": "Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums. Answer each arithmetic question with JSON only and decide it by plain sums.",
+    "system_cache": "5m"
+  },
+  "response": {
+    "refusal_category": null,
+    "request_id": "req_011Ch99WLVbmAhwojExb3u55",
+    "served_model": "claude-haiku-5-5",
+    "stop": "completed",
+    "text": "{\"correct\":true}",
+    "usage": {
+      "cache_read_tokens": 0,
+      "cache_write_1h_tokens": 0,
+      "cache_write_5m_tokens": 1692,
+      "input_tokens": 22,
+      "output_tokens": 9,
+      "thinking_tokens": 0
+    }
+  },
+  "source": "live"
+}
