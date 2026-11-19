@@ -34,3 +34,15 @@ class IdentityRefused(MemoError):
     def __init__(self, detail: str) -> None:
         self.detail = detail
         super().__init__(f"An identity text was refused: {detail}")
+
+
+class ToolResultRejected(MemoError):
+    """A tool result handed to the memo is not usable: it is too large, is not valid JSON, does
+    not fit its model, or disagrees with another result (another company, another scope note).
+    Built from fixed words, a tool name and a field of the model; it never echoes the result."""
+
+    def __init__(self, tool: str, field: str, detail: str) -> None:
+        self.tool = tool
+        self.field = field
+        self.detail = detail
+        super().__init__(f"The {tool} result was rejected (field {field!r}): {detail}")

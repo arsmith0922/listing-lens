@@ -46,7 +46,13 @@ from listinglens.core.errors.llm import (
     UnpricedUsage,
 )
 from listinglens.core.errors.margin import MarginConfigError, MarginError
-from listinglens.core.errors.memo import FactInvalid, IdCollision, IdentityRefused, MemoError
+from listinglens.core.errors.memo import (
+    FactInvalid,
+    IdCollision,
+    IdentityRefused,
+    MemoError,
+    ToolResultRejected,
+)
 from listinglens.core.errors.representation import UnrepresentableNumber
 from listinglens.core.errors.standards import RuleNotFound, StandardsConfigError, StandardsError
 from listinglens.core.errors.validation import InputValidationError, ToolArgumentError
@@ -94,6 +100,7 @@ __all__ = [
     "StandardsError",
     "TooManyRedirects",
     "ToolArgumentError",
+    "ToolResultRejected",
     "UndecodableDocument",
     "UnexpectedModelResponse",
     "UnitUnavailable",
