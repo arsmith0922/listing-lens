@@ -57,8 +57,20 @@ class ResponseFormat(BaseModel):
         try:
             text = canonical_json(schema)
         except ValueError as exc:
+            # json.dumps raises ValueError for a loop and for a number it cannot write
+            reason = (
+                "the schema refers to itself"
+                if "Circular reference" in str(exc)
+                else "a number in the schema is not finite"
+            )
+            raise InputValidationError(field="response_format", value=reason) from exc
+        except TypeError as exc:
             raise InputValidationError(
-                field="response_format", value="a number in the schema is not finite"
+                field="response_format", value="the schema holds a value that is not JSON"
+            ) from exc
+        except RecursionError as exc:
+            raise InputValidationError(
+                field="response_format", value="the schema is nested too deeply"
             ) from exc
         return cls(name=name, schema_text=text)
 
