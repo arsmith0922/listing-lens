@@ -2,7 +2,7 @@
 (one tier for each of the seven recorded companies, and three tiers for two of them) under a
 Meter, prints the figures of each call and, for each draft, which rules fired on the first attempt
 and which list entries matched (names and counts, never any text of a draft), and writes every call,
-retries included, as a live recording under tests/fixtures/llm/live_writer/. It is outside
+retries included, as a live recording under tests/fixtures/llm/live_writer/<RUN>/. It is outside
 testpaths and is never collected or run in CI, and no test ever runs it with the gate set; the
 tests call main() with a scripted client.
 
@@ -54,7 +54,10 @@ from listinglens.workflow.writer import parse_draft, write_narrative
 
 GATE = "LISTINGLENS_ALLOW_LIVE"
 REPO = Path(__file__).resolve().parent.parent
-OUTPUT_DIR = REPO / "tests" / "fixtures" / "llm" / "live_writer"
+# One folder to a run (D69): run-1 holds the first run and is committed, this run goes to RUN, and
+# the commit that adds its recordings names the next one. A folder that holds anything is refused.
+RUN = "run-2"
+OUTPUT_DIR = REPO / "tests" / "fixtures" / "llm" / "live_writer" / RUN
 # Nine drafts, each at most two attempts: 18 calls under the 20. The worst case reserved for a call
 # is about 0.15 to 0.19 dollars (D68), so the dollar cap passes the meter's pre-call check for all.
 BUDGET = Budget(max_attempts=20, max_tokens=450_000, max_dollars=Decimal("2.00"))

@@ -6,7 +6,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-DIGEST = "d0e08fa12a0e95a665f8e4b5c6ac7a2f2033f0caef5f802849744beed3947ceb"
+# D69: the seven form counts of the set carry their form, 15 + len(form) bytes each (156 in all);
+# with those keys taken out the set hashes to the D65 value d0e08fa1...3947ceb, 57,208 bytes.
+DIGEST = "bf4f354bacbc05d1fab4db95c43b96f209a56df38fd02c49ad835a970730498f"
 CIK = "0001935172"
 ACC = "0001213900-26-060270"
 RULES = "https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5400-series"

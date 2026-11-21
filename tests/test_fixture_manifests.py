@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -15,7 +16,28 @@ FOLDERS = ("edgar", "nasdaq")  # fixtures are organized by source; each folder h
 # listing the directory. Their manifests have a source and a time instead of a url, so they join
 # the byte checks below but not the url check, which stays on the SEC and Nasdaq folders.
 LLM = FIXTURES / "llm"
-SCENARIOS = tuple(sorted(f"llm/{p.name}" for p in LLM.iterdir() if p.is_dir()))
+
+
+def _is_a_container_of_runs(folder: Path) -> bool:
+    """A folder whose every entry is a folder named run-N (the live writer's recordings are kept
+    one run to a folder, D69), so it has no manifest of its own; each of those is a scenario."""
+    entries = sorted(folder.iterdir())
+    return bool(entries) and all(
+        p.is_dir() and re.fullmatch(r"run-[0-9]+", p.name) for p in entries
+    )
+
+
+def _scenarios() -> tuple[str, ...]:
+    found: list[str] = []
+    for folder in sorted(p for p in LLM.iterdir() if p.is_dir()):
+        if _is_a_container_of_runs(folder):
+            found += [f"llm/{folder.name}/{run.name}" for run in sorted(folder.iterdir())]
+        else:
+            found.append(f"llm/{folder.name}")
+    return tuple(found)
+
+
+SCENARIOS = _scenarios()
 ALL_FOLDERS = (*FOLDERS, *SCENARIOS)
 
 

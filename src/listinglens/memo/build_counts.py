@@ -28,7 +28,7 @@ def _filing_counts(c: Collector, results: ToolResults, filing_ids: Sequence[str]
         if isinstance(value, FilingValue):
             by_form.setdefault(value.form_type, []).append(fact_id)
     for form, ids in by_form.items():
-        c.count(f"filings.form.{slug(form)}", len(ids), ids, COUNT)
+        c.count(f"filings.form.{slug(form)}", len(ids), ids, COUNT, form_type=form)
 
 
 def _figure_counts(c: Collector, results: ToolResults) -> None:

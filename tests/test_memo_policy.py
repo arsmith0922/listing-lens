@@ -24,7 +24,7 @@ FIELD_SETS: dict[str, tuple[str, ...]] = {
         "type", "level", "tier", "standard_id", "standard_name", "requirement", "branch",
         "value", "thin", "reported_financials",
     ),
-    "CountValue": ("type", "name", "count"),
+    "CountValue": ("type", "name", "count", "form_type"),
     "DataStatusValue": ("type", "status"),
     "DirectoryCitationView": (
         "kind", "url", "file_created", "file_sha256", "symbol", "security_name",

@@ -29,11 +29,14 @@ FILING = "filing." + ACC_6K
 
 
 def count_spec(name: str, count: int, cites: tuple[FactCitation, ...] | None, *rests: str) -> Spec:
+    value: dict[str, object] = {"type": "count", "name": name, "count": count}
+    if name.startswith("filings.form."):  # the form as the SEC writes it: 6-K, 20-F, 8-K
+        value["form_type"] = name.removeprefix("filings.form.").upper()
     return Spec(
         "count." + name,
         "count",
         "primary" if name.endswith(".findings_breached") else "context",
-        {"type": "count", "name": name, "count": count},
+        value,
         cites,
         tuple(rests),
     )

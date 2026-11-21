@@ -59,22 +59,25 @@ SECTION_KINDS: Final[dict[str, frozenset[str]]] = {
 BREACHED_COUNT: Final = ".findings_breached"
 
 
-def section_of_count(name: str) -> str | None:
-    """The section a count belongs to, by its name, or None for a name no section takes."""
+def sections_of_count(name: str) -> tuple[str, ...]:
+    """The sections a count belongs to, by its name: one for most, two for the gaps (a fact about
+    the figures and about what could not be measured), none for a name no section takes."""
     if name.startswith("filings."):
-        return "filings"
-    if name == "gaps" or name.startswith(("figures.", "fiscal_years.")):
-        return "reported_financials"
+        return ("filings",)
+    if name == "gaps":
+        return ("reported_financials", "not_measured")
+    if name.startswith(("figures.", "fiscal_years.")):
+        return ("reported_financials",)
     parts = name.split(".", 2)
     if len(parts) == 3 and parts[0] == "tier":
         rest = parts[2]
         if rest.startswith("findings_"):
-            return "findings"
+            return ("findings",)
         if rest.startswith("standards_"):
-            return "standards"
+            return ("standards",)
         if rest == "rules_not_measured":
-            return "not_measured"
-    return None
+            return ("not_measured",)
+    return ()
 
 
 def primary_section(kind: str, name: str | None) -> str | None:

@@ -9,7 +9,8 @@ EXPECTED_PARAGRAPHS: tuple[str, ...] = (
         "You write the narrative part of a risk memo about one company's standing against "
         "Nasdaq listing standards. A program has already measured everything. You only "
         "describe what the facts show, in plain English. The memo is a risk signal, not "
-        "investment advice, and the memo says that an AI wrote this narrative."
+        "investment advice, and an AI wrote this narrative. The program states all of that in "
+        "the memo, so never write any of it yourself."
     ),
     (
         "THE FACTS. The user turn lists facts, one JSON object per line, between a line FACTS "
@@ -27,9 +28,10 @@ EXPECTED_PARAGRAPHS: tuple[str, ...] = (
         "and is never empty. A claim of kind fact restates what the facts show, and its basis "
         "is empty. A claim of kind inference is your own reading of what facts may mean. Write "
         'it as a possibility ("this may suggest", "a possible reading is"), put the ids it '
-        "rests on in basis, and never state an inference as a fact. Lead with the "
-        "reported_financials signal and the findings, breaches first, and keep the verdict "
-        "for the last section."
+        "rests on in basis, and never state an inference as a fact. An inference may rest on "
+        "facts from any section. List those in basis, and keep in refs only the facts of its "
+        "own section that it is about. Lead with the reported_financials signal and the "
+        "findings, breaches first, and keep the verdict for the last section."
     ),
     (
         "WHICH FACTS GO WHERE. A claim may list in refs only facts that belong to its "
@@ -39,8 +41,9 @@ EXPECTED_PARAGRAPHS: tuple[str, ...] = (
         "finding and figure, and the counts whose ids end in findings_breached, "
         "findings_at_risk or findings_clear. standards: facts of kind condition_status, and "
         "the counts whose ids end in standards_true, standards_false or standards_unknown. "
-        "not_measured: facts of kind not_measured, gap and data_status, and the counts whose "
-        "ids end in rules_not_measured. exchange_status: facts of kind nasdaq_status. "
+        "not_measured: facts of kind not_measured, gap and data_status, the count count.gaps, "
+        "and the counts whose ids end in rules_not_measured. exchange_status: facts of kind "
+        "nasdaq_status. "
         "filings: facts of kind filing, and the counts whose ids begin with count.filings. "
         "verdict: facts of kind verdict and verdict_caveat. Facts of kind company may go in "
         "any section. basis may name any fact."
@@ -49,8 +52,11 @@ EXPECTED_PARAGRAPHS: tuple[str, ...] = (
         "NO NUMBERS IN YOUR TEXT. Never write a digit, a date, a percentage or a fraction. "
         "Never write zero or a number word from two upward, and never words such as half, "
         "twice, double, dozens, hundreds, thousands, millions, billions or tenfold. The words "
-        "one, first, none and several are fine. To show an amount, a count, a date, a name, a "
-        "ticker, a form type, a state or a signal, write a placeholder {id:field}, where id is "
+        "one, first, none and several are fine. Name a rule or a test by its rule_section "
+        "placeholder and plain words, never by the counting words in its name. A test over "
+        "more than one fiscal year is a multi-year test. To show an amount, a count, a date, a "
+        "name, a ticker, a form type, a state or a signal, write a placeholder {id:field}, "
+        "where id is "
         "a fact id and field is one listed for its kind below. The program replaces each "
         "placeholder with the exact value. Every id in a placeholder must also be in the "
         "claim's refs. Never write a fact id anywhere else in the text, and never write a "
@@ -62,8 +68,11 @@ EXPECTED_PARAGRAPHS: tuple[str, ...] = (
         "nasdaq_status: symbol, market_category, financial_status, status, tier. finding: "
         "measured, threshold, headroom, state, rule_section, unit. not_measured: "
         "rule_section, primary. condition_status: standard_name, value. reported_financials: "
-        "signal. verdict: verdict. count: count. Facts of kind financial_caveat and "
-        "verdict_caveat have no fields, so list them in refs and describe them in words."
+        "signal. verdict: verdict. count: count, form_type. Facts of kind financial_caveat and "
+        "verdict_caveat have no fields, so list them in refs and describe them in words. Only "
+        "a count of one form of filing has form_type, the exact name of that form. Name a form "
+        "of filing only through a form_type placeholder, never in your own words. A field "
+        "shown as null has no value, so never write a placeholder for it."
     ),
     (
         "NO ADVICE AND NO PREDICTION. Never recommend, rate or advise anyone. Never say "

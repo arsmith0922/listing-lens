@@ -25,6 +25,9 @@ class WriterView(BaseModel):
     text: str  # the fact lines, one per fact, joined by newlines
     kinds: dict[str, str]  # fact id -> kind, for every fact shown
     primary: tuple[str, ...]  # ids of the primary facts shown, in reading order
+    # fact id -> the keys of its shown value that hold a value (not null), sorted: exactly what
+    # a placeholder may name on that fact (D69)
+    carried: dict[str, tuple[str, ...]]
 
 
 def _shown(fact: Fact) -> bool:
@@ -34,12 +37,16 @@ def _shown(fact: Fact) -> bool:
     )
 
 
-def _row(fact: Fact) -> str:
+def _shown_value(fact: Fact) -> dict[str, object]:
     value = fact.value.model_dump(mode="json")
     value.pop("type", None)
     if isinstance(fact.value, NotMeasuredValue):
         value = {key: value[key] for key in NOT_MEASURED_SHOWN}
-    return dumps({"id": fact.id, "kind": fact.kind, "value": value})
+    return value
+
+
+def _row(fact: Fact) -> str:
+    return dumps({"id": fact.id, "kind": fact.kind, "value": _shown_value(fact)})
 
 
 def build_writer_view(fact_set: FactSet) -> WriterView:
@@ -50,4 +57,10 @@ def build_writer_view(fact_set: FactSet) -> WriterView:
         primary=tuple(
             fact.id for fact in ordered if rules.expected_lead(fact.kind, fact.value) == "primary"
         ),
+        carried={
+            fact.id: tuple(
+                sorted(key for key, held in _shown_value(fact).items() if held is not None)
+            )
+            for fact in ordered
+        },
     )

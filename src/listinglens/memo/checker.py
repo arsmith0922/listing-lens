@@ -11,7 +11,7 @@ from listinglens.memo.narrative import (
     Claim,
     Narrative,
     primary_section,
-    section_of_count,
+    sections_of_count,
 )
 from listinglens.memo.placeholders import FIELDS, parse_text
 from listinglens.memo.view import WriterView
@@ -28,6 +28,7 @@ CheckRule = Literal[
     "unresolved_placeholder",
     "placeholder_not_in_refs",
     "field_not_allowed",
+    "field_not_carried",
     "malformed_placeholder",
     "digit_in_text",
     "quantity_word",
@@ -53,6 +54,7 @@ RULE_ORDER: Final[tuple[CheckRule, ...]] = (
     "unresolved_placeholder",
     "placeholder_not_in_refs",
     "field_not_allowed",
+    "field_not_carried",
     "malformed_placeholder",
     "digit_in_text",
     "quantity_word",
@@ -78,6 +80,7 @@ MESSAGES: Final[dict[CheckRule, str]] = {
     "unresolved_placeholder": "A placeholder names an id that is not a fact you were given.",
     "placeholder_not_in_refs": "A placeholder names a fact the claim does not list in refs.",
     "field_not_allowed": "A placeholder names a field that its kind of fact does not allow.",
+    "field_not_carried": "A placeholder names a field that this fact has no value for.",
     "malformed_placeholder": "The text has a brace that is not part of a valid placeholder.",
     "digit_in_text": "A number appears in the text. Use a placeholder for every value.",
     "quantity_word": "A word that states a quantity appears in the text. Use a placeholder.",
@@ -133,7 +136,7 @@ def _is_plain(text: str) -> bool:
 
 def _belongs(section: str, fact_id: str, kind: str) -> bool:
     if kind == "count":
-        return section_of_count(fact_id.removeprefix("count.")) == section
+        return section in sections_of_count(fact_id.removeprefix("count."))
     return kind in SECTION_KINDS[section]
 
 
@@ -152,6 +155,8 @@ def _claim_rules(claim: Claim, section: str, view: WriterView) -> set[CheckRule]
             fired.add("placeholder_not_in_refs")
         if placeholder.field not in FIELDS.get(kind, ()):
             fired.add("field_not_allowed")
+        elif placeholder.field not in view.carried.get(placeholder.fact_id, ()):
+            fired.add("field_not_carried")
     if parsed.malformed:
         fired.add("malformed_placeholder")
     if rules_text.has_number(parsed.prose):

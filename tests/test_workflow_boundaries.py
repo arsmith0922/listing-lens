@@ -50,6 +50,26 @@ def find_unapproved_imports(text: str) -> set[str]:
     return found
 
 
+def imported_names(text: str) -> str:
+    """The text's imports as source lines that name every imported thing by its full dotted name:
+    `from listinglens.core import config` also imports `listinglens.core.config`, a module the ban
+    must see, and the shared check reads only the module of a from-import (D69)."""
+    lines: list[str] = []
+    for node in ast.walk(ast.parse(text)):
+        if isinstance(node, ast.Import):
+            lines += [f"import {alias.name}" for alias in node.names]
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            lines.append(f"import {node.module}")
+            lines += [
+                f"import {node.module}.{alias.name}" for alias in node.names if alias.name != "*"
+            ]
+    return "\n".join(lines)
+
+
+def find_banned_imports(text: str) -> set[str]:
+    return find_forbidden_imports(imported_names(text), BANNED)
+
+
 def _workflow_files() -> list[tuple[str, str]]:
     root = _repo_root()
     found = [
@@ -67,7 +87,7 @@ def test_workflow_imports_only_what_the_boundary_allows() -> None:
 
 def test_workflow_imports_none_of_the_banned_names() -> None:
     files = _workflow_files()
-    offenders = {rel: sorted(find_forbidden_imports(text, BANNED)) for rel, text in files}
+    offenders = {rel: sorted(find_banned_imports(text)) for rel, text in files}
     assert {rel: mods for rel, mods in offenders.items() if mods} == {}
 
 
@@ -128,17 +148,31 @@ def test_the_guards_see_what_they_are_meant_to() -> None:
     }
     assert find_unapproved_imports("from . import x") == {"."}
     banned = "from listinglens.llm.anthropic_client import AnthropicClient"
-    assert find_forbidden_imports(banned, BANNED)
-    assert find_forbidden_imports("from listinglens.llm.factory import open_model_client", BANNED)
-    assert find_forbidden_imports("import anthropic", BANNED)
-    assert not find_forbidden_imports("from listinglens.llm.models import ModelRequest", BANNED)
+    assert find_banned_imports(banned)
+    assert find_banned_imports("from listinglens.llm.factory import open_model_client")
+    assert find_banned_imports("import anthropic")
+    assert not find_banned_imports("from listinglens.llm.models import ModelRequest")
     settings = "from listinglens.core.config import Settings"
-    assert find_forbidden_imports(settings, BANNED)
-    assert find_forbidden_imports("import listinglens.core.config", BANNED)
-    assert not find_forbidden_imports("from listinglens.core.errors import WriterFailed", BANNED)
+    assert find_banned_imports(settings)
+    assert find_banned_imports("import listinglens.core.config")
+    assert not find_banned_imports("from listinglens.core.errors import WriterFailed")
     ok = "from listinglens.llm.client import ModelClient"
-    assert not find_forbidden_imports(ok, BANNED) and find_unapproved_imports(ok) == set()
-    assert not find_forbidden_imports("from listinglens.llm import ModelClient", BANNED)
+    assert not find_banned_imports(ok) and find_unapproved_imports(ok) == set()
+    assert not find_banned_imports("from listinglens.llm import ModelClient")
     assert find_clock_use("import time") == [1]
     assert find_environment_reads("import os\nx = os.environ['A']")
     assert find_print_calls("print('x')")
+    # a from-import of a banned module by name, where the module named in the line is allowed
+    assert find_banned_imports("from listinglens.core import config") == {"listinglens.core.config"}
+    assert find_banned_imports("from listinglens.core import config as c, errors") == {
+        "listinglens.core.config"
+    }
+    assert not find_banned_imports("from listinglens.core import errors")
+    assert find_banned_imports("from listinglens.core.config import *")  # a star names no thing
+    assert find_banned_imports("from listinglens.llm import factory") == {"listinglens.llm.factory"}
+    assert find_banned_imports("from listinglens.llm import anthropic_client") == {
+        "listinglens.llm.anthropic_client"
+    }
+    assert find_banned_imports("from listinglens import tools") == {"listinglens.tools"}
+    assert not find_banned_imports("from listinglens.llm import client")
+    assert find_unapproved_imports("from listinglens import server") == {"listinglens"}

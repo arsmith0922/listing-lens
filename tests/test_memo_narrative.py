@@ -218,24 +218,25 @@ def test_the_primary_facts_and_the_section_that_must_cover_them(
 
 
 @pytest.mark.parametrize(
-    ("name", "section"),
+    ("name", "sections"),
     [
-        ("filings.returned", "filings"),
-        ("filings.total_matching", "filings"),
-        ("filings.form.20-f_a", "filings"),
-        ("figures.extracted", "reported_financials"),
-        ("gaps", "reported_financials"),
-        ("fiscal_years.with_figures", "reported_financials"),
-        ("tier.global.findings_breached", "findings"),
-        ("tier.capital.findings_at_risk", "findings"),
-        ("tier.global_select.standards_unknown", "standards"),
-        ("tier.global.rules_not_measured", "not_measured"),
-        ("tier.global", None),
-        ("mystery", None),
+        ("filings.returned", ("filings",)),
+        ("filings.total_matching", ("filings",)),
+        ("filings.form.20-f_a", ("filings",)),
+        ("figures.extracted", ("reported_financials",)),
+        ("gaps", ("reported_financials", "not_measured")),  # D69: the gaps are in both
+        ("fiscal_years.with_figures", ("reported_financials",)),
+        ("tier.global.findings_breached", ("findings",)),
+        ("tier.capital.findings_at_risk", ("findings",)),
+        ("tier.global_select.standards_unknown", ("standards",)),
+        ("tier.global.rules_not_measured", ("not_measured",)),
+        ("tier.global", ()),
+        ("mystery", ()),
     ],
 )
-def test_a_count_goes_to_the_section_its_name_says(name: str, section: str | None) -> None:
-    assert n.section_of_count(name) == section
+def test_a_count_goes_to_the_sections_its_name_says(name: str, sections: tuple[str, ...]) -> None:
+    assert n.sections_of_count(name) == sections
+    assert not hasattr(n, "section_of_count")  # the singular is gone: no caller can still use it
 
 
 def test_the_kinds_each_section_may_be_about_are_the_pinned_table() -> None:

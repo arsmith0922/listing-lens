@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from datetime import datetime
 
 import pytest
@@ -18,7 +19,10 @@ from tests.memo_results import CHECKS, DAY1, DAY2, assemble, results_for, texts
 from tests.test_memo_time import restamped
 from tests.tools_stack import CIKS
 
-AIXI_DIGEST = "3b95539bc0cb10c6bb7ff70225d02ffe223b6d153473379ac7fa5f7d2b988e03"
+# D69: seven form counts, each row 15 + len(form) bytes longer, 156 in all (D66: 14,390 bytes,
+# digest 3b95539b...988e03 once those keys are taken out, as the test below does by hand)
+AIXI_DIGEST = "5cf08588ee5b8860f5279fc0f200c9ddcb0a1a045fd4f497cbc48bb2746a71d3"
+D66_AIXI_DIGEST = "3b95539bc0cb10c6bb7ff70225d02ffe223b6d153473379ac7fa5f7d2b988e03"
 PRIMARY_AIXI = (
     "tier.global.reported_financials",
     "tier.global.financial_caveat",
@@ -39,7 +43,7 @@ def rows(view: WriterView) -> list[dict[str, object]]:
 
 def test_the_xiao_i_view_is_pinned_by_size_digest_and_its_first_lines() -> None:
     view = build_writer_view(facts("aixi"))
-    assert len(view.text.encode()) == 14_390
+    assert len(view.text.encode()) == 14_390 + 156
     assert hashlib.sha256(view.text.encode()).hexdigest() == AIXI_DIGEST
     assert view.text.splitlines()[:5] == [
         '{"id":"company.cik","kind":"company","value":{"field":"cik","text":"0001935172"}}',
@@ -49,6 +53,19 @@ def test_the_xiao_i_view_is_pinned_by_size_digest_and_its_first_lines() -> None:
         '{"id":"company.exchange.nasdaq","kind":"company","value":{"field":"exchange","text":"Nasdaq"}}',
     ]
     assert len(view.kinds) == 83 and tuple(view.primary) == PRIMARY_AIXI
+
+
+def test_the_only_change_since_d66_is_the_form_of_each_form_count() -> None:
+    """Take the form_type key out of every count row by hand and the view is D66's again."""
+    text = build_writer_view(facts("aixi")).text
+    forms = re.findall(r'"count":[0-9]+,"form_type":"([^"]*)",', text)
+    assert sorted(forms) == sorted(
+        ["20-F", "20-F/A", "424B5", "6-K", "F-6 POS", "SCHEDULE 13G", "SCHEDULE 13G/A"]
+    )
+    assert sum(15 + len(form) for form in forms) == 156
+    old = re.sub(r'("count":[0-9]+,)"form_type":"[^"]*",', r"\1", text)
+    assert len(old.encode()) == 14_390
+    assert hashlib.sha256(old.encode()).hexdigest() == D66_AIXI_DIGEST
 
 
 def test_a_row_holds_an_id_a_kind_and_a_value_and_nothing_else() -> None:
@@ -143,8 +160,8 @@ def test_the_primary_facts_are_the_signal_caveat_findings_and_breached_count() -
 def test_sizes_over_the_seven_recorded_companies_are_pinned() -> None:
     one = [len(build_writer_view(facts(label, "check_one")).text.encode()) for label in CIKS]
     three = [len(build_writer_view(facts(label, "check_three")).text.encode()) for label in CIKS]
-    assert (min(one), max(one)) == (12_016, 15_602)
-    assert (min(three), max(three)) == (24_738, 35_782)
+    assert (min(one), max(one)) == (12_142, 15_774)  # D66: 12,016 and 15,602
+    assert (min(three), max(three)) == (24_862, 35_970)  # D66: 24,738 and 35,782
 
 
 def test_the_view_is_smaller_than_the_stable_part_of_the_set_by_about_half() -> None:

@@ -23,7 +23,7 @@ FIELDS: Final[dict[str, tuple[str, ...]]] = {
     "condition_status": ("standard_name", "value"),
     "reported_financials": ("signal",),
     "verdict": ("verdict",),
-    "count": ("count",),
+    "count": ("count", "form_type"),
 }
 
 

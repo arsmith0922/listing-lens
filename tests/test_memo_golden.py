@@ -38,7 +38,7 @@ def test_the_whole_set_is_pinned_by_its_digest_size_and_count_per_kind() -> None
     fact_set = built()
     assert fact_set_digest(fact_set) == DIGEST
     assert (len(fact_set.facts), len(fact_set.citations)) == (96, 50)
-    assert len(canonical_json(fact_set)) == 57208
+    assert len(canonical_json(fact_set)) == 57_208 + 156  # D65's size plus the seven form names
     assert dict(Counter(f.kind for f in fact_set.facts)) == KIND_COUNTS
 
 

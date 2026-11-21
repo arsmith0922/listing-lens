@@ -60,7 +60,7 @@ def test_two_claims_report_in_reading_order_and_one_finding_per_rule_per_claim()
 def test_every_rule_has_one_fixed_message_and_the_order_lists_each_rule_once() -> None:
     rules = set(get_args(CheckRule))
     assert set(MESSAGES) == rules == set(RULE_ORDER)
-    assert len(RULE_ORDER) == len(rules) == 23
+    assert len(RULE_ORDER) == len(rules) == 24
     assert len(set(MESSAGES.values())) == len(MESSAGES)
     assert all(message.endswith(".") and message.isascii() for message in MESSAGES.values())
 

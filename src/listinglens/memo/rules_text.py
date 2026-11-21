@@ -4,9 +4,10 @@ import re
 import unicodedata
 from typing import Final
 
-# The text rules of the checker (D67): how a draft's prose is normalized and the provisional lists
-# it is matched against. The lists are provisional: they are measured on recorded writer drafts
-# and frozen in the commit after the first live run. Each is matched on whole words, so
+# The text rules of the checker (D67): how a draft's prose is normalized and the lists it is
+# matched against. The lists are frozen by D69, after the first live run classified every finding
+# on the recorded drafts; a change needs a new decision record that supersedes D69 (a test pins
+# them). Each is matched on whole words, so
 # "threshold" and "shareholders" can never contain "hold", and hyphens, underscores and slashes
 # are word boundaries (so "sell-side analysts" is "sell side analysts", which no phrase names,
 # and "buy-rating" is "buy rating", which one does). Ordinals and "one" are ordinary English and

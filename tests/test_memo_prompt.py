@@ -52,7 +52,7 @@ def test_the_prompt_has_the_form_it_was_approved_in() -> None:
         "NO NUMBERS IN YOUR TEXT",
     ]
     assert [h for h in heads[6:]] == ["NO ADVICE AND NO PREDICTION", "LIMITS", "STYLE", "SECTIONS"]
-    assert 4_500 < len(SYSTEM_PROMPT) < 6_500  # well above the 512-token caching minimum
+    assert 4_500 < len(SYSTEM_PROMPT) < 7_000  # well above the 512-token caching minimum
 
 
 def test_the_fields_the_prompt_lists_are_the_placeholder_allowlist() -> None:
@@ -82,23 +82,25 @@ def test_every_limit_the_prompt_states_is_the_constant_of_the_narrative_model() 
     assert re.findall(r"\d[\d,]*", limits) == LIMITS_NUMBERS
 
 
-def parse_section_table() -> tuple[dict[str, set[str]], dict[str, str]]:
-    """The kinds and the count names each section takes, as the prompt words them."""
+def parse_section_table() -> tuple[dict[str, set[str]], dict[str, str], dict[str, str]]:
+    """The kinds, the counts by suffix and the single named count each section takes."""
     text = paragraph("WHICH FACTS GO WHERE. ").split("A claim may list in refs only facts that")[1]
     text = text.split(" section. ", 1)[1].split(" Facts of kind company may go in any section")[0]
     kinds: dict[str, set[str]] = {}
     counts: dict[str, str] = {}
+    singles: dict[str, str] = {}
     pieces = re.split(r"(?<=\.) (?=[a-z_]+: facts of kind)", text)
     for piece in pieces:
         name, rest = piece.split(": facts of kind ", 1)
         kind_part, _, count_part = rest.rstrip(".").partition(", and the counts ")
+        kind_part, _, singles[name] = kind_part.partition(", the count ")
         kinds[name] = set(re.split(r", | and ", kind_part))
         counts[name] = count_part
-    return kinds, counts
+    return kinds, counts, singles
 
 
 def test_the_section_table_of_the_prompt_is_the_one_the_checker_enforces() -> None:
-    kinds, counts = parse_section_table()
+    kinds, counts, singles = parse_section_table()
     assert list(kinds) == list(n.SECTIONS)
     assert {name: found | {"company"} for name, found in kinds.items()} == {
         name: set(found) for name, found in n.SECTION_KINDS.items()
@@ -110,6 +112,7 @@ def test_the_section_table_of_the_prompt_is_the_one_the_checker_enforces() -> No
     assert counts["findings"].startswith("whose ids end in findings_breached, findings_at_risk")
     assert counts["standards"].startswith("whose ids end in standards_true, standards_false")
     assert counts["not_measured"] == "whose ids end in rules_not_measured"
+    assert singles == {name: "count.gaps" if name == "not_measured" else "" for name in kinds}
     assert counts["filings"] == "whose ids begin with count.filings"
     assert counts["exchange_status"] == "" == counts["verdict"]
 
@@ -122,12 +125,13 @@ def test_the_count_names_in_the_prompt_are_exactly_the_counts_the_recorded_sets_
                 if item.kind != "count":
                     continue
                 name = item.id.removeprefix("count.")
-                section = n.section_of_count(name)
-                assert section is not None, item.id
+                sections = n.sections_of_count(name)
+                assert sections, item.id
                 tail = name.split(".", 2)[2] if name.startswith("tier.") else name
-                by_section[section].add(
-                    tail if section in ("findings", "standards", "not_measured") else name
-                )
+                for section in sections:
+                    by_section[section].add(
+                        tail if section in ("findings", "standards", "not_measured") else name
+                    )
     assert by_section["reported_financials"] == {
         "gaps",
         "figures.extracted",
@@ -135,7 +139,7 @@ def test_the_count_names_in_the_prompt_are_exactly_the_counts_the_recorded_sets_
     }
     assert by_section["findings"] == {"findings_breached", "findings_at_risk", "findings_clear"}
     assert by_section["standards"] == {"standards_true", "standards_false", "standards_unknown"}
-    assert by_section["not_measured"] == {"rules_not_measured"}
+    assert by_section["not_measured"] == {"rules_not_measured", "gaps"}  # D69: and the gaps
     assert all(name.startswith("filings.") for name in by_section["filings"])
     assert not by_section["exchange_status"] and not by_section["verdict"]
 
@@ -210,7 +214,7 @@ def test_the_hand_written_passing_draft_and_a_company_in_every_section_pass_the_
 
 def test_the_user_turn_is_the_facts_between_two_fixed_lines_and_the_instruction() -> None:
     rows = '{"id":"a","kind":"count","value":{}}\n{"id":"b"}'
-    view = WriterView(text=rows, kinds={}, primary=())
+    view = WriterView(text=rows, kinds={}, primary=(), carried={})
     assert user_turn(view) == "FACTS\n" + rows + "\nEND OF FACTS\nWrite the narrative."
     lines = user_turn(aixi_view()).split("\n")
     assert lines[0] == "FACTS" and lines[-2:] == ["END OF FACTS", "Write the narrative."]

@@ -4,7 +4,15 @@ import re
 from datetime import date
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, Field, StringConstraints, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    Field,
+    SerializerFunctionWrapHandler,
+    StringConstraints,
+    model_serializer,
+    model_validator,
+)
 
 from listinglens.core.errors import FactInvalid, IdentityRefused
 from listinglens.memo import vocab
@@ -217,10 +225,35 @@ class VerdictCaveatValue(_Value):
     stale_concepts: tuple[vocab.Concept, ...]
 
 
+FORM_COUNT_PREFIX = "filings.form."
+
+
 class CountValue(_Value):
+    """A number the memo states. A count of one form of filing also holds the form's exact name,
+    which the writer may place by its field (D69); no other count has it, and it is left out of
+    every serialized form when absent, so a count of anything else is byte for byte what it was."""
+
     type: Literal["count"] = "count"
     name: Slug
     count: Annotated[int, Field(ge=0)]
+    form_type: Identity | None = None
+
+    @model_validator(mode="after")
+    def _form_type_goes_with_a_form_count(self) -> CountValue:
+        if self.name.startswith(FORM_COUNT_PREFIX) != (self.form_type is not None):
+            raise FactInvalid(
+                f"count.{self.name}", "form_type is set exactly on a count of one form"
+            )
+        return self
+
+    @model_serializer(mode="wrap")
+    def _leave_out_an_absent_form_type(
+        self, handler: SerializerFunctionWrapHandler
+    ) -> dict[str, object]:
+        data: dict[str, object] = handler(self)
+        if data.get("form_type") is None:
+            data.pop("form_type", None)
+        return data
 
 
 FactValue = Annotated[

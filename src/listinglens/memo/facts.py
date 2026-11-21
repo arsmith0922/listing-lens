@@ -7,12 +7,13 @@ from pydantic import BaseModel, Field, model_validator
 from listinglens.core.errors import FactInvalid
 from listinglens.memo import counts, rules
 from listinglens.memo.citations import CitationId, FactCitation, citation_id
-from listinglens.memo.ids import expected_id
+from listinglens.memo.ids import expected_id, slug
 from listinglens.memo.values import (
     ConditionValue,
     CountValue,
     FactId,
     FactValue,
+    FilingValue,
     FindingValue,
     NotMeasuredValue,
 )
@@ -132,6 +133,15 @@ class FactSet(BaseModel):
         member = counts.members_of(value.name)
         if not all(member(by_id[other]) for other in fact.rests_on):
             raise FactInvalid(fact.id, "a count rests on a fact outside its population")
+        if value.form_type is not None:
+            if slug(value.form_type) != value.name.removeprefix("filings.form."):
+                raise FactInvalid(fact.id, "a form count's form_type does not match its name")
+            for other in fact.rests_on:
+                filing = by_id[other].value
+                if not isinstance(filing, FilingValue) or filing.form_type != value.form_type:
+                    raise FactInvalid(
+                        fact.id, "a form count's form_type differs from a filing it counts"
+                    )
         if not fact.rests_on:
             population = counts.population_citations(value.name, self.facts, self.citations)
             if not population:

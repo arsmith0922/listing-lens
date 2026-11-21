@@ -52,7 +52,14 @@ class Collector:
             cited.update(self._by_id[other].citations)
         return self._file(ident, value, rank, tuple(sorted(cited)), tuple(sorted(rests_on)))
 
-    def count(self, name: str, count: int, rests_on: Sequence[str], rank: Rank) -> str | None:
+    def count(
+        self,
+        name: str,
+        count: int,
+        rests_on: Sequence[str],
+        rank: Rank,
+        form_type: str | None = None,
+    ) -> str | None:
         """Add a count, or nothing when its population is empty (no fact without a citation)."""
         population = counts.population_citations(name, self.facts(), self._table.as_mapping())
         chosen = counts.count_citations(
@@ -60,7 +67,7 @@ class Collector:
         )
         if chosen is None:
             return None
-        value = CountValue(name=name, count=count)
+        value = CountValue(name=name, count=count, form_type=form_type)
         return self._file(f"count.{name}", value, rank, chosen, tuple(sorted(rests_on)))
 
     def _file(

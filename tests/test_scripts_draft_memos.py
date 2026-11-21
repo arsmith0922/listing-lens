@@ -109,13 +109,13 @@ def test_the_scenario_is_nine_drafts_built_offline_with_a_fixed_clock() -> None:
         tiers = {f.split(".")[1] for f in view.kinds if f.startswith("tier.")}
         if name.endswith(".three"):
             assert tiers == {"capital", "global", "global_select"}, name
-            assert 24_738 <= len(view.text) <= 35_782, name
+            assert 24_862 <= len(view.text) <= 35_970, name
         elif name.split(".")[0] in draft.DIRECTORY_TIER:
             assert len(tiers) == 1 and tiers != {"global_select"}, name  # the directory's tier
-            assert 12_000 <= len(view.text) <= 15_602, name
+            assert 12_000 <= len(view.text) <= 15_774, name
         else:
             assert tiers == {"global_select"}, name  # Global Select named
-            assert 12_000 <= len(view.text) <= 15_602, name
+            assert 12_000 <= len(view.text) <= 15_774, name
         assert view.primary, name
     assert draft.DIRECTORY_TIER == ("aacg", "agmh", "aixi")
     assert draft.THREE_TIERS == ("aixi", "trans_american")
