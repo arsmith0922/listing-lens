@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import ast
 import sys
+from pathlib import PurePosixPath
 
 from tests.test_repo_constraints import _rel, _repo_root, find_forbidden_imports
 from tests.test_server_boundaries import find_environment_reads
@@ -110,14 +111,50 @@ def test_memo_reads_no_clock_no_randomness_no_environment_and_prints_nothing() -
     assert {n: find_print_calls(t) for n, t in files if find_print_calls(t)} == {}
 
 
-def test_nothing_below_the_memo_imports_it() -> None:
-    root = _repo_root()
-    offenders = [
-        _rel(path, root)
-        for path in sorted((root / "src" / "listinglens").rglob("*.py"))
-        if "/memo/" not in path.as_posix() and "listinglens.memo" in path.read_text("utf-8")
+def in_package(rel: str, package: str) -> bool:
+    """True if the repository-relative path is inside src/listinglens/<package>/, matched by path
+    parts and never by a string prefix (so workflows/ and workflow_tools.py are not workflow/)."""
+    return PurePosixPath(rel).parts[:3] == ("src", "listinglens", package)
+
+
+def find_memo_importers(files: list[tuple[str, str]]) -> list[str]:
+    """The files outside memo/ and workflow/ whose text mentions listinglens.memo. The workflow
+    package is the one other place that may use the memo (D68); its own guard says what else it
+    may and may not import."""
+    return [
+        rel
+        for rel, text in files
+        if not in_package(rel, "memo")
+        and not in_package(rel, "workflow")
+        and "listinglens.memo" in text
     ]
-    assert offenders == []
+
+
+def test_nothing_outside_the_memo_and_the_workflow_imports_it() -> None:
+    root = _repo_root()
+    files = [
+        (_rel(path, root), path.read_text("utf-8"))
+        for path in sorted((root / "src" / "listinglens").rglob("*.py"))
+    ]
+    assert find_memo_importers(files) == []
+
+
+def test_only_the_workflow_directory_itself_may_import_the_memo() -> None:
+    uses = "from listinglens.memo import prompt\n"
+    siblings = [
+        "src/listinglens/workflows/writer.py",
+        "src/listinglens/workflow_tools.py",
+        "src/listinglens/workflow.py",
+        "src/listinglens/tools/workflow/writer.py",
+        "src/listinglens/memos/x.py",
+        "src/listinglens/llm/x.py",
+        "scripts/x.py",
+    ]
+    assert find_memo_importers([(rel, uses) for rel in siblings]) == siblings
+    allowed = ["src/listinglens/workflow/writer.py", "src/listinglens/memo/x.py"]
+    assert find_memo_importers([(rel, uses) for rel in allowed]) == []
+    assert in_package("src/listinglens/workflow/a/b.py", "workflow")
+    assert not in_package("src/listinglens/workflow.py", "workflow")
 
 
 def test_the_guards_see_what_they_are_meant_to() -> None:

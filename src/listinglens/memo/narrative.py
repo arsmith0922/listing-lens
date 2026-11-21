@@ -36,17 +36,25 @@ MAX_CLAIMS: Final = 100  # per draft
 MAX_DRAFT_PROSE: Final = 24_000  # characters of prose per draft
 
 # The kinds of fact a section may be about (a count goes by its name, below). A basis may name any
-# fact. The checker (the next commit) enforces this table.
+# fact. A company fact may be named in any section (D68). The checker enforces this table.
 SECTION_KINDS: Final[dict[str, frozenset[str]]] = {
     "reported_financials": frozenset(
-        {"reported_financials", "financial_caveat", "figure", "fiscal_year", "data_status", "gap"}
+        {
+            "reported_financials",
+            "financial_caveat",
+            "figure",
+            "fiscal_year",
+            "data_status",
+            "gap",
+            "company",
+        }
     ),
-    "findings": frozenset({"finding", "figure"}),
-    "standards": frozenset({"condition_status"}),
-    "not_measured": frozenset({"not_measured", "gap", "data_status"}),
+    "findings": frozenset({"finding", "figure", "company"}),
+    "standards": frozenset({"condition_status", "company"}),
+    "not_measured": frozenset({"not_measured", "gap", "data_status", "company"}),
     "exchange_status": frozenset({"nasdaq_status", "company"}),
     "filings": frozenset({"filing", "company"}),
-    "verdict": frozenset({"verdict", "verdict_caveat"}),
+    "verdict": frozenset({"verdict", "verdict_caveat", "company"}),
 }
 BREACHED_COUNT: Final = ".findings_breached"
 

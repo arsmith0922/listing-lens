@@ -51,7 +51,9 @@ from listinglens.core.errors.memo import (
     IdCollision,
     IdentityRefused,
     MemoError,
+    NarrativeRejected,
     ToolResultRejected,
+    WriterFailed,
 )
 from listinglens.core.errors.representation import UnrepresentableNumber
 from listinglens.core.errors.standards import RuleNotFound, StandardsConfigError, StandardsError
@@ -82,6 +84,7 @@ __all__ = [
     "MissingUserAgent",
     "ModelError",
     "ModelNotConfigured",
+    "NarrativeRejected",
     "OutsideFullTextCoverage",
     "PeriodUnavailable",
     "PriceTableInvalid",
@@ -108,4 +111,5 @@ __all__ = [
     "UnpricedUsage",
     "UnrepresentableNumber",
     "UpstreamError",
+    "WriterFailed",
 ]

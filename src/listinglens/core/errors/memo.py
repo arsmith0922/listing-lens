@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Protocol
+
 from listinglens.core.errors.base import ListingLensError
 
 
@@ -46,3 +48,29 @@ class ToolResultRejected(MemoError):
         self.field = field
         self.detail = detail
         super().__init__(f"The {tool} result was rejected (field {field!r}): {detail}")
+
+
+class _Finding(Protocol):
+    @property
+    def rule(self) -> str: ...
+
+
+class NarrativeRejected(MemoError):
+    """The writer's draft failed the checker twice, the retry included, so there is no memo. It
+    holds the findings of the last attempt (each a rule, a place and a fixed message, never any
+    of the draft) and its own message names the rules only."""
+
+    def __init__(self, findings: tuple[_Finding, ...]) -> None:
+        self.findings = findings
+        rules = sorted({finding.rule for finding in findings})
+        super().__init__("The narrative was rejected after one retry: " + ", ".join(rules))
+
+
+class WriterFailed(MemoError):
+    """The writer's call did not end in an answer: it was refused, cut off at the output limit,
+    stopped at the context window, or came back empty. The reason is one of those fixed words.
+    There is no memo and no retry."""
+
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+        super().__init__(f"The writer produced no narrative: {reason}")

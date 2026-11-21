@@ -239,24 +239,25 @@ def test_a_count_goes_to_the_section_its_name_says(name: str, section: str | Non
 
 
 def test_the_kinds_each_section_may_be_about_are_the_pinned_table() -> None:
-    assert {
-        "reported_financials": frozenset(
-            {
-                "reported_financials",
-                "financial_caveat",
-                "figure",
-                "fiscal_year",
-                "data_status",
-                "gap",
-            }
-        ),
-        "findings": frozenset({"finding", "figure"}),
-        "standards": frozenset({"condition_status"}),
-        "not_measured": frozenset({"not_measured", "gap", "data_status"}),
-        "exchange_status": frozenset({"nasdaq_status", "company"}),
-        "filings": frozenset({"filing", "company"}),
-        "verdict": frozenset({"verdict", "verdict_caveat"}),
-    } == n.SECTION_KINDS
+    own = {
+        "reported_financials": {
+            "reported_financials",
+            "financial_caveat",
+            "figure",
+            "fiscal_year",
+            "data_status",
+            "gap",
+        },
+        "findings": {"finding", "figure"},
+        "standards": {"condition_status"},
+        "not_measured": {"not_measured", "gap", "data_status"},
+        "exchange_status": {"nasdaq_status"},
+        "filings": {"filing"},
+        "verdict": {"verdict", "verdict_caveat"},
+    }
+    # a company fact may be named in any section (D68)
+    assert {name: frozenset(kinds | {"company"}) for name, kinds in own.items()} == n.SECTION_KINDS
+    assert all("company" in kinds for kinds in n.SECTION_KINDS.values())
     assert set(n.SECTION_KINDS) == set(n.SECTIONS)
 
 
