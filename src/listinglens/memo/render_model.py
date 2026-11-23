@@ -91,3 +91,21 @@ class RenderedMemo(BaseModel):
     exchange_note: Statement
     sections: tuple[RenderedSection, ...]  # all seven, in reading order, some without claims
     sources: tuple[SourceEntry, ...]  # in the order of their numbers
+
+
+class Provenance(BaseModel):
+    """What the memo says about how it was made (D72), as plain text and numbers, so the page needs
+    nothing from the model interface: the model and effort that wrote the narrative, the SHA-256 of
+    the system text it was sent, the cost as exact decimal text, the attempts and tokens, and the
+    version of the price table the cost was computed with. The record builds it; D73's footer reads
+    it."""
+
+    model_config = TOOL_CONFIG
+
+    model: str
+    effort: str | None
+    prompt_sha256: str
+    cost: str  # exact decimal text of the dollars, as the meter totals them
+    attempts: int
+    tokens: int
+    price_table_version: int

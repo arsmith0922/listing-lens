@@ -95,3 +95,15 @@ class LinkRefused(MemoError):
         self.kind = kind[:40]
         self.reason = reason
         super().__init__(f"A source link was refused ({self.kind}): {reason}")
+
+
+class RecordInvalid(MemoError):
+    """A memo record does not hold together: its format is not the current one, its digest is not
+    the fact set's, its narrative has a finding of the checker, its context, calls or totals
+    disagree with each other. The check is a fixed word and the detail fixed words or the names of
+    checker rules; nothing of the narrative, of a fact or of a value is ever in it."""
+
+    def __init__(self, check: str, detail: str) -> None:
+        self.check = check[:40]
+        self.detail = detail
+        super().__init__(f"The memo record is not valid ({self.check}): {detail}")
