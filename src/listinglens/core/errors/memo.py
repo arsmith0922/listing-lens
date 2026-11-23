@@ -74,3 +74,24 @@ class WriterFailed(MemoError):
     def __init__(self, reason: str) -> None:
         self.reason = reason
         super().__init__(f"The writer produced no narrative: {reason}")
+
+
+class RenderRefused(MemoError):
+    """The text layer refused to render: the narrative has findings (named by rule only), or a value
+    has no rule, no value or no word. The key is a field key (kind.field) shortened, never a value;
+    the reason is a fixed phrase."""
+
+    def __init__(self, key: str, reason: str) -> None:
+        self.key = key[:80]
+        self.reason = reason
+        super().__init__(f"The memo could not be rendered ({self.key}): {reason}")
+
+
+class LinkRefused(MemoError):
+    """A link built for a source did not pass the allow-list, or could not be built from the
+    citation. It names the kind of citation and a fixed reason, never the address."""
+
+    def __init__(self, kind: str, reason: str) -> None:
+        self.kind = kind[:40]
+        self.reason = reason
+        super().__init__(f"A source link was refused ({self.kind}): {reason}")
