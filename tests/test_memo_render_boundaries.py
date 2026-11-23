@@ -1,8 +1,8 @@
-"""What the text layer may not do (D71), beyond the memo's own guard (stdlib, pydantic, core,
-domain, tools models; no model, network client, clock, randomness, environment or print): no
-module that opens a connection (urllib.request, socket, ssl, http), only urllib.parse of the
-urllib package, and nothing locale-dependent (strftime, locale, calendar) in anything that writes
-a date or a number."""
+"""What the text layer (D71) and the page (D73) may not do, beyond the memo's own guard (stdlib,
+pydantic, core, domain, tools models; no model, network client, clock, randomness, environment or
+print): no module that opens a connection (urllib.request, socket, ssl, http), only urllib.parse
+of the urllib package, and nothing locale-dependent (strftime, locale, calendar) in anything that
+writes a date or a number."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ def render_files() -> list[tuple[str, str]]:
         )
         for name in sorted(names)
     ]
-    assert len(found) == 7, [n for n, _ in found]
+    assert len(found) == 11, [n for n, _ in found]
     return found
 
 

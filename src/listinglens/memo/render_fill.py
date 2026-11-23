@@ -18,7 +18,7 @@ from listinglens.memo.render_model import (
     Text,
 )
 from listinglens.memo.render_rules import render_value
-from listinglens.memo.render_sources import describe, marks, number_citations
+from listinglens.memo.render_sources import describe, marks, number_citations, release_of
 from listinglens.memo.statements import (
     AI_DISCLOSURE,
     AI_DISCLOSURE_ID,
@@ -83,7 +83,11 @@ def render_memo(narrative: Narrative, fact_set: FactSet) -> RenderedMemo:
     for citation_id, number in sorted(numbers.items(), key=lambda item: item[1]):
         cite = fact_set.citations[citation_id]
         label, links = describe(cite)
-        sources.append(SourceEntry(number=number, kind=cite.kind, label=label, links=links))
+        sources.append(
+            SourceEntry(
+                number=number, kind=cite.kind, label=label, links=links, release=release_of(cite)
+            )
+        )
     return RenderedMemo(
         scope_note=Statement(id=SCOPE_NOTE_ID, text=SCOPE_NOTE),
         ai_disclosure=Statement(id=AI_DISCLOSURE_ID, text=AI_DISCLOSURE),

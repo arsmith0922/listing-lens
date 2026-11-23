@@ -74,6 +74,7 @@ class SourceEntry(BaseModel):
     kind: Literal["xbrl", "directory", "sec_record", "rule"]
     label: str
     links: tuple[str, ...]  # each one has passed the allow-list
+    release: str | None  # the SEC release of a rule, whose approval sentence has the second link
 
 
 class Statement(BaseModel):

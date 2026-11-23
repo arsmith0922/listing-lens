@@ -20,7 +20,9 @@ from listinglens.tools.models_source import DirectoryCitationView
 # code from the fields of the citation and passes an allow-list that fails closed: https only, one
 # of four exact hosts, no userinfo, no port, no query, no fragment, no character outside printable
 # ASCII. The words of a source label were approved word for word; a rule's quoted text is Nasdaq's
-# own and stays as it is (5 of the 62 distinct quotes in the recorded sets hold a semicolon).
+# own and stays as it is (5 of the 62 distinct quotes in the recorded sets hold a semicolon). A rule
+# approved in an SEC release has two links: its label, and the approval sentence after it, which the
+# page links on its own (D73), so the release id is kept apart from the label.
 ALLOWED_HOSTS: Final = (
     "www.sec.gov",
     "data.sec.gov",
@@ -38,6 +40,7 @@ SUBMISSION_FIELD_WORDS: Final = {
     "exchanges": "exchanges",
     "filings": "filing list",
 }
+APPROVED_IN: Final = "Approved in"
 
 
 def check_link(kind: str, url: str) -> str:
@@ -71,14 +74,28 @@ def filing_index(kind: str, cik: str, accession: str) -> str:
     return check_link(kind, f"https://www.sec.gov/Archives/edgar/data/{path}")
 
 
+def runs(numbers: tuple[int, ...]) -> tuple[tuple[int, int], ...]:
+    """The sorted numbers as runs of consecutive numbers, each as its first and last number."""
+    found: list[tuple[int, int]] = []
+    for _, run in groupby(enumerate(sorted(set(numbers))), lambda pair: pair[1] - pair[0]):
+        members = [number for _, number in run]
+        found.append((members[0], members[-1]))
+    return tuple(found)
+
+
+def run_text(first: int, last: int) -> str:
+    return str(first) if first == last else f"{first}-{last}"
+
+
 def marks(numbers: tuple[int, ...]) -> str:
     """Sorted numbers as written: a run of two or more consecutive numbers is a-b, the pieces are
     joined by a comma with no space."""
-    pieces: list[str] = []
-    for _, run in groupby(enumerate(sorted(set(numbers))), lambda pair: pair[1] - pair[0]):
-        members = [number for _, number in run]
-        pieces.append(str(members[0]) if len(members) == 1 else f"{members[0]}-{members[-1]}")
-    return ",".join(pieces)
+    return ",".join(run_text(first, last) for first, last in runs(numbers))
+
+
+def approval(release: str) -> str:
+    """The sentence that names the SEC release a rule was approved in."""
+    return f"{APPROVED_IN} {release}."
 
 
 def _record(cite: SecRecordCite) -> tuple[str, tuple[str, ...]]:
@@ -115,8 +132,16 @@ def _record(cite: SecRecordCite) -> tuple[str, tuple[str, ...]]:
     raise LinkRefused(kind, "a record field with no link")
 
 
+def release_of(cite: FactCitation) -> str | None:
+    """The SEC release a rule was approved in, when the citation has the release and its link."""
+    if isinstance(cite, RuleCite) and cite.sec_release_url is not None:
+        return cite.sec_release  # None when the rule names no release
+    return None
+
+
 def describe(cite: FactCitation) -> tuple[str, tuple[str, ...]]:
-    """The label of a source and its links, both built from the citation's own fields."""
+    """The label of a source and its links, both built from the citation's own fields. A rule's
+    label stops before its approval sentence (release_of gives the release)."""
     if isinstance(cite, SecRecordCite):
         return _record(cite)
     if isinstance(cite, XbrlCite):
@@ -135,8 +160,7 @@ def describe(cite: FactCitation) -> tuple[str, tuple[str, ...]]:
             f'Nasdaq {cite.section}: "{cite.quoted_text}". Read {format_date(cite.retrieved_on)}.'
         )
         links = [check_link("rule", cite.url)]
-        if cite.sec_release is not None and cite.sec_release_url is not None:
-            label += f" Approved in {cite.sec_release}."
+        if release_of(cite) is not None and cite.sec_release_url is not None:
             links.append(check_link("rule", cite.sec_release_url))
         return label, tuple(links)
     assert isinstance(cite, DirectoryCitationView)

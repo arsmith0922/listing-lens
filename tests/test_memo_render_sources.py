@@ -16,9 +16,13 @@ from listinglens.memo.narrative import Claim
 from listinglens.memo.render_fill import render_memo
 from listinglens.memo.render_sources import (
     ALLOWED_HOSTS,
+    APPROVED_IN,
+    approval,
     describe,
     marks,
     number_citations,
+    release_of,
+    runs,
 )
 from listinglens.tools.models_financials import PeriodView
 from listinglens.tools.models_source import DirectoryCitationView
@@ -47,6 +51,8 @@ def test_marks_write_a_run_of_two_or_more_as_a_range_and_join_the_rest_with_comm
     numbers: tuple[int, ...], shown: str
 ) -> None:
     assert marks(numbers) == shown
+    pieces = [str(a) if a == b else f"{a}-{b}" for a, b in runs(numbers)]
+    assert ",".join(pieces) == shown and all(a <= b for a, b in runs(numbers))
 
 
 def oracle(name: str) -> tuple[list[str], list[tuple[int, ...]]]:
@@ -201,17 +207,19 @@ def rule(**parts: object) -> RuleCite:
 
 
 def test_the_labels_of_a_rule_with_and_without_a_release_keep_the_quote_verbatim() -> None:
+    """The approved label is the label and, for a rule approved in a release, the approval
+    sentence after it, which the page links on its own (D73)."""
     both = describe(rule())
-    assert both[0] == (
+    shown = 'Nasdaq Rule 5550(a): "At least 300 Public Holders; and more". Read October 13, 2026.'
+    assert both[0] == shown and release_of(rule()) == "SR-NASDAQ-2024-084"
+    assert both[0] + " " + approval("SR-NASDAQ-2024-084") == (
         'Nasdaq Rule 5550(a): "At least 300 Public Holders; and more". Read October 13, 2026. '
         "Approved in SR-NASDAQ-2024-084."
     )
+    assert APPROVED_IN == "Approved in"
     assert both[1] == (ALLOWED[2], "https://www.sec.gov/rules-regulations/sro/2024-084")
-    bare = describe(rule(sec_release=None, sec_release_url=None))
-    assert bare == (
-        'Nasdaq Rule 5550(a): "At least 300 Public Holders; and more". Read October 13, 2026.',
-        (ALLOWED[2],),
-    )
+    bare = rule(sec_release=None, sec_release_url=None)
+    assert describe(bare) == (shown, (ALLOWED[2],)) and release_of(bare) is None
 
 
 def test_the_label_of_a_directory_row_and_a_link_off_the_list_is_refused_in_a_rule() -> None:

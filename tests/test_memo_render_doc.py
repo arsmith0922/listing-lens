@@ -58,8 +58,15 @@ def small_memo() -> RenderedMemo:
                 kind="rule",
                 label="A rule.",
                 links=("https://a.example/1", "https://a.example/2"),
+                release="SR-X-1",
             ),
-            SourceEntry(number=2, kind="directory", label="A row.", links=("https://b.example/x",)),
+            SourceEntry(
+                number=2,
+                kind="directory",
+                label="A row.",
+                links=("https://b.example/x",),
+                release=None,
+            ),
         ),
     )
 
@@ -75,7 +82,7 @@ def test_the_projection_has_the_approved_structure_to_the_character() -> None:
         "Exchange note.\n\n"
         "The flag is deficient. [4]\n\n"
         "Sources\n"
-        "1. A rule.\n"
+        "1. A rule. Approved in SR-X-1.\n"
         "    https://a.example/1\n"
         "    https://a.example/2\n"
         "2. A row.\n"
