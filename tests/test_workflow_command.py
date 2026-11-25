@@ -184,7 +184,7 @@ def test_help_needs_no_key_and_the_entry_point_is_in_the_project(
         "listinglens-server": "listinglens.server.startup:main",
         "listinglens-memo": "listinglens.workflow.command:main",
     }
-    assert "memos/" in (REPO / ".gitignore").read_text("utf-8").splitlines()
+    assert "/memos/" in (REPO / ".gitignore").read_text("utf-8").splitlines()
 
 
 def test_the_record_time_is_utc_in_whole_seconds() -> None:

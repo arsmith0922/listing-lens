@@ -1,0 +1,132 @@
+Figures are as reported in SEC XBRL filings and are not verified by ListingLens. This output is a risk signal, not investment advice and not a recommendation to buy or sell any security.
+
+A program took every figure from the company's SEC filings, measured each against the Nasdaq rules, read the exchange's own directory and cited every fact. An AI model wrote the sentences below from those facts alone, without seeing any filing text. The program checked every sentence, put in every value and attached every source. Passages marked Reading are the model's interpretation, not facts.
+
+Reported financials
+The reported financials signal is clear. The financial caveat flags no absent, stale or year-end balance concepts. [1-10]
+As reported by the company and not verified, revenue was 30,561,201 USD, net income 561,630 USD and pretax income 3,474,779 USD. [11-13]
+Reported total assets were 44,228,907 USD, equity 39,172,562 and cash 325,338. [9,14-15]
+Data status is available. 7 figures came from 1 fiscal year, ending December 31, 2025. [5,9,11-17]
+Reported income from continuing operations was 577,826 USD. [5]
+
+Findings
+Breached findings number 0. At-risk findings number 0. Clear findings number 2. [1-10]
+Under Rule 5550(b)(1), reported stockholders' equity is 39,172,562 against a threshold of 2,500,000. Headroom is 36,672,562 and the state is clear. [1,9]
+Under Rule 5550(b)(3), reported income from continuing operations is 577,826 against a threshold of 500,000. Headroom is 77,826 and the state is clear. [3,5]
+Reading: The income margin over the threshold is narrow in absolute terms, so a possible reading is that this test is sensitive to a modest change in reported income. [3,5]
+
+Standards
+Standards met number 2, failed number 0 and unknown number 1. [1-10]
+The Equity Standard is true, and its main branch is true. [1,9]
+The Net Income Standard is true, decided on the latest fiscal year branch, which is true. [3,5]
+The Market Value of Listed Securities Standard is unknown, as its inputs are missing. [2]
+
+Not measured
+Rules not measured number 7. [2-4,6-8,10]
+Several tests under Rule 5550(a) and Rule 5550(b)(2) could not be measured because market price is an input the filings do not supply. [2,4,10]
+Market maker count, public holders and publicly held shares are also missing inputs. [6-8]
+The multi-year net income test under Rule 5550(b)(3) was not measured because of a window mismatch problem. [3]
+There are 2 gaps. Concepts shares outstanding and public float were not found, with reason concept not found. [16]
+
+Exchange status
+Nasdaq's financial status flag for the issuer as of the directory file's creation stamp. It is the exchange's flag, not a ListingLens finding, and it does not feed the assessment.
+
+The exchange's own data for AGMH shows a status of deficient and a financial status code of D, in market category S, tier capital. This flag belongs to the exchange and is not our finding. [18]
+
+Filings
+The memo lists 20 recent filings out of 259 matching, with 239 omitted. [19-39]
+The latest annual report is a 20-F filed on August 7, 2026 for the period ending December 31, 2025. It followed a NT 20-F filed on April 30, 2026. [23,27]
+The most common form is 6-K, with 11 among those returned. The most recent was filed on November 16, 2026. [19,21,24,28,30-33,35-36,38]
+Ownership filings also appear, including 1 of form SCHEDULE 13D and 1 of form SCHEDULE 13D/A. [20,25]
+
+Verdict
+The verdict is cannot determine. The company is neither passed nor failed. The caveat names missing inputs: market price, publicly held shares, public holders and market maker count. [1-10]
+Reading: A possible reading is that the measured standards are met on reported figures, yet the exchange's deficient flag and the unmeasured rules leave the overall position open. [1-10,18]
+
+Sources
+1. Nasdaq Rule 5550(b)(1): "Stockholders' equity of at least $2.5 million". Read October 13, 2026. Approved in SR-NASDAQ-2009-018.
+    https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    https://www.sec.gov/rule-release/34-59663
+2. Nasdaq Rule 5550(b)(2): "Market Value of Listed Securities of at least $35 million". Read October 13, 2026. Approved in SR-NASDAQ-2009-018.
+    https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    https://www.sec.gov/rule-release/34-59663
+3. Nasdaq Rule 5550(b)(3): "Net income from continuing operations of $500,000 in the most recently completed fiscal year or in two of the three most recently completed fiscal years". Read October 13, 2026. Approved in SR-NASDAQ-2009-018.
+    https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    https://www.sec.gov/rule-release/34-59663
+4. Nasdaq Rule 5550(a): "Market Value of Publicly Held Shares of at least $1 million". Read October 13, 2026. Approved in SR-NASDAQ-2009-018.
+    https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    https://www.sec.gov/rule-release/34-59663
+5. us-gaap:IncomeLossFromContinuingOperations in USD, January 1, 2025 to December 31, 2025, reported in the 20-F with accession 0001185185-26-003323
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526003323/
+6. Nasdaq Rule 5550(a): "At least 500,000 Publicly Held Shares". Read October 13, 2026. Approved in SR-NASDAQ-2009-018.
+    https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    https://www.sec.gov/rule-release/34-59663
+7. Nasdaq Rule 5550(a): "At least 300 Public Holders". Read October 13, 2026. Approved in SR-NASDAQ-2009-018.
+    https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    https://www.sec.gov/rule-release/34-59663
+8. Nasdaq Rule 5550(a): "At least two registered and active Market Makers, one of which may be a Market Maker entering a stabilizing bid". Read October 13, 2026. Approved in SR-NASDAQ-2009-018.
+    https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    https://www.sec.gov/rule-release/34-59663
+9. us-gaap:StockholdersEquity in USD, as of December 31, 2025, reported in the 20-F with accession 0001185185-26-003323
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526003323/
+10. Nasdaq Rule 5550(a): "Minimum bid price of at least $1 per share". Read October 13, 2026. Approved in SR-NASDAQ-2009-018.
+    https://listingcenter.nasdaq.com/rulebook/nasdaq/rules/nasdaq-5500-series
+    https://www.sec.gov/rule-release/34-59663
+11. us-gaap:Revenues in USD, January 1, 2025 to December 31, 2025, reported in the 20-F with accession 0001185185-26-003323
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526003323/
+12. us-gaap:NetIncomeLoss in USD, January 1, 2025 to December 31, 2025, reported in the 20-F with accession 0001185185-26-003323
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526003323/
+13. us-gaap:IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest in USD, January 1, 2025 to December 31, 2025, reported in the 20-F with accession 0001185185-26-003323
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526003323/
+14. us-gaap:Assets in USD, as of December 31, 2025, reported in the 20-F with accession 0001185185-26-003323
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526003323/
+15. us-gaap:CashAndCashEquivalentsAtCarryingValue in USD, as of December 31, 2025, reported in the 20-F with accession 0001185185-26-003323
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526003323/
+16. SEC company facts for CIK 0001705402, which items the company reports
+    https://data.sec.gov/api/xbrl/companyfacts/CIK0001705402.json
+17. SEC company facts for CIK 0001705402, latest fiscal year, from the 20-F with accession 0001185185-26-003323
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526003323/
+18. Nasdaq symbol directory, row AGMH, market category S, financial status D, file created 1124202621:32
+    https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt
+19. Form 6-K, filed September 16, 2026, accession 0001185185-26-004042
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526004042/
+20. Form SCHEDULE 13D, filed October 6, 2026, accession 0001185185-26-004591
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526004591/
+21. Form 6-K, filed October 29, 2026, accession 0001185185-26-005064
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526005064/
+22. Form 3, filed October 5, 2026, accession 0001213900-26-106664
+    https://www.sec.gov/Archives/edgar/data/1705402/000121390026106664/
+23. Form NT 20-F, filed April 30, 2026, accession 0001185185-26-001656
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526001656/
+24. Form 6-K, filed November 16, 2026, accession 0001185185-26-005460
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526005460/
+25. Form SCHEDULE 13D/A, filed October 8, 2026, accession 0001185185-26-004654
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526004654/
+26. Form 3/A, filed October 8, 2026, accession 0001185185-26-004655
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526004655/
+27. Form 20-F, filed August 7, 2026, accession 0001185185-26-003323
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526003323/
+28. Form 6-K, filed May 26, 2026, accession 0001185185-26-002113
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526002113/
+29. Form 3, filed October 6, 2026, accession 0001185185-26-004593
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526004593/
+30. Form 6-K, filed September 18, 2026, accession 0001185185-26-004130
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526004130/
+31. Form 6-K, filed October 5, 2026, accession 0001185185-26-004574
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526004574/
+32. Form 6-K, filed October 15, 2026, accession 0001185185-26-004784
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526004784/
+33. Form 6-K, filed November 13, 2026, accession 0001185185-26-005385
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526005385/
+34. Form EFFECT, filed August 28, 2026, accession 9999999995-26-002807
+    https://www.sec.gov/Archives/edgar/data/1705402/999999999526002807/
+35. Form 6-K, filed August 12, 2026, accession 0001185185-26-003430
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526003430/
+36. Form 6-K, filed October 13, 2026, accession 0001185185-26-004716
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526004716/
+37. Form POS AM, filed August 25, 2026, accession 0001185185-26-003709
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526003709/
+38. Form 6-K, filed November 4, 2026, accession 0001185185-26-005172
+    https://www.sec.gov/Archives/edgar/data/1705402/000118518526005172/
+39. SEC submissions record for CIK 0001705402, filing list
+    https://data.sec.gov/submissions/CIK0001705402.json

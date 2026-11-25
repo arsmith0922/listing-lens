@@ -37,7 +37,7 @@ data/*.db*
 .DS_Store
 
 # Memos made by listinglens-memo (D74); each run writes its own folder here
-memos/
+/memos/
 
 # Private planning docs (never publish)
 private/

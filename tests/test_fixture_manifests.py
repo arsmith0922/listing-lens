@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 import subprocess
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -38,7 +39,13 @@ def _scenarios() -> tuple[str, ...]:
 
 
 SCENARIOS = _scenarios()
-ALL_FOLDERS = (*FOLDERS, *SCENARIOS)
+# The memos kept from live runs of listinglens-memo (D75), one folder each under memos/, found by
+# listing the directory. Their manifests give each file's bytes with a source and a time, so they
+# join the byte checks below but neither the url check nor the recording check.
+MEMOS = FIXTURES / "memos"
+MEMO_FOLDERS = tuple(f"memos/{p.name}" for p in sorted(MEMOS.iterdir()) if p.is_dir())
+MEMO_FILES = ("memo.html", "memo.txt", "record.json")
+ALL_FOLDERS = (*FOLDERS, *SCENARIOS, *MEMO_FOLDERS)
 
 
 def _entries(folder: str) -> list[dict[str, str]]:
@@ -78,6 +85,7 @@ def test_git_stores_every_fixture_as_exact_bytes_with_no_line_ending_conversion(
     """The recorded directory is CRLF, and its manifest hash is over those bytes (D29)."""
     paths = [str(p.relative_to(FIXTURES.parent.parent)) for f in ALL_FOLDERS for p in _files(f)]
     paths += [f"tests/fixtures/{scenario}/manifest.json" for scenario in SCENARIOS]
+    paths += [f"tests/fixtures/{memo}/manifest.json" for memo in MEMO_FOLDERS]
     out = subprocess.run(
         ["git", "check-attr", "text", "--", *paths],
         cwd=FIXTURES.parent.parent,
@@ -112,3 +120,41 @@ def test_a_scenario_manifest_has_a_source_and_a_time_and_matches_its_recordings(
         assert entry == manifest_entry(recording, path.read_text(encoding="utf-8"))
         assert entry["source"] in ("hand", "live")
         assert len(entry["fingerprint"]) == 64
+
+
+def test_the_memo_folders_are_found_and_include_the_first_live_memo() -> None:
+    assert MEMO_FOLDERS and "memos/agmh-live-1" in MEMO_FOLDERS
+    assert set(MEMO_FOLDERS) <= set(ALL_FOLDERS)
+
+
+@pytest.mark.parametrize("memo", MEMO_FOLDERS)
+def test_a_memo_manifest_has_each_files_bytes_and_a_source_and_a_time(memo: str) -> None:
+    raw = (FIXTURES / memo / "manifest.json").read_bytes()
+    assert b"\r" not in raw
+    entries = json.loads(raw)
+    for entry in entries:
+        assert set(entry) == {"bytes", "file", "recorded_at", "sha256", "source"}
+        assert entry["source"] == "live"
+        assert datetime.fromisoformat(entry["recorded_at"]).utcoffset() == timedelta(0)
+        assert entry["bytes"] == (FIXTURES / memo / entry["file"]).stat().st_size
+    assert sorted(entry["file"] for entry in entries) == list(MEMO_FILES)
+
+
+def _ignored(path: str) -> bool:
+    """Whether the repository's ignore rules match the path, tracked or not (--no-index)."""
+    done = subprocess.run(
+        ["git", "check-ignore", "--no-index", "-q", "--", path],
+        cwd=FIXTURES.parent.parent,
+        capture_output=True,
+        check=False,
+    )
+    assert done.returncode in (0, 1), done.stderr
+    return done.returncode == 0
+
+
+def test_the_memo_output_folder_is_ignored_and_the_kept_memo_is_not() -> None:
+    """D75: the rule is /memos/, the command's folder at the root, not every folder named memos."""
+    assert _ignored("memos/AGMH-20261125T035900Z/record.json")
+    for memo in MEMO_FOLDERS:
+        for name in (*MEMO_FILES, "manifest.json"):
+            assert not _ignored(f"tests/fixtures/{memo}/{name}"), (memo, name)

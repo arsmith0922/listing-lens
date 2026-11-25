@@ -1,0 +1,23 @@
+[
+  {
+    "bytes": 22307,
+    "file": "memo.html",
+    "recorded_at": "2026-11-25T03:59:00Z",
+    "sha256": "229cc47b567baac6198cf0f1be12ed77d9adf96cb8e2ad96b08242f250707dfa",
+    "source": "live"
+  },
+  {
+    "bytes": 10944,
+    "file": "memo.txt",
+    "recorded_at": "2026-11-25T03:59:00Z",
+    "sha256": "ab3e00ce68a41284a9db07a56db7ec35e2bb7014a689fadaf329c3f3f41218f5",
+    "source": "live"
+  },
+  {
+    "bytes": 54358,
+    "file": "record.json",
+    "recorded_at": "2026-11-25T03:59:00Z",
+    "sha256": "6bdde16858329de11ce10741b19da8a8681348da795815a9973188342f791755",
+    "source": "live"
+  }
+]
