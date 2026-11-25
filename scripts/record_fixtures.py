@@ -8,6 +8,7 @@ it is outside testpaths and is never collected or run in CI.
     record_fixtures.py aacg         ATA Creativity (AACG): untrimmed submissions and companyfacts
     record_fixtures.py creditsuisse Credit Suisse AG: untrimmed pair plus trimmed overflow pages
     record_fixtures.py agmh         AGM Group (AGMH): untrimmed submissions and companyfacts
+    record_fixtures.py routes       the four route examples (D77): untrimmed submissions and pages
 
 manifest.json is merged by file name, so recording one set never drops the other's entries.
 """
@@ -23,6 +24,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import record_pairs as pairs
+import record_routes as routes
 from pydantic import JsonValue
 from record_trim import (
     has_null_fy_fact,
@@ -58,7 +60,7 @@ MAX_UNCOMMON_UNIT_CONCEPTS = 40
 MAX_NULL_FY_CONCEPTS = 25
 
 # The pair-recorded companies (aacg, creditsuisse, ...) are in record_pairs.py.
-SELECTORS = ("chunk6", "companyfacts", "nasdaq", *pairs.UNTRIMMED_PAIRS)
+SELECTORS = ("chunk6", "companyfacts", "nasdaq", *pairs.UNTRIMMED_PAIRS, "routes")
 
 MANIFEST: list[dict[str, JsonValue]] = []
 NASDAQ_MANIFEST: list[dict[str, JsonValue]] = []
@@ -249,15 +251,20 @@ def main(argv: Sequence[str] = ()) -> None:
     NASDAQ_DIR.mkdir(parents=True, exist_ok=True)
     settings = Settings()
     transport = EdgarTransport(settings.sec_edgar_contact, clock=RealClock())
+    written: tuple[int, int] | None = None
     if selector == "companyfacts":
         record_companyfacts(transport)
     elif selector == "nasdaq":
         record_nasdaq(transport)
     elif selector in pairs.UNTRIMMED_PAIRS:
         record_pair(transport, selector)
+    elif selector == "routes":
+        written = routes.record_route_examples(transport, write_raw_fixture)
     else:
         record_chunk6(transport)
     write_manifest()
+    if written is not None:  # last, so the size of what was recorded is the final line
+        print(f"in all: {written[0]} files, {written[1]:,} bytes (the manifest not counted)")
 
 
 if __name__ == "__main__":
