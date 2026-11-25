@@ -5,6 +5,7 @@ from datetime import date
 from listinglens.domain.company import CompanyRef, ResolvedCompany
 from listinglens.domain.filing import FilingDocument, FilingRef
 from listinglens.domain.identifiers import AccessionNumber
+from listinglens.domain.issuer import IssuerRecord
 from listinglens.domain.profile import CompanyProfile
 from listinglens.domain.search import FullTextSearchResult
 from listinglens.ingestion.client import EdgarClient
@@ -27,6 +28,9 @@ class IngestionService:
 
     def list_filings(self, company: ResolvedCompany) -> list[FilingRef]:
         return self._repository.list_filings(company)
+
+    def issuer_record(self, company: ResolvedCompany) -> IssuerRecord:
+        return self._repository.issuer_record(company)
 
     def fetch_document(
         self, company: ResolvedCompany, accession: AccessionNumber, document_name: str

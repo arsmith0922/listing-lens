@@ -19,6 +19,14 @@ def _check_equal_lengths(page: FilingIndexPage, url: str) -> None:
             )
 
 
+def split_items(text: str | None) -> tuple[str, ...]:
+    """The items text split on every comma, each piece exactly as written and empty pieces kept,
+    so the pieces joined by commas are the text again; no text is (). The column means what the
+    form says (8-K items, an EFFECT row's form and time, a Form D's exemptions), so it is never
+    read here (D14, D77)."""
+    return tuple(text.split(",")) if text else ()
+
+
 def page_to_filing_refs(page: FilingIndexPage, cik: Cik, url: str) -> list[FilingRef]:
     """One FilingRef per row, built by explicit index (never zip) after the length check."""
     _check_equal_lengths(page, url)
@@ -37,6 +45,10 @@ def page_to_filing_refs(page: FilingIndexPage, cik: Cik, url: str) -> list[Filin
                 report_date=page.report_date[i],
                 acceptance_datetime=page.acceptance_date_time[i],
                 primary_document=page.primary_document[i] or None,
+                items=split_items(page.items[i]),
+                primary_doc_description=page.primary_doc_description[i],
+                file_number=page.file_number[i],
+                act=page.act[i],
             )
         )
     return refs

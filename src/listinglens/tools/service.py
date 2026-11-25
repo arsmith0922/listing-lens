@@ -6,11 +6,13 @@ from listinglens.extraction.service import ExtractionService
 from listinglens.ingestion.nasdaq_directory import NasdaqDirectoryRepository
 from listinglens.ingestion.service import IngestionService
 from listinglens.ingestion.throttle import Clock
+from listinglens.issuer.build import build_issuer_structure
 from listinglens.standards.ruleset import Ruleset
 from listinglens.tools.args import (
     CheckStandardsArgs,
     CompanySelector,
     ExtractFinancialsArgs,
+    GetIssuerStructureArgs,
     ListFilingsArgs,
     ResolveCompanyArgs,
     company_ref_of,
@@ -23,11 +25,13 @@ from listinglens.tools.facts import load_snapshot
 from listinglens.tools.models_basic import ListFilingsResult, ResolveCompanyResult
 from listinglens.tools.models_check import CheckStandardsResult
 from listinglens.tools.models_financials import ExtractFinancialsResult
+from listinglens.tools.models_structure import GetIssuerStructureResult
 from listinglens.tools.project_financials import filing_view, fiscal_year_view, snapshot_views
+from listinglens.tools.project_structure import structure_result
 
 
 class ToolService:
-    """The four tools as plain methods (D46). Each takes a validated argument model and returns
+    """The five tools as plain methods (D46, D77). Each takes a validated argument model and returns
     a result model; none takes a price or a date, and today comes from the injected clock in
     UTC. Nothing here recomputes what the engine measured."""
 
@@ -106,3 +110,10 @@ class ToolService:
             ruleset=self._ruleset,
             today=today_utc(self._clock),
         )
+
+    def get_issuer_structure(self, args: GetIssuerStructureArgs) -> GetIssuerStructureResult:
+        """The issuer-structure facts as of today (D77): no tool takes a date."""
+        company = self._resolve(args)
+        today = today_utc(self._clock)
+        facts = build_issuer_structure(self._ingestion.issuer_record(company), today)
+        return structure_result(echo_of(company), today, facts)

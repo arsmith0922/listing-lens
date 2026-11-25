@@ -46,7 +46,7 @@ def _run(args: list[str], env: dict[str, str], cwd: Path) -> subprocess.Complete
 
 
 @pytest.mark.anyio
-async def test_a_real_stdio_session_lists_exactly_the_four_tools(tmp_path: Path) -> None:
+async def test_a_real_stdio_session_lists_exactly_the_five_tools(tmp_path: Path) -> None:
     cache = tmp_path / "cache"
     params = StdioServerParameters(
         command=sys.executable,

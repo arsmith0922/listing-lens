@@ -37,6 +37,10 @@ GE_OVERFLOW = ("CIK0000040545-submissions-001.json", "CIK0000040545-submissions-
 # Credit Suisse AG lists 22 overflow pages, each recorded trimmed to 40 rows (D50): list_filings
 # reads every one of them on every call.
 CS_OVERFLOW = tuple(f"CIK0001053092-submissions-{n:03d}.json" for n in range(1, 23))
+# The four route examples (D77): submissions only (no companyfacts), so they stay out of CIKS and
+# every test parametrized over the seven is untouched. Coinbase lists one overflow page.
+ROUTE_CIKS = {"lcaa": 1841024, "lotus": 1962746, "puda": 1162747, "coinbase": 1679788}
+COINBASE_OVERFLOW = ("CIK0001679788-submissions-001.json",)
 
 
 def _bytes(name: str) -> bytes:
@@ -64,6 +68,11 @@ def recorded_routes() -> dict[str, Route]:
     cs = Cik.parse(CIKS["credit_suisse"])
     for name in CS_OVERFLOW:
         routes[submissions_overflow_url(cs, name)] = _bytes(name)
+    for stem, number in ROUTE_CIKS.items():
+        routes[submissions_url(Cik.parse(number))] = _bytes(f"submissions_{stem}.json")
+    coinbase = Cik.parse(ROUTE_CIKS["coinbase"])
+    for name in COINBASE_OVERFLOW:
+        routes[submissions_overflow_url(coinbase, name)] = _bytes(name)
     return routes
 
 

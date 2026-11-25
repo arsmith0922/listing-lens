@@ -13,11 +13,13 @@ from listinglens.core.errors import (
 from listinglens.domain.company import CompanyRef, ResolvedCompany
 from listinglens.domain.filing import FilingDocument, FilingRef, SourceText
 from listinglens.domain.identifiers import AccessionNumber, Cik
+from listinglens.domain.issuer import IssuerRecord
 from listinglens.domain.profile import CompanyProfile
 from listinglens.ingestion import endpoints
 from listinglens.ingestion.client import EdgarClient
 from listinglens.ingestion.company_index import CompanyIndex
 from listinglens.ingestion.filing_rows import page_to_filing_refs
+from listinglens.ingestion.issuer_rows import issuer_record_of
 from listinglens.ingestion.payloads.archives import ArchivesIndex
 from listinglens.ingestion.payloads.submissions import FilingIndexPage, SubmissionsDocument
 from listinglens.ingestion.payloads.tickers import CompanyTickersMap
@@ -51,8 +53,15 @@ class EdgarRepository:
 
     def list_filings(self, company: ResolvedCompany) -> list[FilingRef]:
         """All filings, newest first: filings.recent, then each overflow page in listed order."""
-        cik = company.cik
-        document = self._submissions(cik)
+        return self._all_refs(company.cik, self._submissions(company.cik))
+
+    def issuer_record(self, company: ResolvedCompany) -> IssuerRecord:
+        """The company fields of the submissions record and every filing, read exactly as
+        list_filings reads them (D77)."""
+        document = self._submissions(company.cik)
+        return issuer_record_of(document, company.cik, self._all_refs(company.cik, document))
+
+    def _all_refs(self, cik: Cik, document: SubmissionsDocument) -> list[FilingRef]:
         refs = page_to_filing_refs(document.filings.recent, cik, endpoints.submissions_url(cik))
         for overflow in document.filings.files:
             try:

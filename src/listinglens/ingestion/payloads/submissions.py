@@ -19,6 +19,26 @@ class FormerName(BaseModel):
     to_date: IsoDateTime = Field(alias="to")
 
 
+class AddressPayload(BaseModel):
+    """Where an address is, never the address: extra keys are ignored, so the street, the postal
+    code, the district and the foreign-location flag are never held (D77)."""
+
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+
+    city: _OptStr = None
+    state_or_country: _OptStr = Field(None, alias="stateOrCountry")
+    state_or_country_description: _OptStr = Field(None, alias="stateOrCountryDescription")
+    country: _OptStr = None
+    country_code: _OptStr = Field(None, alias="countryCode")
+
+
+class AddressesPayload(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    business: AddressPayload | None = None
+    mailing: AddressPayload | None = None
+
+
 class OverflowFileRef(BaseModel):
     model_config = ConfigDict(extra="allow", populate_by_name=True)
 
@@ -87,6 +107,16 @@ class SubmissionsDocument(BaseModel):
     exchanges: list[str]
     former_names: list[FormerName] = Field(alias="formerNames")
     filings: FilingsBlock
+    # The company fields D77 reads, each optional so no record the four tools read fails on them.
+    sic: _OptStr = None
+    sic_description: _OptStr = Field(None, alias="sicDescription")
+    state_of_incorporation: _OptStr = Field(None, alias="stateOfIncorporation")
+    state_of_incorporation_description: _OptStr = Field(
+        None, alias="stateOfIncorporationDescription"
+    )
+    addresses: AddressesPayload | None = None
+    category: _OptStr = None
+    fiscal_year_end: _OptStr = Field(None, alias="fiscalYearEnd")
 
     @classmethod
     def parse(cls, raw: object, url: str) -> SubmissionsDocument:

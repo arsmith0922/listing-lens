@@ -10,12 +10,14 @@ from listinglens.tools import arg_text
 from listinglens.tools.args import (
     CheckStandardsArgs,
     ExtractFinancialsArgs,
+    GetIssuerStructureArgs,
     ListFilingsArgs,
     ResolveCompanyArgs,
 )
 from listinglens.tools.models_basic import ListFilingsResult, ResolveCompanyResult
 from listinglens.tools.models_check import CheckStandardsResult
 from listinglens.tools.models_financials import ExtractFinancialsResult
+from listinglens.tools.models_structure import GetIssuerStructureResult
 from tests.server_support import recorded_server
 from tests.server_texts import ARGUMENTS, DESCRIPTIONS, INSTRUCTIONS
 from tests.test_tools_descriptions import (
@@ -33,6 +35,7 @@ MODELS: dict[str, tuple[type[BaseModel], type[BaseModel]]] = {
     "list_filings": (ListFilingsArgs, ListFilingsResult),
     "extract_financials": (ExtractFinancialsArgs, ExtractFinancialsResult),
     "check_standards": (CheckStandardsArgs, CheckStandardsResult),
+    "get_issuer_structure": (GetIssuerStructureArgs, GetIssuerStructureResult),
 }
 
 
@@ -48,7 +51,7 @@ async def test_the_server_names_itself_and_carries_the_approved_instructions(
 
 
 @pytest.mark.anyio
-async def test_exactly_the_four_tools_are_published_with_the_approved_descriptions(
+async def test_exactly_the_five_tools_are_published_with_the_approved_descriptions(
     tmp_path: Path,
 ) -> None:
     async with Client(recorded_server(tmp_path)) as client:
@@ -97,6 +100,7 @@ async def test_the_input_schemas_carry_the_approved_argument_texts(tmp_path: Pat
     properties = {name: tool.input_schema["properties"] for name, tool in tools.items()}
     assert set(properties["resolve_company"]) == {"cik", "ticker", "name"}
     assert set(properties["extract_financials"]) == {"cik", "ticker", "name"}
+    assert set(properties["get_issuer_structure"]) == {"cik", "ticker", "name"}
     assert set(properties["list_filings"]) == {"cik", "ticker", "name", "forms", "limit"}
     assert set(properties["check_standards"]) == {
         "cik",

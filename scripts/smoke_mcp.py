@@ -37,7 +37,13 @@ from listinglens.ingestion.wiring import open_cached_client
 
 CAP_BYTES = 50 * 1024 * 1024
 READ_TIMEOUT = 120.0
-TOOLS = ["resolve_company", "list_filings", "extract_financials", "check_standards"]
+TOOLS = [
+    "resolve_company",
+    "list_filings",
+    "extract_financials",
+    "check_standards",
+    "get_issuer_structure",
+]
 
 
 def large_filer_probe(rep: calls.Report, settings: Settings, root: Path) -> None:
@@ -91,7 +97,7 @@ async def amain(settings: Settings) -> int:
                 tools = (await client.list_tools()).tools
                 listed_ok = sorted(x.name for x in tools) == sorted(TOOLS)
                 rep.check(
-                    "tools/list: the four tools, each with an output schema",
+                    "tools/list: the five tools, each with an output schema",
                     [] if listed_ok and all(x.output_schema for x in tools) else ["no"],
                 )
                 for target in flows.TARGETS:

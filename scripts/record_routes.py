@@ -35,7 +35,7 @@ class RouteExample(NamedTuple):
 ROUTE_EXAMPLES = (
     RouteExample("lcaa", "0001841024", "L CATTERTON ASIA ACQUISITION", None),  # a SPAC
     RouteExample("lotus", "0001962746", "LOTUS TECH", "LOT"),  # the de-SPAC with it
-    RouteExample("puda", "0001143313", "PUDA COAL", None),  # a 2005 China reverse merger
+    RouteExample("puda", "0001162747", "PUDA COAL", None),  # a 2005 China reverse merger
     RouteExample("coinbase", "0001679788", "COINBASE GLOBAL", "COIN"),  # a direct listing
 )
 

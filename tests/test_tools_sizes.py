@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from listinglens.tools.args import (
     CheckStandardsArgs,
     ExtractFinancialsArgs,
+    GetIssuerStructureArgs,
     ListFilingsArgs,
     ResolveCompanyArgs,
 )
@@ -29,6 +30,7 @@ CEILINGS = {
     # R12 asked for 75 KB. Luckin's initial listing, all three tiers, is 76,892 bytes, so the
     # ceiling here is 80 KB; D46 records the difference as a decision for the architect.
     "check_standards (three tiers)": 80 * KB,
+    "get_issuer_structure": 6 * KB,  # D77: the seven measure 2,803 to 3,015 bytes
 }
 
 
@@ -47,6 +49,7 @@ CALLS: dict[str, Callable[[ToolService, str], BaseModel]] = {
         s, c, listing_type="continued", tier="global_select"
     ),
     "check_standards (three tiers)": lambda s, c: _check(s, c, listing_type="initial"),
+    "get_issuer_structure": lambda s, c: s.get_issuer_structure(GetIssuerStructureArgs(cik=c)),
 }
 
 

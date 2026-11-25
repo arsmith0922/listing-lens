@@ -53,6 +53,7 @@ SELF_EVIDENT = frozenset(
         "FindingView.threshold",
         "FindingView.unit",
         "GapView.concept",
+        "GetIssuerStructureResult.company",
         "IdentityEvidenceView.pretax_tag",
         "IdentityEvidenceView.pretax_value",
         "IdentityEvidenceView.tax_tag",

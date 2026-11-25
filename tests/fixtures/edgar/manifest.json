@@ -304,5 +304,35 @@
     "file": "companyfacts_agmh.json",
     "sha256": "c46f1909570ff5276bec7efdd07b45c92a342bc6f10c25bd60c4b98d066fb4e5",
     "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001705402.json"
+  },
+  {
+    "fetched_at": "2026-11-25T20:38:25.815059+00:00",
+    "file": "submissions_lcaa.json",
+    "sha256": "c7899065fd021299364fbbb18ca75e76308f618a5c8ca15faa1bd786687d7ecd",
+    "url": "https://data.sec.gov/submissions/CIK0001841024.json"
+  },
+  {
+    "fetched_at": "2026-11-25T20:38:25.816075+00:00",
+    "file": "submissions_lotus.json",
+    "sha256": "325592bd43fda9c6574147d71130dd1c55a2f0baf1693daf63ff98e391ce4a68",
+    "url": "https://data.sec.gov/submissions/CIK0001962746.json"
+  },
+  {
+    "fetched_at": "2026-11-25T20:38:25.817076+00:00",
+    "file": "submissions_puda.json",
+    "sha256": "6e05c05592d4bea461047efa55898722019fee3f68369df0311037ed937b94f9",
+    "url": "https://data.sec.gov/submissions/CIK0001162747.json"
+  },
+  {
+    "fetched_at": "2026-11-25T20:38:25.819073+00:00",
+    "file": "submissions_coinbase.json",
+    "sha256": "db44a6a60aaf9d748e6a67a96a1507434e3d066ec9d8b241a6af4460ea716877",
+    "url": "https://data.sec.gov/submissions/CIK0001679788.json"
+  },
+  {
+    "fetched_at": "2026-11-25T20:38:25.819073+00:00",
+    "file": "CIK0001679788-submissions-001.json",
+    "sha256": "653dd80a1c544e45c4f80f067888f05652f30497c5d0cf78280113e072e3b118",
+    "url": "https://data.sec.gov/submissions/CIK0001679788-submissions-001.json"
   }
 ]

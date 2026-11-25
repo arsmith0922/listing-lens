@@ -18,7 +18,9 @@ from listinglens.domain.financials import (
     RestatementDiagnostic,
 )
 from listinglens.domain.fiscal_year import FiscalYearAnchor
+from listinglens.domain.issuer import FormerName, IssuerRecord, Location
 from listinglens.domain.profile import CompanyProfile
+from listinglens.issuer.models import IssuerStructure
 from listinglens.margin.nodes import BranchResult, RequirementResult, StandardResult
 from listinglens.margin.tier import Caveat, FinancialCaveat, TierResult, TranslatedFigure
 from tests.tools_mapping_rules import RULE_MAPPING, SELECTION
@@ -126,6 +128,48 @@ MAPPING: dict[type[BaseModel], dict[str, str]] = {
         "report_date": "FilingView.report_date",
         "acceptance_datetime": "FilingView.acceptance_datetime",
         "primary_document": "FilingView.primary_document",
+        "items": "omitted: read by the route and flag layers by form (D77); no tool shows it yet",
+        "primary_doc_description": "omitted: for the route and flag layers (D77); not shown yet",
+        "file_number": "omitted: for the route and flag layers (D77); no tool shows it yet",
+        "act": "omitted: for the route and flag layers (D77); no tool shows it yet",
+    },
+    IssuerRecord: {
+        "cik": "SecRecordCitationView.cik",
+        "name": "omitted: the company echo carries the issuer name the resolution read",
+        "sic": "IndustryView.sic",
+        "sic_description": "IndustryView.description",
+        "state_of_incorporation": "IncorporationView.code",
+        "state_of_incorporation_description": "IncorporationView.description",
+        "business_address": "GetIssuerStructureResult.business_address",
+        "mailing_address": "GetIssuerStructureResult.mailing_address",
+        "filer_category": "FilerCategoryView.parts",
+        "fiscal_year_end": "FiscalYearEndView.month_day",
+        "former_names": "FormerNamesView.names",
+        "filings": "FilerFormsView.deciding_filing, FilerFormsView.other_side_filing",
+    },
+    Location: {
+        "city": "AddressView.city",
+        "state_or_country": "AddressView.state_or_country",
+        "state_or_country_description": "AddressView.state_or_country_description",
+        "country": "AddressView.country",
+        "country_code": "AddressView.country_code",
+    },
+    FormerName: {
+        "name": "FormerNameView.name",
+        "from_date": "FormerNameView.from_date",
+        "to_date": "FormerNameView.to_date",
+    },
+    IssuerStructure: {
+        "cik": "SecRecordCitationView.cik",
+        "cutoff": "GetIssuerStructureResult.cutoff",
+        "incorporation": "IncorporationView.*",
+        "business_address": "AddressView.*",
+        "mailing_address": "AddressView.*",
+        "filer_forms": "FilerFormsView.*",
+        "filer_category": "FilerCategoryView.parts",
+        "industry": "IndustryView.*",
+        "fiscal_year_end": "FiscalYearEndView.month_day",
+        "former_names": "FormerNamesView.names",
     },
     NasdaqDirectory: {
         "url": "DirectoryOutcomeView.url",

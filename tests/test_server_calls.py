@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from pathlib import Path
 
@@ -11,12 +12,14 @@ from pydantic import BaseModel, TypeAdapter
 from listinglens.tools.args import (
     CheckStandardsArgs,
     ExtractFinancialsArgs,
+    GetIssuerStructureArgs,
     ListFilingsArgs,
     ResolveCompanyArgs,
 )
 from listinglens.tools.models_basic import ListFilingsResult, ResolveCompanyResult
 from listinglens.tools.models_check import CheckStandardsResult
 from listinglens.tools.models_financials import ExtractFinancialsResult
+from listinglens.tools.models_structure import GetIssuerStructureResult
 from tests.server_support import Stack, recorded_opener, recorded_server
 from tests.tools_stack import CIKS
 
@@ -38,6 +41,10 @@ CEILINGS = {
     "check_standards (one tier)": 52_000,
     "check_standards (three tiers)": 180_000,
 }
+# get_issuer_structure's own ceiling (D77), kept out of CEILINGS, which the live smoke script
+# shares for the four tools it calls. The eleven recorded companies measure at most 6,518.
+STRUCTURE_WIRE_CEILING = 14_000
+LIMITS = {**CEILINGS, "get_issuer_structure": STRUCTURE_WIRE_CEILING}
 
 
 def wire_bytes(text: str, structured: dict[str, object]) -> int:
@@ -61,8 +68,11 @@ async def call(
     assert isinstance(text, str)
     structured = result.structured_content
     # The text is the same data as compact JSON, and the structured content is a valid model.
+    # Compact: no whitespace outside the strings (a string may hold spaces: Credit Suisse's
+    # former name holds 28, D77).
     assert json.loads(text) == structured
-    assert "\n" not in text and "  " not in text.replace('"', "").replace(" ", "  ", 0)
+    outside = re.sub(r'"(?:[^"\\]|\\.)*"', '""', text)
+    assert not any(character.isspace() for character in outside)
     TypeAdapter(model).validate_json(json.dumps(structured))
     return text, structured
 
@@ -73,6 +83,20 @@ async def expected(tmp_path: Path, method: str, args: BaseModel) -> dict[str, ob
     with recorded_opener(tmp_path / "direct", stack)() as service:
         model: BaseModel = getattr(service, method)(args)
     return model.model_dump(mode="json", by_alias=True)
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("cik", COMPANIES)
+async def test_get_issuer_structure_arrives_as_the_service_returned_it(
+    tmp_path: Path, cik: str
+) -> None:
+    async with Client(recorded_server(tmp_path / "s")) as client:
+        _, structured = await call(
+            client, "get_issuer_structure", {"cik": cik}, GetIssuerStructureResult
+        )
+    assert structured == await expected(
+        tmp_path, "get_issuer_structure", GetIssuerStructureArgs(cik=cik)
+    )
 
 
 @pytest.mark.anyio
@@ -184,7 +208,7 @@ async def test_a_wrong_key_is_a_readable_request_for_exactly_one_selector(tmp_pa
 
 @pytest.mark.anyio
 async def test_no_result_exceeds_its_wire_ceiling(tmp_path: Path) -> None:
-    sizes: dict[str, int] = {name: 0 for name in CEILINGS}
+    sizes: dict[str, int] = {name: 0 for name in LIMITS}
     async with Client(recorded_server(tmp_path)) as client:
         for cik in COMPANIES:
             calls: dict[str, tuple[str, dict[str, object], type[BaseModel]]] = {
@@ -215,8 +239,13 @@ async def test_no_result_exceeds_its_wire_ceiling(tmp_path: Path) -> None:
                     {"cik": cik, "listing_type": "initial", "pathway": "traditional_ipo"},
                     CheckStandardsResult,
                 ),
+                "get_issuer_structure": (
+                    "get_issuer_structure",
+                    {"cik": cik},
+                    GetIssuerStructureResult,
+                ),
             }
             for label, (tool, arguments, model) in calls.items():
                 text, structured = await call(client, tool, arguments, model)
                 sizes[label] = max(sizes[label], wire_bytes(text, structured))
-    assert {name: size for name, size in sizes.items() if size > CEILINGS[name]} == {}, sizes
+    assert {name: size for name, size in sizes.items() if size > LIMITS[name]} == {}, sizes

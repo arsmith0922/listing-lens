@@ -25,7 +25,7 @@ from tests.test_scripts_record_fixtures import _load_script_module
 # the exact bytes the SEC sent, written only after every CIK is confirmed from the SEC's own
 # records. Everything is served by a mock.
 CONTACT = "secret.person@example.com"
-LCAA, LOTUS, PUDA, COIN = (Cik.parse(n) for n in (1841024, 1962746, 1143313, 1679788))
+LCAA, LOTUS, PUDA, COIN = (Cik.parse(n) for n in (1841024, 1962746, 1162747, 1679788))
 LOTUS_PAGES = ("CIK0001962746-submissions-001.json",)
 COIN_PAGES = ("CIK0001679788-submissions-001.json", "CIK0001679788-submissions-002.json")
 LCAA_NAME = "L Catterton Asia Acquisition Corp"
@@ -169,7 +169,7 @@ def test_the_run_asks_for_the_ticker_file_then_each_record_and_its_pages_and_not
     assert [tuple(example) for example in harness.module.routes.ROUTE_EXAMPLES] == [
         ("lcaa", "0001841024", "L CATTERTON ASIA ACQUISITION", None),
         ("lotus", "0001962746", "LOTUS TECH", "LOT"),
-        ("puda", "0001143313", "PUDA COAL", None),
+        ("puda", "0001162747", "PUDA COAL", None),
         ("coinbase", "0001679788", "COINBASE GLOBAL", "COIN"),
     ]
     assert [str(r.url) for r in harness.seen] == [company_tickers_url(), *(u for _, u in WRITTEN)]
@@ -189,7 +189,7 @@ def test_the_run_says_what_it_confirmed_and_ends_with_the_total_it_wrote(
         "confirmed lcaa: CIK 0001841024 is 'L Catterton Asia Acquisition Corp'",
         "confirmed lotus: CIK 0001962746 is 'Lotus Technology Inc.', and LOT maps to it in "
         "company_tickers.json",
-        "confirmed puda: CIK 0001143313 is 'PUDA COAL, INC.'",
+        "confirmed puda: CIK 0001162747 is 'PUDA COAL, INC.'",
         "confirmed coinbase: CIK 0001679788 is 'Coinbase Global, Inc.', and COIN maps to it in "
         "company_tickers.json",
     ]
@@ -217,7 +217,7 @@ def test_a_name_that_does_not_match_writes_nothing_and_says_what_the_sec_has(
     said = {  # every problem of the run, in one report
         "name": [
             "not confirmed: lcaa: the SEC has CIK 0001841024 as 'Lotus Technology Inc.'",
-            "not confirmed: puda: the SEC has CIK 0001143313 as 'SOME OTHER CO'",
+            "not confirmed: puda: the SEC has CIK 0001162747 as 'SOME OTHER CO'",
         ],
         "cik": ["not confirmed: puda: the SEC has CIK 0000320193 as 'PUDA COAL, INC.'"],
     }

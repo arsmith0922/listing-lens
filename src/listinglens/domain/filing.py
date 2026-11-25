@@ -25,6 +25,12 @@ class FilingRef(BaseModel):
     report_date: date | None = None
     acceptance_datetime: datetime | None = None
     primary_document: str | None = None
+    # D77: the row's items split on every comma, each piece as the SEC wrote it (empty pieces
+    # kept, so the pieces joined by commas are the text again); what they mean depends on the form.
+    items: tuple[str, ...] = ()
+    primary_doc_description: str | None = None
+    file_number: str | None = None
+    act: str | None = None
 
 
 class FilingDocument(BaseModel):

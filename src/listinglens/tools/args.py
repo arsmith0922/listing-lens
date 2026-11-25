@@ -68,6 +68,10 @@ class ExtractFinancialsArgs(CompanySelector):
     pass
 
 
+class GetIssuerStructureArgs(CompanySelector):
+    pass
+
+
 class ListFilingsArgs(CompanySelector):
     forms: FormsArg = ()
     limit: LimitArg = DEFAULT_LIMIT
