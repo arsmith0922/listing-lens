@@ -61,3 +61,20 @@ WRITER_WORDS: Final = {
     "empty": "empty",
 }
 CAP_WORDS: Final = {"attempts": "attempt", "tokens": "token", "dollars": "dollar"}
+
+# The trace's line (D76), printed after the run's last line: the id of a sent trace (on stdout
+# after "Saved in" on success, on stderr after the exit and cost lines on a failure), or why it
+# was not sent (always on stderr). A detail is an HTTP status code or an exception's class name.
+TRACE_SENT: Final = "Trace sent to Langfuse: {trace_id}"
+TRACE_NOT_SENT: Final = "Trace not sent: {reason}."
+TRACE_REASONS: Final = {
+    "host": "LISTINGLENS_LANGFUSE_HOST is not one of Langfuse's cloud hosts",
+    "keys": (
+        "only one of LISTINGLENS_LANGFUSE_PUBLIC_KEY and LISTINGLENS_LANGFUSE_SECRET_KEY is set"
+    ),
+    "timeout": "Langfuse did not answer in time",
+    "connection": "the connection to Langfuse failed",
+    "status": "Langfuse answered HTTP {detail}",
+    "too_large": "the trace is larger than Langfuse accepts",
+    "unexpected": "an unexpected error ({detail})",
+}

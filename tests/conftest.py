@@ -10,6 +10,7 @@ from typing import Protocol
 import httpx
 import pluggy
 import pytest
+from pydantic_settings.sources.providers.dotenv import DotEnvSettingsSource
 
 from listinglens.extraction.service import ExtractionService
 from listinglens.ingestion.cache import CachedEdgarClient
@@ -22,6 +23,9 @@ from tests.baseline import RunSelection, diff_baseline, is_full_suite, read_base
 from tests.network_support import deny, loopback_only
 
 EDGAR_FIXTURES_DIR = Path(__file__).parent / "fixtures" / "edgar"
+# The repository's own .env, which holds the builder's real keys (D76): no test may read it.
+REPOSITORY_ENV = (Path(__file__).resolve().parents[1] / ".env").resolve()
+REPOSITORY_ENV_READ = "A test would read the repository's own .env: run it in a folder of its own."
 
 ENV_PREFIXES_TO_SCRUB = ("SEC_", "ANTHROPIC_", "LANGFUSE_", "LISTINGLENS_")
 
@@ -38,6 +42,28 @@ def _deny_network_access(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(socket.socket, "connect_ex", loopback_only(socket.socket.connect_ex))
     monkeypatch.setattr(socket, "create_connection", deny)
     monkeypatch.setattr(socket, "getaddrinfo", deny)
+
+
+def names_the_repository_env(env_file: object) -> bool:
+    """Whether an env_file names the repository's .env, relative or absolute, existing or not."""
+    named = [env_file] if isinstance(env_file, str | os.PathLike) else env_file
+    paths = named if isinstance(named, list | tuple) else []
+    return REPOSITORY_ENV in [Path(p).resolve() for p in paths if isinstance(p, str | os.PathLike)]
+
+
+@pytest.fixture(autouse=True)
+def _never_read_the_repository_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """pydantic-settings loads every .env a settings object names through this one method, before
+    it looks for the file. A test whose settings would read the repository's own .env fails
+    instead, in CI too where there is no such file, and the message names no variable or value."""
+    real = DotEnvSettingsSource._read_env_files
+
+    def guarded(self: DotEnvSettingsSource) -> Mapping[str, str | None]:
+        if names_the_repository_env(self.env_file):
+            raise AssertionError(REPOSITORY_ENV_READ)
+        return real(self)
+
+    monkeypatch.setattr(DotEnvSettingsSource, "_read_env_files", guarded)
 
 
 @pytest.fixture(autouse=True)

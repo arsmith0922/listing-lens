@@ -90,6 +90,8 @@ uv run listinglens-memo --ticker AGMH --listing-type continued --pathway traditi
 
 Give exactly one of `--cik`, `--ticker` or `--name`, the listing type (`initial` or `continued`) and the pathway (for example `traditional_ipo`), and optionally `--tier`, `--limit` (how many filings to list, default 20) and `--out` (default `memos`). Each run saves a new folder under `memos/`, which git ignores, holding `record.json` (the official record), `memo.html` (the page) and `memo.txt` (the plain text), and prints the plain text, the exact cost and the folder. It exits 0 on success, 2 for a bad argument, 3 for a missing or unusable setting, 5 without a key, 4 when the tools give no usable answer, 6 when the model step gives no memo, 7 when the output folder cannot be used, and 1 on any other error, and it saves nothing unless it succeeds.
 
+Tracing is optional. With `LISTINGLENS_LANGFUSE_PUBLIC_KEY` and `LISTINGLENS_LANGFUSE_SECRET_KEY` set, each run that reaches the tools also sends one trace to Langfuse Cloud (`LISTINGLENS_LANGFUSE_HOST`, one of its cloud hosts, default `https://us.cloud.langfuse.com`) and prints its id; with them blank nothing is sent, and Langfuse's general `LANGFUSE_*` names are never used. A failed send is reported in one line and never changes the memo or the exit code.
+
 ## Disclaimer
 This is an educational and research tool. It is not investment advice, not a recommendation to buy or sell any security, and it does not predict fraud. It surfaces risk signals from public filings, with accuracy reported in the evaluation harness.
 

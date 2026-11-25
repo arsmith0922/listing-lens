@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import secrets
 import sys
 import tempfile
+import time
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -32,22 +34,29 @@ from listinglens.llm.prices import load_price_table
 from listinglens.memo.build import Built, build_fact_set
 from listinglens.tools.args import CheckStandardsArgs, ListFilingsArgs, company_ref_of
 from listinglens.tools.config import ToolSettings
+from listinglens.tracing.config import TracingSettings, open_tracer
+from listinglens.tracing.tracer import Tracer
 from listinglens.workflow import command_text as text
 from listinglens.workflow import run, save
 from listinglens.workflow.mcp_client import server_parameters, stdio_tools
+from listinglens.workflow.observe import NanoClock, SeenModel, seen_tools
+from listinglens.workflow.trace import Ids, RunTrace, TraceLine, send_trace
 
 # listinglens-memo (D53, D74): one cited risk memo for one company. Code decides every step: the
 # arguments (validated by the tools' own models), the settings (the environment, then .env in the
 # working folder), the key, the output folder, the four tools through our own server over stdio,
 # the facts, the writer through the run's Meter, the record (validated), and the three files. Each
 # failure is an exit code and a fixed line; a cost line follows wherever the model step was
-# reached. This is the one workflow file that may read the settings, build the model client, read
-# the clock (once, for the record's time) and print.
+# reached. Every run that reached the tools then sends one trace to Langfuse if tracing is set
+# up (D76), after its last line and without touching its exit code, lines or files. This is the
+# one workflow file that may read the settings, build the model client and the tracer, read the
+# clock (the record's time, and the span clock), draw the trace's random ids and print.
 BUDGET: Final = Budget(max_attempts=2, max_tokens=120_000, max_dollars=Decimal("1.00"))
 DEFAULT_OUT: Final = Path("memos")
 COMPANY_OPTIONS: Final = ("cik", "ticker", "name")
 ClientSource = Callable[[ToolSettings], ModelClient]
 Clock = Callable[[], datetime]
+TracerSource = Callable[[TracingSettings], Tracer]
 
 
 class _Stop(Exception):
@@ -168,11 +177,26 @@ def _now() -> datetime:
     return datetime.now(UTC).replace(microsecond=0)
 
 
+def _tracer(source: TracerSource | None) -> Tracer:
+    """The tracer from its three settings (the environment, then .env in the working folder)."""
+    return (source or open_tracer)(TracingSettings(_env_file=".env"))
+
+
 class _Run:
     """One run; it keeps the meter so a failure after the model step can show the cost."""
 
     def __init__(self) -> None:
         self.meter: Meter | None = None
+        self.source: TracerSource | None = None
+        self.trace: RunTrace | None = None
+
+    def trace_line(self, code: int, line: str | None) -> TraceLine | None:
+        """Nothing for a run that stopped before the tools; otherwise the trace's one line. The
+        trace is taken as it is sent, so a run never sends it twice."""
+        trace, self.trace = self.trace, None
+        if trace is None:
+            return None
+        return send_trace(lambda: _tracer(self.source), trace, code, line)
 
     def __call__(
         self,
@@ -180,6 +204,7 @@ class _Run:
         open_tools: run.OpenTools | None,
         model_source: ClientSource | None,
         now: Clock | None,
+        tracing: tuple[TracerSource | None, NanoClock | None, Ids | None],
     ) -> int:
         try:
             names = _parser().parse_args(list(argv))
@@ -190,6 +215,7 @@ class _Run:
             raise _Stop(text.EXIT_ARGUMENT, text.BAD_OPTION.format(option=option)) from None
         calls = _tool_calls(names)
         settings = _settings()
+        self.source = tracing[0]
         try:
             client = (model_source or open_model_client)(settings)
         except ModelNotConfigured:
@@ -201,20 +227,31 @@ class _Run:
             raise _Stop(text.EXIT_FOLDER, text.BAD_OUT) from None
         contact, cache = settings.sec_edgar_contact, settings.listinglens_cache_dir
         opener = open_tools or (lambda: stdio_tools(server_parameters(contact, cache)))
-        built = _collect(opener, calls)
-        self.meter = Meter(client, load_price_table(), BUDGET)
+        prices = load_price_table()
+        clock = tracing[1] or time.time_ns
+        trace = self.trace = RunTrace(
+            calls, clock, tracing[2] or secrets.token_bytes, prices.table_version
+        )
+        trace.built = built = _collect(seen_tools(opener, clock, trace.tools), calls)
+        trace.meter = self.meter = Meter(SeenModel(client, clock, trace.models), prices, BUDGET)
         drafted = _draft(built, self.meter)
-        record = run.record_of(drafted, self.meter, (now or _now)())
+        trace.record = record = run.record_of(drafted, self.meter, (now or _now)())
         files = save.memo_files(record)
+        started = clock()
         try:
             folder = save.save_memo(root, save.folder_name(record), files)
         except MemoFolderRefused as exc:
             exists = exc.reason == "it already exists"
             line = text.FOLDER_EXISTS if exists else text.FOLDER_UNWRITABLE
             raise _Stop(text.EXIT_FOLDER, line) from None
+        sizes = {name: len(files[name].encode("ascii")) for name in save.FILES}
+        trace.saved = (folder.name, sizes, started, clock())
         print(files["memo.txt"], end="")
         print(cost_line(self.meter))
         print(text.SAVED.format(folder=folder))
+        traced = self.trace_line(text.EXIT_OK, None)
+        if traced is not None:
+            print(traced.line, file=sys.stdout if traced.sent else sys.stderr)
         return text.EXIT_OK
 
 
@@ -224,10 +261,16 @@ def main(
     open_tools: run.OpenTools | None = None,
     model_source: ClientSource | None = None,
     now: Clock | None = None,
+    tracer_source: TracerSource | None = None,
+    trace_clock: NanoClock | None = None,
+    trace_ids: Ids | None = None,
 ) -> int:
     the_run = _Run()
+    tracing = (tracer_source, trace_clock, trace_ids)
     try:
-        return the_run(sys.argv[1:] if argv is None else argv, open_tools, model_source, now)
+        return the_run(
+            sys.argv[1:] if argv is None else argv, open_tools, model_source, now, tracing
+        )
     except _Stop as stop:
         code, line = stop.code, stop.line
     except SystemExit as done:  # --help, which argparse ends with exit 0
@@ -237,4 +280,7 @@ def main(
     print(line, file=sys.stderr)
     if the_run.meter is not None:
         print(cost_line(the_run.meter), file=sys.stderr)
+    traced = the_run.trace_line(code, line)
+    if traced is not None:
+        print(traced.line, file=sys.stderr)
     return code

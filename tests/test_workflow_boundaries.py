@@ -31,13 +31,31 @@ ALLOWED_LISTINGLENS = (
     "listinglens.llm",
     "listinglens.memo",
     "listinglens.workflow",
+    # the pure parts of tracing (D76): the span models, the OTLP builder and the tracer interface
+    "listinglens.tracing.spans",
+    "listinglens.tracing.otlp",
+    "listinglens.tracing.tracer",
 )
 # The command's exception (D74), matched on its exact path parts: it alone may import these three
 # modules (the settings it reads, the tools' own argument models it validates with, and the factory
 # of the model client), read the clock once for the record's time, and print. The memo command's
 # MCP client has the SDK exception of test_server_boundaries.
 COMMAND_PARTS = ("src", "listinglens", "workflow", "command.py")
-COMMAND_MODULES = ("listinglens.llm.factory", "listinglens.tools.args", "listinglens.tools.config")
+COMMAND_MODULES = (
+    "listinglens.llm.factory",
+    "listinglens.tools.args",
+    "listinglens.tools.config",
+    "listinglens.tracing.config",
+)
+# The command's three clock and randomness lines (D74, D76): the record's time, the span clock's
+# module and the trace ids' module.
+COMMAND_CLOCK_LINES = (
+    "import secrets",
+    "import time",
+    "return datetime.now(UTC).replace(microsecond=0)",
+)
+# What the command does with those two modules, each once: the span clock and the id source.
+COMMAND_CLOCK_USES = {"secrets": ["token_bytes"], "time": ["time_ns"]}
 
 
 def allowed_here(rel: str, found: set[str]) -> set[str]:
@@ -94,6 +112,27 @@ def find_banned_imports(text: str) -> set[str]:
     return find_forbidden_imports(imported_names(text), BANNED)
 
 
+def module_uses(text: str) -> dict[str, list[str]]:
+    """Each attribute the text reads from the clock and randomness modules it imports whole."""
+    tree = ast.parse(text)
+    modules = {
+        alias.asname or alias.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Import)
+        for alias in node.names
+        if alias.name in ("time", "secrets")
+    }
+    uses: dict[str, list[str]] = {name: [] for name in sorted(modules)}
+    read = {id(n.value) for n in ast.walk(tree) if isinstance(n, ast.Attribute)}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+            if node.value.id in uses:
+                uses[node.value.id].append(node.attr)
+        elif isinstance(node, ast.Name) and node.id in uses and id(node) not in read:
+            uses[node.id].append("<bare>")
+    return uses
+
+
 def _workflow_files() -> list[tuple[str, str]]:
     root = _repo_root()
     found = [
@@ -119,11 +158,17 @@ def test_workflow_imports_none_of_the_banned_names() -> None:
 
 
 def test_workflow_reads_no_environment_no_clock_and_prints_nothing() -> None:
-    """Only the command reads the clock, and once; only the command prints."""
+    """Only the command reads the clock and draws random ids, at exactly three lines (the record's
+    time, the span clock and the id source); only the command prints."""
     files = _workflow_files()
     command = [n for n, _ in files if PurePosixPath(n).parts == COMMAND_PARTS]
     clocks = {n: find_clock_use(t) for n, t in files if find_clock_use(t)}
-    assert {n: len(lines) for n, lines in clocks.items()} == dict.fromkeys(command, 1)
+    assert list(clocks) == command
+    text = dict(files)[command[0]].splitlines()
+    assert sorted(text[line - 1].strip() for line in clocks[command[0]]) == sorted(
+        COMMAND_CLOCK_LINES
+    )
+    assert module_uses(dict(files)[command[0]]) == COMMAND_CLOCK_USES
     assert {n: find_environment_reads(t) for n, t in files if find_environment_reads(t)} == {}
     printing = {n for n, t in files if find_print_calls(t)}
     assert printing == set(command)
@@ -186,6 +231,20 @@ def test_the_mirror_rule_sees_a_sibling_and_lets_the_package_through() -> None:
     ]
     assert find_workflow_importers([(rel, uses) for rel in siblings]) == siblings
     assert find_workflow_importers([("src/listinglens/workflow/writer.py", uses)]) == []
+
+
+def test_the_clock_exception_is_three_lines_and_two_names() -> None:
+    """The command's clock rule sees a fourth clock line and any other use of the two modules."""
+    assert len(find_clock_use("import time\nimport secrets\nx = datetime.now()")) == 3
+    assert len(find_clock_use("import time\nx = datetime.now()\ny = time.monotonic()")) == 3
+    assert module_uses(
+        "import time\nimport secrets\na = time.time_ns\nb = secrets.token_bytes"
+    ) == (COMMAND_CLOCK_USES)
+    assert module_uses("import time\na = time.time_ns\nb = time.time()") == {
+        "time": ["time_ns", "time"]
+    }
+    assert module_uses("import secrets as s\nb = s.token_hex") == {"s": ["token_hex"]}
+    assert module_uses("import time\nclock = time") == {"time": ["<bare>"]}
 
 
 def test_the_guards_see_what_they_are_meant_to() -> None:
