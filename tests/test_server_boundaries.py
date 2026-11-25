@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+from pathlib import PurePosixPath
 
 from tests.test_repo_constraints import (
     _layer_violations,
@@ -18,6 +19,38 @@ from tests.test_tools_boundaries import find_print_calls
 # so nothing in a process environment can choose what the server serves.
 SDK = ("mcp", "mcp_types")
 SERVER_PREFIX = "src/listinglens/server/"
+# The one file outside server/ that may import the SDK (D74): the memo command's client, matched on
+# its exact path parts, and only these names.
+MCP_CLIENT_PARTS = ("src", "listinglens", "workflow", "mcp_client.py")
+MCP_CLIENT_NAMES = {
+    "mcp.client.client": ("Client",),
+    "mcp.client.stdio": ("StdioServerParameters", "stdio_client"),
+    "mcp_types": ("TextContent",),
+}
+
+
+def is_mcp_client(rel: str) -> bool:
+    return PurePosixPath(rel).parts == MCP_CLIENT_PARTS
+
+
+def sdk_names(text: str) -> dict[str, tuple[str, ...]]:
+    """Every SDK module the text imports, with the names it takes from it ("*" for a whole module
+    or a star), so an allowance can be held to exact names."""
+    found: dict[str, list[str]] = {}
+    for node in ast.walk(ast.parse(text)):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if find_forbidden_imports(f"import {alias.name}", SDK):
+                    found.setdefault(alias.name, []).append("*")
+        elif (
+            isinstance(node, ast.ImportFrom)
+            and node.module
+            and find_forbidden_imports(f"import {node.module}", SDK)
+        ):
+            found.setdefault(node.module, []).extend(alias.name for alias in node.names)
+    return {module: tuple(names) for module, names in found.items()}
+
+
 BELOW_TOOLS = (
     "listinglens.domain",
     "listinglens.ingestion",
@@ -74,9 +107,30 @@ def test_only_the_server_package_imports_the_sdk() -> None:
         if path.suffix == ".py"
         and _rel(path, root).startswith("src/")
         and not _rel(path, root).startswith(SERVER_PREFIX)
+        and not is_mcp_client(_rel(path, root))
     }
     assert {name: mods for name, mods in found.items() if mods} == {}
     assert any(find_forbidden_imports(text, SDK) for _, text in _server_files())
+    client = (root / PurePosixPath(*MCP_CLIENT_PARTS)).read_text(encoding="utf-8")
+    assert sdk_names(client) == MCP_CLIENT_NAMES
+
+
+def test_the_one_exception_is_that_exact_path_with_those_exact_names() -> None:
+    assert is_mcp_client("src/listinglens/workflow/mcp_client.py")
+    for sibling in (
+        "src/listinglens/workflow/mcp_client_two.py",
+        "src/listinglens/workflows/mcp_client.py",
+        "src/listinglens/workflow/sub/mcp_client.py",
+        "src/listinglens/memo/mcp_client.py",
+    ):
+        assert not is_mcp_client(sibling), sibling
+    assert sdk_names("from mcp.client.client import Client, ClientSession") == {
+        "mcp.client.client": ("Client", "ClientSession")
+    }
+    assert sdk_names("import mcp") == {"mcp": ("*",)}
+    assert sdk_names("from mcp.server import MCPServer") == {"mcp.server": ("MCPServer",)}
+    assert sdk_names("from mcp_types import *") == {"mcp_types": ("*",)}
+    assert sdk_names("import mcpx") == {}
 
 
 def test_no_layer_below_the_server_imports_the_sdk_or_the_server() -> None:

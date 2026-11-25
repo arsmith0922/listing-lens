@@ -107,3 +107,23 @@ class RecordInvalid(MemoError):
         self.check = check[:40]
         self.detail = detail
         super().__init__(f"The memo record is not valid ({self.check}): {detail}")
+
+
+class ToolCallFailed(MemoError):
+    """A tool of our own server gave the memo command no answer to use (D74): it answered with an
+    error, or the server was not the ListingLens server. Names the tool and a fixed reason; never
+    the tool's own message, which can quote SEC text."""
+
+    def __init__(self, tool: str, reason: str) -> None:
+        self.tool = tool[:40]
+        self.reason = reason
+        super().__init__(f"The tool {self.tool} gave no usable answer: {reason}")
+
+
+class MemoFolderRefused(MemoError):
+    """The folder a memo would be saved in cannot be used (D74): it already exists, or it cannot
+    be created or written. Fixed words only, never the path."""
+
+    def __init__(self, reason: str) -> None:
+        self.reason = reason
+        super().__init__(f"The memo's folder cannot be used: {reason}")

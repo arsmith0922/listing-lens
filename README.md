@@ -77,6 +77,19 @@ LISTINGLENS_ALLOW_NETWORK=1 uv run python scripts/smoke_mcp.py
 
 The smoke script reads `SEC_EDGAR_CONTACT` from your environment or `.env`, hands it to the server it starts, and never prints it.
 
+## Make a memo
+`listinglens-memo` writes a cited risk memo for one company. It starts the server itself, calls the four tools, has the model write the narrative from the checked facts (it never sees filing text), checks every sentence, and saves the result. A run costs a few cents and is capped at 1.00 dollar. It reads its settings from the environment, then from `.env` in the folder you run it in:
+
+- `LISTINGLENS_ANTHROPIC_API_KEY`: your own Anthropic key (a general `ANTHROPIC_API_KEY` is never used)
+- `SEC_EDGAR_CONTACT`: your real email address
+- `LISTINGLENS_CACHE_DIR`: an absolute path to a writable directory
+
+```
+uv run listinglens-memo --ticker AGMH --listing-type continued --pathway traditional_ipo
+```
+
+Give exactly one of `--cik`, `--ticker` or `--name`, the listing type (`initial` or `continued`) and the pathway (for example `traditional_ipo`), and optionally `--tier`, `--limit` (how many filings to list, default 20) and `--out` (default `memos`). Each run saves a new folder under `memos/`, which git ignores, holding `record.json` (the official record), `memo.html` (the page) and `memo.txt` (the plain text), and prints the plain text, the exact cost and the folder. It exits 0 on success, 2 for a bad argument, 3 for a missing or unusable setting, 5 without a key, 4 when the tools give no usable answer, 6 when the model step gives no memo, 7 when the output folder cannot be used, and 1 on any other error, and it saves nothing unless it succeeds.
+
 ## Disclaimer
 This is an educational and research tool. It is not investment advice, not a recommendation to buy or sell any security, and it does not predict fraud. It surfaces risk signals from public filings, with accuracy reported in the evaluation harness.
 

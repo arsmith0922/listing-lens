@@ -8,10 +8,16 @@ from __future__ import annotations
 
 import ast
 import sys
+from pathlib import PurePosixPath
 
 from tests.test_memo_boundaries import find_clock_use, in_package
 from tests.test_repo_constraints import _rel, _repo_root, find_forbidden_imports
-from tests.test_server_boundaries import find_environment_reads
+from tests.test_server_boundaries import (
+    MCP_CLIENT_NAMES,
+    MCP_CLIENT_PARTS,
+    find_environment_reads,
+    sdk_names,
+)
 from tests.test_tools_boundaries import find_print_calls
 
 BANNED = (
@@ -26,6 +32,24 @@ ALLOWED_LISTINGLENS = (
     "listinglens.memo",
     "listinglens.workflow",
 )
+# The command's exception (D74), matched on its exact path parts: it alone may import these three
+# modules (the settings it reads, the tools' own argument models it validates with, and the factory
+# of the model client), read the clock once for the record's time, and print. The memo command's
+# MCP client has the SDK exception of test_server_boundaries.
+COMMAND_PARTS = ("src", "listinglens", "workflow", "command.py")
+COMMAND_MODULES = ("listinglens.llm.factory", "listinglens.tools.args", "listinglens.tools.config")
+
+
+def allowed_here(rel: str, found: set[str]) -> set[str]:
+    """What a guard found in a file, less what that file's named exception allows."""
+    parts = PurePosixPath(rel).parts
+    if parts == COMMAND_PARTS:
+        keep: tuple[str, ...] = COMMAND_MODULES
+    elif parts == MCP_CLIENT_PARTS:
+        keep = tuple(MCP_CLIENT_NAMES)
+    else:
+        return found
+    return {name for name in found if not any(name == m or name.startswith(f"{m}.") for m in keep)}
 
 
 def _allowed(name: str) -> bool:
@@ -81,21 +105,57 @@ def _workflow_files() -> list[tuple[str, str]]:
 
 
 def test_workflow_imports_only_what_the_boundary_allows() -> None:
-    offenders = {rel: sorted(find_unapproved_imports(text)) for rel, text in _workflow_files()}
+    offenders = {
+        rel: sorted(allowed_here(rel, find_unapproved_imports(text)))
+        for rel, text in _workflow_files()
+    }
     assert {rel: mods for rel, mods in offenders.items() if mods} == {}
 
 
 def test_workflow_imports_none_of_the_banned_names() -> None:
     files = _workflow_files()
-    offenders = {rel: sorted(find_banned_imports(text)) for rel, text in files}
+    offenders = {rel: sorted(allowed_here(rel, find_banned_imports(text))) for rel, text in files}
     assert {rel: mods for rel, mods in offenders.items() if mods} == {}
 
 
 def test_workflow_reads_no_environment_no_clock_and_prints_nothing() -> None:
+    """Only the command reads the clock, and once; only the command prints."""
     files = _workflow_files()
-    assert {n: find_clock_use(t) for n, t in files if find_clock_use(t)} == {}
+    command = [n for n, _ in files if PurePosixPath(n).parts == COMMAND_PARTS]
+    clocks = {n: find_clock_use(t) for n, t in files if find_clock_use(t)}
+    assert {n: len(lines) for n, lines in clocks.items()} == dict.fromkeys(command, 1)
     assert {n: find_environment_reads(t) for n, t in files if find_environment_reads(t)} == {}
-    assert {n: find_print_calls(t) for n, t in files if find_print_calls(t)} == {}
+    printing = {n for n, t in files if find_print_calls(t)}
+    assert printing == set(command)
+
+
+def test_each_exception_names_exactly_what_its_file_imports() -> None:
+    texts = {PurePosixPath(rel).parts: text for rel, text in _workflow_files()}
+    command = texts[COMMAND_PARTS]
+    found = find_unapproved_imports(command) | find_banned_imports(command)
+    used = {m for m in COMMAND_MODULES if any(f == m or f.startswith(f"{m}.") for f in found)}
+    assert used == set(COMMAND_MODULES)
+    assert "listinglens.core.config" not in find_banned_imports(command)
+    assert sdk_names(texts[MCP_CLIENT_PARTS]) == MCP_CLIENT_NAMES
+
+
+def test_the_exceptions_hold_only_on_their_exact_paths() -> None:
+    found = {"listinglens.tools.args", "listinglens.tools.service", "mcp.client.client"}
+    assert allowed_here("src/listinglens/workflow/command.py", found) == {
+        "listinglens.tools.service", "mcp.client.client"
+    }  # fmt: skip
+    assert allowed_here("src/listinglens/workflow/mcp_client.py", found) == {
+        "listinglens.tools.args", "listinglens.tools.service"
+    }  # fmt: skip
+    for sibling in (
+        "src/listinglens/workflow/command_text.py",
+        "src/listinglens/workflows/command.py",
+        "src/listinglens/workflow/sub/command.py",
+        "src/listinglens/workflow/run.py",
+    ):
+        assert allowed_here(sibling, found) == found, sibling
+    config = {"listinglens.core.config"}
+    assert allowed_here("src/listinglens/workflow/command.py", config) == config
 
 
 def find_workflow_importers(files: list[tuple[str, str]]) -> list[str]:
