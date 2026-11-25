@@ -9,6 +9,7 @@ it is outside testpaths and is never collected or run in CI.
     record_fixtures.py creditsuisse Credit Suisse AG: untrimmed pair plus trimmed overflow pages
     record_fixtures.py agmh         AGM Group (AGMH): untrimmed submissions and companyfacts
     record_fixtures.py routes       the four route examples (D77): untrimmed submissions and pages
+    record_fixtures.py headers      Lotus's 425 and F-4 (D78): each filing's index and SEC header
 
 manifest.json is merged by file name, so recording one set never drops the other's entries.
 """
@@ -23,6 +24,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
+import record_headers as headers
 import record_pairs as pairs
 import record_routes as routes
 from pydantic import JsonValue
@@ -60,7 +62,7 @@ MAX_UNCOMMON_UNIT_CONCEPTS = 40
 MAX_NULL_FY_CONCEPTS = 25
 
 # The pair-recorded companies (aacg, creditsuisse, ...) are in record_pairs.py.
-SELECTORS = ("chunk6", "companyfacts", "nasdaq", *pairs.UNTRIMMED_PAIRS, "routes")
+SELECTORS = ("chunk6", "companyfacts", "nasdaq", *pairs.UNTRIMMED_PAIRS, "routes", "headers")
 
 MANIFEST: list[dict[str, JsonValue]] = []
 NASDAQ_MANIFEST: list[dict[str, JsonValue]] = []
@@ -260,6 +262,8 @@ def main(argv: Sequence[str] = ()) -> None:
         record_pair(transport, selector)
     elif selector == "routes":
         written = routes.record_route_examples(transport, write_raw_fixture)
+    elif selector == "headers":
+        written = headers.record_headers(transport, write_raw_fixture)
     else:
         record_chunk6(transport)
     write_manifest()
