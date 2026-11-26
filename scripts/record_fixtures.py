@@ -10,6 +10,7 @@ it is outside testpaths and is never collected or run in CI.
     record_fixtures.py agmh         AGM Group (AGMH): untrimmed submissions and companyfacts
     record_fixtures.py routes       the four route examples (D77): untrimmed submissions and pages
     record_fixtures.py headers      Lotus's 425 and F-4 (D78): each filing's index and SEC header
+    record_fixtures.py lucid        Lucid Group (D79): its record, pages, S-1 index and SEC header
 
 manifest.json is merged by file name, so recording one set never drops the other's entries.
 """
@@ -25,6 +26,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import record_headers as headers
+import record_lucid as lucid
 import record_pairs as pairs
 import record_routes as routes
 from pydantic import JsonValue
@@ -61,8 +63,10 @@ KEEP_FIRST_CONCEPTS = 5
 MAX_UNCOMMON_UNIT_CONCEPTS = 40
 MAX_NULL_FY_CONCEPTS = 25
 
-# The pair-recorded companies (aacg, creditsuisse, ...) are in record_pairs.py.
-SELECTORS = ("chunk6", "companyfacts", "nasdaq", *pairs.UNTRIMMED_PAIRS, "routes", "headers")
+# The pair-recorded companies (aacg, creditsuisse, ...) are in record_pairs.py, and the routes,
+# headers and lucid recorders in their own modules.
+RECORDERS = ("routes", "headers", "lucid")
+SELECTORS = ("chunk6", "companyfacts", "nasdaq", *pairs.UNTRIMMED_PAIRS, *RECORDERS)
 
 MANIFEST: list[dict[str, JsonValue]] = []
 NASDAQ_MANIFEST: list[dict[str, JsonValue]] = []
@@ -264,6 +268,10 @@ def main(argv: Sequence[str] = ()) -> None:
         written = routes.record_route_examples(transport, write_raw_fixture)
     elif selector == "headers":
         written = headers.record_headers(transport, write_raw_fixture)
+    elif selector == "lucid":
+        written = lucid.record_lucid(
+            transport, write_raw_fixture, lambda name: (FIXTURES_DIR / name).exists()
+        )
     else:
         record_chunk6(transport)
     write_manifest()
