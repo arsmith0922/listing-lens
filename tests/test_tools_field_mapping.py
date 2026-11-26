@@ -12,6 +12,7 @@ from listinglens.tools import (
     models_basic,
     models_check,
     models_financials,
+    models_route,
     models_rule,
     models_source,
     models_structure,
@@ -28,16 +29,20 @@ MODULES: tuple[ModuleType, ...] = (
     models_tier,
     models_check,
     models_structure,
+    models_route,
 )
 
 
+def _own_models(module: ModuleType) -> list[tuple[str, type[BaseModel]]]:
+    return [
+        (name, item)
+        for name, item in inspect.getmembers(module, inspect.isclass)
+        if issubclass(item, BaseModel) and item.__module__ == module.__name__
+    ]
+
+
 def view_models() -> dict[str, type[BaseModel]]:
-    found: dict[str, type[BaseModel]] = {}
-    for module in MODULES:
-        for name, item in inspect.getmembers(module, inspect.isclass):
-            if issubclass(item, BaseModel) and item.__module__ == module.__name__:
-                found[name] = item
-    return found
+    return {name: item for module in MODULES for name, item in _own_models(module)}
 
 
 VIEWS = view_models()
@@ -71,7 +76,7 @@ def test_every_destination_names_a_real_view_field_and_every_omission_says_why(
 
 def test_the_table_covers_the_models_the_views_read_and_nothing_else() -> None:
     names = sorted(m.__name__ for m in MAPPING)
-    assert len(names) == len(set(names)) == 42
+    assert len(names) == len(set(names)) == 54
     for expected in ("TierResult", "MeasuredResult", "NotEvaluableResult", "StandardRule"):
         assert expected in names
 
@@ -79,6 +84,14 @@ def test_the_table_covers_the_models_the_views_read_and_nothing_else() -> None:
 def test_the_registry_finds_every_view_model() -> None:
     for name in ("TierView", "FindingView", "NotMeasuredView", "FigureView", "NasdaqStatusView"):
         assert name in VIEWS
+    assert {"ClassifyPathwayResult", "RouteStageView", "CounterpartyLookupView"} <= set(VIEWS)
+
+
+def test_no_two_view_models_share_a_name() -> None:
+    """The registry is keyed by class name, so a second view of the same name would hide the
+    first from every test that reads it (D80)."""
+    names = [name for module in MODULES for name, _ in _own_models(module)]
+    assert len(names) == len(set(names)) == len(VIEWS)
 
 
 def test_the_etf_flag_is_mapped_to_the_match_view_and_not_omitted() -> None:

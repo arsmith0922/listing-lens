@@ -23,6 +23,7 @@ from listinglens.domain.profile import CompanyProfile
 from listinglens.issuer.models import IssuerStructure
 from listinglens.margin.nodes import BranchResult, RequirementResult, StandardResult
 from listinglens.margin.tier import Caveat, FinancialCaveat, TierResult, TranslatedFigure
+from tests.tools_mapping_routes import ROUTE_MAPPING
 from tests.tools_mapping_rules import RULE_MAPPING, SELECTION
 
 # Every field of every domain or engine model the views read, and what became of it (D45):
@@ -128,9 +129,11 @@ MAPPING: dict[type[BaseModel], dict[str, str]] = {
         "report_date": "FilingView.report_date",
         "acceptance_datetime": "FilingView.acceptance_datetime",
         "primary_document": "FilingView.primary_document",
-        "items": "omitted: read by the route and flag layers by form (D77); no tool shows it yet",
+        "items": "omitted: read by the route and flag layers by form (D77); classify_pathway "
+        "shows only the deciding items of a shell merger (D80)",
         "primary_doc_description": "omitted: for the route and flag layers (D77); not shown yet",
-        "file_number": "omitted: for the route and flag layers (D77); no tool shows it yet",
+        "file_number": "omitted: for the route and flag layers (D77); classify_pathway shows "
+        "only the entry registration's (D80)",
         "act": "omitted: for the route and flag layers (D77); no tool shows it yet",
     },
     IssuerRecord: {
@@ -264,3 +267,4 @@ MAPPING: dict[type[BaseModel], dict[str, str]] = {
 }
 
 MAPPING |= RULE_MAPPING
+MAPPING |= ROUTE_MAPPING

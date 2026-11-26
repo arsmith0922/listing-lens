@@ -22,6 +22,7 @@ SELF_EVIDENT = frozenset(
     {
         "BranchView.name",
         "CheckStandardsResult.company",
+        "ClassifyPathwayResult.company",
         "CheckStandardsResult.tier_source",
         "CompanyEcho.resolved_from",
         "CrossTagView.concept",
