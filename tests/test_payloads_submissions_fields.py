@@ -1,6 +1,6 @@
 """The company fields of the submissions record that D77 types (the SIC code, the place of
 incorporation, the two address locations, the filer category and the fiscal year end), each equal
-to the JSON as the SEC sent it in all eleven recorded records, with empty text as None. An address
+to the JSON as the SEC sent it in all twelve recorded records, with empty text as None. An address
 holds where it is and never the street, the postal code or the phone, and a record without any of
 these keys still parses, so nothing the four tools read can fail on them."""
 
@@ -39,7 +39,7 @@ def _parsed(load: FixtureLoader, stem: str) -> tuple[dict[str, object], Submissi
 
 
 @pytest.mark.parametrize("stem", sorted(RECORDED))
-def test_every_company_field_is_typed_on_the_eleven_records(
+def test_every_company_field_is_typed_on_every_recorded_record(
     load_edgar_fixture: FixtureLoader, stem: str
 ) -> None:
     raw, document = _parsed(load_edgar_fixture, stem)

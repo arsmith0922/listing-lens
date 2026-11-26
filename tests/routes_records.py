@@ -16,6 +16,7 @@ from listinglens.ingestion.payloads.header import header_document_name
 from listinglens.issuer.build import build_issuer_structure
 from listinglens.routes.classify import CounterpartyRecord, classify_route
 from listinglens.routes.models import RouteResult
+from listinglens.routes.spac import ipo_header_to_check
 from tests.conftest import EDGAR_FIXTURES_DIR, RepositoryFactory, Route
 from tests.issuer_support import RECORDED, record_of, record_with
 from tests.routes_support import HAND
@@ -25,6 +26,8 @@ D = date.fromisoformat
 LOTUS = Cik.parse(RECORDED["lotus"])
 A425 = AccessionNumber.parse("0001104659-23-008580")  # Lotus's first 425
 AF4 = AccessionNumber.parse("0001104659-23-109358")  # its F-4
+LUCID = Cik.parse(RECORDED["lucid"])
+S1 = AccessionNumber.parse("0001104659-20-083464")  # Lucid's IPO S-1
 LOTUS_COMPANY = ResolvedCompany(cik=LOTUS, issuer_name="lotus", ref=CompanyRef(cik=LOTUS))
 
 
@@ -60,11 +63,15 @@ def hand(
 
 
 def classify(
-    record: IssuerRecord, cutoff: str, counterparty: CounterpartyRecord | None = None
+    record: IssuerRecord,
+    cutoff: str,
+    counterparty: CounterpartyRecord | None = None,
+    ipo_header: FilingHeader | None = None,
 ) -> RouteResult:
     """The classifier at the cutoff, with the issuer facts built at the same cutoff."""
     day = D(cutoff)
-    return classify_route(record, build_issuer_structure(record, day), day, counterparty)
+    facts = build_issuer_structure(record, day)
+    return classify_route(record, facts, day, counterparty, ipo_header)
 
 
 def run(
@@ -77,19 +84,37 @@ def run(
 
 
 def header_routes() -> dict[str, Route]:
-    """Lotus's 425 and F-4: each filing's index and its SEC header, as Austin recorded them."""
+    """Lotus's 425 and F-4, and Lucid's IPO S-1 (D79): each filing's index and its SEC header, as
+    Austin recorded them."""
     routes: dict[str, Route] = {}
-    for accession, stem in ((A425, "lotus_425"), (AF4, "lotus_f4")):
+    for cik, accession, stem in (
+        (LOTUS, A425, "lotus_425"),
+        (LOTUS, AF4, "lotus_f4"),
+        (LUCID, S1, "lucid_s1"),
+    ):
         index = (EDGAR_FIXTURES_DIR / f"archives_index_{stem}.json").read_bytes()
-        routes[filing_index_url(LOTUS, accession)] = index
+        routes[filing_index_url(cik, accession)] = index
         page = (EDGAR_FIXTURES_DIR / f"header_{stem}.html").read_bytes()
-        routes[filing_document_url(LOTUS, accession, header_document_name(accession))] = page
+        routes[filing_document_url(cik, accession, header_document_name(accession))] = page
     return routes
 
 
-def header_of(factory: RepositoryFactory, accession: AccessionNumber) -> FilingHeader:
+def header_of(
+    factory: RepositoryFactory, accession: AccessionNumber, cik: Cik = LOTUS
+) -> FilingHeader:
     repository, _ = factory({**recorded_routes(), **header_routes()})
-    return repository.filing_header(LOTUS_COMPANY, accession)
+    company = ResolvedCompany(cik=cik, issuer_name="recorded", ref=CompanyRef(cik=cik))
+    return repository.filing_header(company, accession)
+
+
+def run_as_served(factory: RepositoryFactory, stem: str, cutoff: str) -> RouteResult:
+    """The classifier as the tool will call it (D79): with the IPO header ipo_header_to_check
+    names, fetched over the recorded routes, and with none when it names nothing."""
+    record, day = record_of(factory, stem), D(cutoff)
+    facts = build_issuer_structure(record, day)
+    named = ipo_header_to_check(record, facts, day)
+    header = None if named is None else header_of(factory, named.accession_no, record.cik)
+    return classify_route(record, facts, day, ipo_header=header)
 
 
 def counterparty(

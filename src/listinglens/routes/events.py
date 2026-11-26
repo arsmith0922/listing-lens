@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Sequence
-from datetime import UTC, date, datetime
-from typing import Literal, NamedTuple
+from datetime import UTC, date, datetime, timedelta
+from typing import TYPE_CHECKING, Final, Literal, NamedTuple
 
 from listinglens.domain.filing import FilingRef
 from listinglens.domain.identifiers import AccessionNumber
@@ -10,13 +10,16 @@ from listinglens.domain.issuer import IssuerRecord
 from listinglens.routes import forms
 from listinglens.routes.models import CitedFiling
 
+if TYPE_CHECKING:  # registrations.py reads this module, so the type is named only for mypy
+    from listinglens.routes.registrations import Registration
+
 # The filing events the route layer reads (D78), each from the filings on or before the cutoff.
 # Form types, dates, file numbers and 8-K items only: no filing text is ever read. "After" and
 # "before" compare filing dates, never acceptance times; the order within a day only picks the
 # first of several filings.
 _NO_TIME = datetime.min.replace(tzinfo=UTC)
-_ENDS = forms.DELISTINGS | forms.DEREGISTRATIONS
 Kind = Literal["offering", "merger"]
+TRANSFER_DAYS: Final = 10  # a Form 25 takes effect 10 days after it is filed
 
 
 def order(ref: FilingRef) -> tuple[date, datetime, str]:
@@ -52,71 +55,6 @@ def effectiveness(ref: FilingRef) -> bool:
     return ref.form_type == forms.EFFECT and ref.items[:1] != (forms.POST_EFFECTIVE,)
 
 
-class Registration(NamedTuple):
-    """One registration: its file number, its statement and the amendments filed on or before its
-    effectiveness, and the notices and prospectus on that number."""
-
-    file_number: str
-    kind: Kind
-    statements: tuple[FilingRef, ...]
-    effect: FilingRef | None
-    prospectus: FilingRef | None
-    withdrawal: FilingRef | None
-    post_effective: int
-
-
-def _registration(filings: Sequence[FilingRef], number: str) -> Registration:
-    on_it = [ref for ref in filings if ref.file_number == number]
-    statements = [ref for ref in on_it if ref.form_type in forms.OFFERING | forms.MERGER]
-    kind: Kind = "merger" if statements[0].form_type in forms.MERGER else "offering"
-    effect = first(on_it, effectiveness)
-    papers = frozenset({forms.MERGER_PROSPECTUS}) if kind == "merger" else forms.OFFERING_PROSPECTUS
-    prospectus, upto = None, date.max
-    if effect is not None:
-        prospectus, upto = since(on_it, papers, effect.filed_date), effect.filed_date
-    return Registration(
-        file_number=number,
-        kind=kind,
-        statements=tuple(ref for ref in statements if ref.filed_date <= upto),
-        effect=effect,
-        prospectus=prospectus,
-        withdrawal=first(
-            filings, lambda ref: ref.form_type == forms.WITHDRAWAL and ref.file_number == number
-        ),
-        post_effective=sum(1 for ref in on_it if ref.form_type == forms.POST_EFFECTIVE),
-    )
-
-
-def registrations(filings: Sequence[FilingRef]) -> tuple[Registration, ...]:
-    """Every offering or merger registration, by its first public statement."""
-    numbers: dict[str, None] = {}
-    for ref in filings:
-        if ref.file_number is not None and ref.form_type in forms.OFFERING | forms.MERGER:
-            numbers.setdefault(ref.file_number)
-    return tuple(_registration(filings, number) for number in numbers)
-
-
-def entry_of(regs: Sequence[Registration]) -> Registration | None:
-    """The first registration that became effective and was not withdrawn; with none, the latest
-    not withdrawn (an entry in progress); with every one withdrawn, the latest."""
-    done = [reg for reg in regs if reg.effect is not None and reg.withdrawal is None]
-    if done:
-        return done[0]
-    going = [reg for reg in regs if reg.withdrawal is None] or list(regs)
-    return going[-1] if going else None
-
-
-def drafts_of(
-    filings: Sequence[FilingRef], regs: Sequence[Registration], entry: Registration
-) -> list[FilingRef]:
-    """The confidential drafts submitted on or before the entry's first public statement and after
-    any earlier registration's, matched by date: a draft carries its own file number."""
-    began = entry.statements[0].filed_date
-    earlier = [reg.statements[0].filed_date for reg in regs if reg.statements[0].filed_date < began]
-    floor = max(earlier, default=date.min)
-    return [r for r in filings if r.form_type in forms.DRAFTS and floor < r.filed_date <= began]
-
-
 class Listed(NamedTuple):
     registered: FilingRef
     certified: FilingRef | None
@@ -144,15 +82,69 @@ def listing_of(
     return Listed(registered, certified, max(ref.filed_date for ref in present), tuple(present))
 
 
+def _certifies(filings: Sequence[FilingRef], listing: FilingRef) -> FilingRef | None:
+    """The first certification with the 8-A12B's file number, filed on or after it."""
+    number, day = listing.file_number, listing.filed_date
+    return first(
+        filings,
+        lambda r: (
+            r.form_type in forms.CERTIFICATIONS and r.file_number == number and r.filed_date >= day
+        ),
+    )
+
+
+def transfer_of(
+    filings: Sequence[FilingRef], form25: FilingRef
+) -> tuple[FilingRef, FilingRef] | None:
+    """An exchange transfer (D79): an 8-A12B other than the listing's own, filed within 10 days
+    before or after the Form 25, and that 8-A12B's certification, once both are filed. Matched by
+    date, never by the Form 25's file number."""
+    own = first(filings, lambda r: r.form_type == forms.EXCHANGE_LISTING)
+    window = timedelta(days=TRANSFER_DAYS)
+    for new in filings:
+        if new.form_type != forms.EXCHANGE_LISTING or new == own:
+            continue
+        if abs(new.filed_date - form25.filed_date) > window:
+            continue
+        certified = _certifies(filings, new)
+        if certified is not None:
+            return new, certified
+    return None
+
+
+def ended(filings: Sequence[FilingRef], ref: FilingRef) -> bool:
+    """A Form 25 that is no exchange transfer, or a deregistration: the listing ends there."""
+    if ref.form_type in forms.DELISTINGS:
+        return transfer_of(filings, ref) is None
+    return ref.form_type in forms.DEREGISTRATIONS
+
+
+def delisting_since(filings: Sequence[FilingRef], day: date) -> FilingRef | None:
+    """The first Form 25 on or after the day that is not an exchange transfer."""
+    return first(
+        filings,
+        lambda r: (
+            r.form_type in forms.DELISTINGS
+            and r.filed_date >= day
+            and transfer_of(filings, r) is None
+        ),
+    )
+
+
 def listed_on(filings: Sequence[FilingRef], day: date) -> bool:
     """Whether an exchange listing was in effect on the day: it took effect by then and no
-    delisting came after it and before the day. A delisting on the day itself does not end it, and
-    a company delisted before the day is unlisted."""
+    delisting came after it and before the day. Neither a delisting on the day itself nor an
+    exchange transfer ends it, and a company delisted before the day is unlisted."""
     listing = listing_of([ref for ref in filings if ref.filed_date <= day], None, entry=False)
     start = None if listing is None else listing.on
     if start is None:
         return False
-    return not any(r.form_type in forms.DELISTINGS and start <= r.filed_date < day for r in filings)
+    return not any(
+        r.form_type in forms.DELISTINGS
+        and start <= r.filed_date < day
+        and transfer_of(filings, r) is None
+        for r in filings
+    )
 
 
 def items_of(ref: FilingRef) -> frozenset[str]:
@@ -170,9 +162,9 @@ def acquired(filings: Iterable[FilingRef], day: date) -> FilingRef | None:
 
 
 def ends_unreported(filings: Sequence[FilingRef], start: FilingRef) -> FilingRef | None:
-    """The first delisting or deregistration on or after the filing's day, when no periodic
-    report came between them."""
-    end = since(filings, _ENDS, start.filed_date)
+    """The first delisting (never an exchange transfer) or deregistration on or after the
+    filing's day, when no periodic report came between them."""
+    end = first(filings, lambda r: r.filed_date >= start.filed_date and ended(filings, r))
     if end is None:
         return None
     if any(

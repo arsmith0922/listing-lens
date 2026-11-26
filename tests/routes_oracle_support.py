@@ -77,7 +77,25 @@ def doc(role: Role, filing: CitedFiling, primary: str | None) -> SettlingDocumen
 
 
 def spac(stem: str) -> SpacEvidence:
-    return SpacEvidence(cik=Cik.parse(RECORDED[stem]), sic="6770", as_of="record_as_served")
+    """A blank check's SIC from its record as the SEC serves it now."""
+    return SpacEvidence(
+        cik=Cik.parse(RECORDED[stem]),
+        sic="6770",
+        as_of="record_as_served",
+        source="record",
+        filing=None,
+    )
+
+
+def spac_header(stem: str, statement: CitedFiling) -> SpacEvidence:
+    """A blank check's SIC from the SEC header of its IPO's first registration statement (D79)."""
+    return SpacEvidence(
+        cik=Cik.parse(RECORDED[stem]),
+        sic="6770",
+        as_of="cutoff",
+        source="registration_header",
+        filing=statement,
+    )
 
 
 def shell(

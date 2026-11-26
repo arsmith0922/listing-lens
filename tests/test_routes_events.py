@@ -13,6 +13,7 @@ import pytest
 from listinglens.domain.filing import FilingRef
 from listinglens.domain.issuer import IssuerRecord
 from listinglens.routes import events as ev
+from listinglens.routes import registrations as rg
 from tests.conftest import RepositoryFactory
 from tests.issuer_support import record_of
 from tests.routes_records import D, classify, hand, row, run
@@ -25,7 +26,7 @@ def _filings(record: IssuerRecord, cutoff: str = "2026-11-25") -> tuple[FilingRe
 def test_a_registration_is_its_file_number_with_its_amendments_effect_and_prospectus(
     repository_factory: RepositoryFactory,
 ) -> None:
-    agmh = ev.registrations(_filings(record_of(repository_factory, "agmh")))
+    agmh = rg.registrations(_filings(record_of(repository_factory, "agmh")))
     assert [reg.file_number for reg in agmh] == [
         "333-218020",
         "333-282420",
@@ -42,17 +43,17 @@ def test_a_registration_is_its_file_number_with_its_amendments_effect_and_prospe
     assert (
         ipo.prospectus is not None and ipo.prospectus.accession_no.dashed == "0001213900-18-002113"
     )
-    assert ev.entry_of(agmh) == ipo  # every later registration is a follow-on
+    assert rg.entry_of(agmh) == ipo  # every later registration is a follow-on
     # Puda's resale registration: an SB-2 continued as S-1/A in 2008 stays one registration, and
     # its 424B3s are never an offering's final prospectus.
     puda = {
-        r.file_number: r for r in ev.registrations(_filings(record_of(repository_factory, "puda")))
+        r.file_number: r for r in rg.registrations(_filings(record_of(repository_factory, "puda")))
     }
     resale = puda["333-130380"]
     assert [ref.form_type for ref in resale.statements] == ["SB-2"] + ["SB-2/A"] * 6 + ["S-1/A"] * 4
     assert resale.effect is not None and str(resale.effect.filed_date) == "2008-03-31"
     assert (resale.prospectus, resale.withdrawal, resale.post_effective) == (None, None, 3)
-    lotus = ev.registrations(_filings(record_of(repository_factory, "lotus")))
+    lotus = rg.registrations(_filings(record_of(repository_factory, "lotus")))
     assert [(r.file_number, r.kind) for r in lotus] == [
         ("333-275001", "merger"),
         ("333-279108", "offering"),
@@ -73,15 +74,15 @@ def test_drafts_are_matched_by_date_not_their_own_file_number(
     repository_factory: RepositoryFactory,
 ) -> None:
     aixi = _filings(record_of(repository_factory, "aixi"))
-    regs = ev.registrations(aixi)
-    drafts = ev.drafts_of(aixi, regs, regs[0])
+    regs = rg.registrations(aixi)
+    drafts = rg.drafts_of(aixi, regs, regs[0])
     assert {ref.file_number for ref in drafts} == {"377-06267"} and regs[
         0
     ].file_number == "333-268889"
     assert len(drafts) == 4
     luckin = _filings(record_of(repository_factory, "luckin"))
-    regs = ev.registrations(luckin)
-    first, follow_on = (ev.drafts_of(luckin, regs, reg) for reg in regs)
+    regs = rg.registrations(luckin)
+    first, follow_on = (rg.drafts_of(luckin, regs, reg) for reg in regs)
     assert [ref.accession_no.dashed for ref in first] == [
         "0000912057-19-000058",
         "0000912057-19-000118",
@@ -99,14 +100,14 @@ def test_an_effect_for_a_post_effective_amendment_is_not_effectiveness() -> None
         row(2, "POS AM", "2003-05-01", "333-10"),
         row(3, "EFFECT", "2003-05-10", "333-10", items="POS AM,0001234567-03-000002,2003-05-10"),
     )
-    (reg,) = ev.registrations(_filings(record))
+    (reg,) = rg.registrations(_filings(record))
     assert (reg.effect, reg.post_effective) == (None, 1)
     assert classify(record, "2026-11-25").stage == "in_registration"
 
 
 def _listed(*rows: FilingRef) -> ev.Listed | None:
     filings = _filings(hand(*rows))
-    regs = ev.registrations(filings)
+    regs = rg.registrations(filings)
     effect = regs[0].effect if regs else None
     return ev.listing_of(filings, effect, entry=bool(regs))
 
@@ -217,9 +218,9 @@ def test_old_format_8k_items_never_make_a_shell_merger(
     old = next(r for r in puda.filings if r.accession_no.dashed == "0001144204-04-005729")
     assert (old.form_type, old.items, ev.items_of(old)) == ("8-K", ("1", "2", "7"), frozenset())
     before = _filings(puda, "2005-07-17")
-    assert ev.shell_merger(before, ev.registrations(before)) is None
+    assert ev.shell_merger(before, rg.registrations(before)) is None
     on_the_day = _filings(puda, "2005-07-18")
-    shell = ev.shell_merger(on_the_day, ev.registrations(on_the_day))
+    shell = ev.shell_merger(on_the_day, rg.registrations(on_the_day))
     assert shell is not None and shell.merger.accession_no.dashed == "0001144204-05-021795"
 
 

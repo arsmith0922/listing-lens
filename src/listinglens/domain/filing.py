@@ -42,8 +42,8 @@ class FilingDocument(BaseModel):
 
 
 class HeaderParty(BaseModel):
-    """A company a filing's SEC header names as its subject: its CIK and the SIC the header
-    assigns it, never its name."""
+    """A company a filing's SEC header names, as a filer or a subject: its CIK and the SIC the
+    header assigns it as of that filing (D79), never its name."""
 
     model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
 
@@ -59,5 +59,5 @@ class FilingHeader(BaseModel):
     model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
 
     accession_no: AccessionNumber
-    filers: tuple[Cik, ...]
+    filers: tuple[HeaderParty, ...]
     subjects: tuple[HeaderParty, ...]

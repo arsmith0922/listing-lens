@@ -81,7 +81,7 @@ def test_a_candidate_set_has_two_distinct_routes_and_phrases_for_them_alone() ->
             CandidateSet.model_validate({**fields, **change})
 
 
-SPAC = SpacEvidence(cik=HAND, sic="6770", as_of="record_as_served")
+SPAC = SpacEvidence(cik=HAND, sic="6770", as_of="record_as_served", source="record", filing=None)
 LISTED = StageFact(stage="listed", on=D("2021-03-12"), filings=(S1, A8, CERT))
 BASE: dict[str, object] = {
     "cik": HAND,
@@ -169,6 +169,23 @@ def test_a_route_result_s_parts_fit_its_outcome(fields: dict[str, object]) -> No
     assert RouteResult.model_validate(de_spac).counterparty == PARTY
     with pytest.raises(InputValidationError):
         RouteResult.model_validate(fields)
+
+
+def test_spac_evidence_s_source_filing_and_timing_fit() -> None:
+    # The record as served, uncited; or the IPO header (D79), as of the cutoff and cited.
+    header = SpacEvidence(
+        cik=HAND, sic="6770", as_of="cutoff", source="registration_header", filing=S1
+    )
+    assert (header.filing, SPAC.filing) == (S1, None)
+    for as_of, source, filing in (
+        ("record_as_served", "registration_header", S1),
+        ("cutoff", "registration_header", None),
+        ("cutoff", "record", None),
+        ("record_as_served", "record", S1),
+    ):
+        fields = {"cik": HAND, "sic": "6770", "as_of": as_of, "source": source, "filing": filing}
+        with pytest.raises(InputValidationError):
+            SpacEvidence.model_validate(fields)
 
 
 def test_every_route_model_is_frozen_strict_and_closed() -> None:

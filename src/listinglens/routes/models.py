@@ -12,8 +12,9 @@ from listinglens.domain.issuer import FormerName
 from listinglens.domain.pathway import Pathway
 
 # What the route layer returns (D78): one of three outcomes, every event cited by filing and
-# holding as of the cutoff. The one fact that is the record as the SEC serves it now is a blank
-# check's SIC, and SpacEvidence says so.
+# holding as of the cutoff. The one fact that may be the record as the SEC serves it now is a
+# blank check's SIC (D79: unless the SEC header of the IPO's registration statement gives it), and
+# SpacEvidence says which.
 STRICT = ConfigDict(frozen=True, strict=True, extra="forbid")
 Stage = Literal[
     "in_registration",
@@ -43,6 +44,7 @@ EventKind = Literal[
     "delisted",
     "deregistered",
     "counterparty_link",
+    "listing_transferred",
 ]
 Reason = Literal["offering_forms_alike", "blank_check_before_listing", "merger_partner_unknown"]
 Role = Literal[
@@ -140,11 +142,24 @@ class Listing(BaseModel):
 
 
 class SpacEvidence(BaseModel):
+    """A blank check's SIC and where it came from (D79): the record as the SEC serves it now, or
+    the SEC header of the entry's first registration statement, which holds as of that filing and
+    so as of the cutoff, and is cited."""
+
     model_config = STRICT
 
     cik: Cik
     sic: str
-    as_of: Literal["record_as_served"]
+    as_of: Literal["record_as_served", "cutoff"]
+    source: Literal["record", "registration_header"]
+    filing: CitedFiling | None
+
+    @model_validator(mode="after")
+    def _source_fits(self) -> SpacEvidence:
+        header = self.source == "registration_header"
+        if header != (self.filing is not None) or header != (self.as_of == "cutoff"):
+            raise _refuse("spac_evidence", self.source)
+        return self
 
 
 class Counterparty(BaseModel):

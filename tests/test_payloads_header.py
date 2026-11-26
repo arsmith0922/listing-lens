@@ -26,7 +26,9 @@ HEADER_425 = (EDGAR_FIXTURES_DIR / "header_lotus_425.html").read_text(encoding="
 URL = filing_document_url(LOTUS, A425, header_document_name(A425))
 # The 425's header as its tagged block states it: L Catterton (SIC 6770) the subject, Lotus filer.
 EXPECTED_425 = FilingHeader(
-    accession_no=A425, filers=(LOTUS,), subjects=(HeaderParty(cik=LCAA, sic="6770"),)
+    accession_no=A425,
+    filers=(HeaderParty(cik=LOTUS, sic=None),),  # its FILED-BY assigns no SIC
+    subjects=(HeaderParty(cik=LCAA, sic="6770"),),
 )
 BLOCK = HEADER_425[HEADER_425.index("<SEC-HEADER>") : HEADER_425.index("</SEC-HEADER>") + 14]
 
@@ -61,11 +63,11 @@ def test_the_service_reads_the_header_as_the_repository_does(
 
 
 def test_what_the_recorded_f4_header_names(repository_factory: RepositoryFactory) -> None:
-    # One FILER (Lotus, whose own SIC 3711 is never read) and no SUBJECT-COMPANY: the F-4 alone
+    # One FILER (Lotus, with the SIC 3711 it had then) and no SUBJECT-COMPANY: the F-4 alone
     # names no merger partner, and that is no error.
     repository, _ = repository_factory(_routes())
     assert repository.filing_header(COMPANY, AF4) == FilingHeader(
-        accession_no=AF4, filers=(LOTUS,), subjects=()
+        accession_no=AF4, filers=(HeaderParty(cik=LOTUS, sic="3711"),), subjects=()
     )
 
 
@@ -104,6 +106,34 @@ def test_a_page_with_the_block_only_in_the_body_is_refused(page: str) -> None:
     with pytest.raises(MalformedPayload) as caught:
         _parse(page)
     assert caught.value.detail == "0 comments hold a SEC-HEADER block, not one"
+
+
+LUCID, S1 = Cik.parse(1811210), AccessionNumber.parse("0001104659-20-083464")
+HEADER_S1 = (EDGAR_FIXTURES_DIR / "header_lucid_s1.html").read_bytes()
+
+
+def test_the_recorded_s1_header_names_lucid_as_its_filer_with_sic_6770() -> None:
+    # Lucid's IPO S-1, filed as Churchill Capital Corp IV: its FILER holds a FORMER-COMPANY section
+    # (Annetta Acquisition Corp, 20200504) outside its COMPANY-DATA, read as a section and never
+    # read from.
+    assert HEADER_S1.count(b"<FORMER-COMPANY>") == 1
+    url = filing_document_url(LUCID, S1, header_document_name(S1))
+    header = parse_filing_header(HEADER_S1, url, S1)
+    assert header == FilingHeader(
+        accession_no=S1, filers=(HeaderParty(cik=LUCID, sic="6770"),), subjects=()
+    )
+    held = header.model_dump_json().lower()
+    for never in ("annetta", "20200504", "churchill", "fifth avenue", "333-239856"):
+        assert never not in held, never
+
+
+def test_a_filer_sic_outside_company_data_is_never_read() -> None:
+    page = HEADER_425.replace(
+        "</COMPANY-DATA>\n<FILING-VALUES>\n<FORM-TYPE>425\n</FILING-VALUES>",
+        "</COMPANY-DATA>\n<ASSIGNED-SIC>9999\n<FILING-VALUES>\n<FORM-TYPE>425\n</FILING-VALUES>",
+    )  # in FILED-BY, outside its COMPANY-DATA
+    assert page.count("<ASSIGNED-SIC>9999") == 1
+    assert _parse(page) == EXPECTED_425
 
 
 def test_a_cik_outside_company_data_is_never_read() -> None:
@@ -152,6 +182,7 @@ MALFORMED = [
         "<ACCESSION-NUMBER>0001104659-23-008580\n",
         "<ACCESSION-NUMBER>0001104659-23-008580\n<ACCESSION-NUMBER>0001104659-23-008580\n",
     ),
+    _swap("<CIK>0001962746\n", "<CIK>0001962746\n<ASSIGNED-SIC>3711\n<ASSIGNED-SIC>3711\n"),
 ]
 # Why each is refused, in the same order.
 REFUSALS = {
@@ -171,6 +202,7 @@ REFUSALS = {
     "an_opener_with_a_value": "an unbalanced </COMPANY-DATA>",
     "a_closer_with_a_value": "an unbalanced </COMPANY-DATA>",
     "the_accession_twice": "the header does not name 0001104659-23-008580 alone",
+    "two_filer_sics": "FILED-BY holds more than one ASSIGNED-SIC",
 }
 
 

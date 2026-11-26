@@ -12,7 +12,9 @@ from listinglens.domain.pathway import Pathway
 from listinglens.issuer.models import IssuerStructure
 from listinglens.routes import events as ev
 from listinglens.routes import forms
+from listinglens.routes import registrations as rg
 from listinglens.routes import result as rs
+from listinglens.routes import spac as sp
 from listinglens.routes.models import (
     CitedFiling,
     Counterparty,
@@ -52,13 +54,6 @@ def link_to_check(result: RouteResult) -> CitedFiling | None:
     return next((e.filing for e in result.events if e.kind == "merger_communication"), None)
 
 
-def _spac_evidence(record: IssuerRecord, facts: IssuerStructure) -> SpacEvidence | None:
-    industry = facts.industry
-    if industry is None or not industry.blank_check:
-        return None
-    return SpacEvidence(cik=record.cik, sic=industry.sic, as_of="record_as_served")
-
-
 def _merged(
     filings: Sequence[FilingRef], merger: ev.SpacMerger, end: rs.Ends
 ) -> tuple[bool, rs.Ends]:
@@ -69,7 +64,7 @@ def _merged(
         return False, end
     day, absorbed = merger.done.filed_date, ev.ends_unreported(filings, merger.done)
     if absorbed is not None:
-        delisted = ev.since(filings, forms.DELISTINGS, day)
+        delisted = ev.delisting_since(filings, day)
         return False, rs.Ends(delisted, ev.since(filings, forms.DEREGISTRATIONS, day))
     survived = ev.reported_after(filings, merger.done) is not None
     return survived, end if survived else rs.Ends(None, None)
@@ -79,8 +74,8 @@ def _offering(
     record: IssuerRecord,
     cutoff: date,
     filings: Sequence[FilingRef],
-    regs: Sequence[ev.Registration],
-    entry: ev.Registration,
+    regs: Sequence[rg.Registration],
+    entry: rg.Registration,
     spac: SpacEvidence | None,
 ) -> RouteResult:
     """A registered offering: a SPAC IPO for a blank check whose listing took effect (or de_spac
@@ -88,9 +83,9 @@ def _offering(
     began = entry.statements[0]
     listing = ev.listing_of(filings, entry.effect, entry=True)
     on = None if listing is None else listing.on
-    merger = ev.SpacMerger(None, None, None, None)
+    merger, prospectus = ev.SpacMerger(None, None, None, None), None
     if spac is not None and on is not None:
-        merger = ev.spac_merger(filings, on)
+        merger, prospectus = ev.spac_merger(filings, on), rg.merger_prospectus(regs, on)
     survived, end = _merged(filings, merger, rs.ends(filings, listing, began.filed_date))
     steps = [
         ("in_registration", began.filed_date, (began,)),
@@ -109,6 +104,7 @@ def _offering(
         ("withdrawn", entry.withdrawal),
         ("merger_communication", merger.talk),
         ("merger_proxy", merger.proxy),
+        ("merger_prospectus", prospectus),
         ("merger_completed", merger.done),
         *rs.closing(filings, listing, end),
     ]
@@ -135,7 +131,7 @@ def _offering(
 def _evidence(
     record: IssuerRecord,
     cutoff: date,
-    entry: ev.Registration,
+    entry: rg.Registration,
     talk: FilingRef | None,
     given: CounterpartyRecord | None,
 ) -> tuple[Counterparty, FilingRef, FilingRef | None] | None:
@@ -169,8 +165,8 @@ def _merger(
     record: IssuerRecord,
     cutoff: date,
     filings: Sequence[FilingRef],
-    regs: Sequence[ev.Registration],
-    entry: ev.Registration,
+    regs: Sequence[rg.Registration],
+    entry: rg.Registration,
     given: CounterpartyRecord | None,
 ) -> RouteResult:
     """A merger registration: de_spac with its counterparty's evidence, candidates without."""
@@ -260,14 +256,16 @@ def classify_route(
     facts: IssuerStructure,
     cutoff: date,
     counterparty: CounterpartyRecord | None = None,
+    ipo_header: FilingHeader | None = None,
 ) -> RouteResult:
-    """How the company entered, or is entering, the US public markets as of the cutoff."""
+    """How the company entered, or is entering, the US public markets as of the cutoff. The IPO
+    header, when a caller supplies it, is the one ipo_header_to_check names (D79)."""
     if facts.cik != record.cik or facts.cutoff != cutoff:
         raise InputValidationError(field="facts", value=f"{facts.cik.padded} {facts.cutoff}")
     filings = ev.counted(record, cutoff)
-    regs = ev.registrations(filings)
-    entry = ev.entry_of(regs)
-    spac = _spac_evidence(record, facts)
+    regs = rg.registrations(filings)
+    entry = rg.entry_of(regs)
+    spac = sp.spac_evidence(record, facts, entry, ipo_header)
     shell = ev.shell_merger(filings, regs)
     listed_spac = (
         spac is not None

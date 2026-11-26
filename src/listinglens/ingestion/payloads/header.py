@@ -11,8 +11,8 @@ from listinglens.domain.identifiers import AccessionNumber, Cik
 # markers, never by an HTML parser. The page carries the header twice: as tagged SGML inside the
 # one HTML comment in its head, and as an escaped, readable copy in its body, which is never
 # read. In the tagged copy only the accession number is read and, inside each party's
-# COMPANY-DATA, its CIK and (for a subject company) its ASSIGNED-SIC: never a name, an address or
-# a form type, and never a CIK anywhere else.
+# COMPANY-DATA (a filer's or a subject company's, D79), its CIK and its ASSIGNED-SIC: never a
+# name, an address, a former company or a form type, and never a CIK or SIC anywhere else.
 _COMMENT: Final = re.compile(r"<!--(.*?)-->", re.DOTALL)
 _OPEN: Final = "<SEC-HEADER>"
 _CLOSE: Final = "</SEC-HEADER>"
@@ -88,12 +88,12 @@ def _tree(lines: list[str], url: str) -> _Section:
     return stack[0]
 
 
-def _party(section: _Section, url: str, *, with_sic: bool) -> HeaderParty:
+def _party(section: _Section, url: str) -> HeaderParty:
     data = [inner for inner in section.sections if inner.tag == COMPANY_DATA]
     if len(data) != 1:
         raise _malformed(url, f"{section.tag} must hold one {COMPANY_DATA}")
     ciks = data[0].only("CIK")
-    sics = data[0].only("ASSIGNED-SIC") if with_sic else []
+    sics = data[0].only("ASSIGNED-SIC")
     if len(ciks) != 1 or not _CIK.fullmatch(ciks[0]):
         raise _malformed(url, f"{section.tag} must hold one ten-digit CIK")
     if len(sics) > 1:
@@ -114,8 +114,8 @@ def parse_filing_header(body: bytes, url: str, accession: AccessionNumber) -> Fi
     root = _tree(_block(body.decode("latin-1"), url), url)
     if root.only("ACCESSION-NUMBER") != [accession.dashed]:
         raise _malformed(url, f"the header does not name {accession.dashed} alone")
-    filers = tuple(_party(s, url, with_sic=False).cik for s in root.sections if s.tag in FILERS)
+    filers = tuple(_party(s, url) for s in root.sections if s.tag in FILERS)
     if not filers:
         raise _malformed(url, "the header names no filer")
-    subjects = tuple(_party(s, url, with_sic=True) for s in root.sections if s.tag == SUBJECT)
+    subjects = tuple(_party(s, url) for s in root.sections if s.tag == SUBJECT)
     return FilingHeader(accession_no=accession, filers=filers, subjects=subjects)

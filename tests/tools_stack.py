@@ -39,7 +39,13 @@ GE_OVERFLOW = ("CIK0000040545-submissions-001.json", "CIK0000040545-submissions-
 CS_OVERFLOW = tuple(f"CIK0001053092-submissions-{n:03d}.json" for n in range(1, 23))
 # The four route examples (D77): submissions only (no companyfacts), so they stay out of CIKS and
 # every test parametrized over the seven is untouched. Coinbase lists one overflow page.
-ROUTE_CIKS = {"lcaa": 1841024, "lotus": 1962746, "puda": 1162747, "coinbase": 1679788}
+ROUTE_CIKS = {
+    "lcaa": 1841024,
+    "lotus": 1962746,
+    "puda": 1162747,
+    "coinbase": 1679788,
+    "lucid": 1811210,  # D79: a SPAC that survived its merger; one page, no overflow
+}
 COINBASE_OVERFLOW = ("CIK0001679788-submissions-001.json",)
 
 

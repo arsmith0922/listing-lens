@@ -21,7 +21,7 @@ from listinglens.issuer.models import (
 from tests.conftest import RepositoryFactory
 from tests.tools_stack import CIKS, ROUTE_CIKS, recorded_routes
 
-RECORDED = {**CIKS, **ROUTE_CIKS}  # the eleven recorded companies, by stem
+RECORDED = {**CIKS, **ROUTE_CIKS}  # the twelve recorded companies, by stem
 HAND = Cik.parse(1234567)  # the CIK of every hand-built record
 
 
@@ -113,7 +113,7 @@ def oracle(
     names: tuple[FormerName, ...],
 ) -> IssuerStructure:
     """An expected structure written out by hand, with the other side null and the fiscal year
-    ending 1231, as in all eleven recorded records."""
+    ending 1231, as in all twelve recorded records."""
     return IssuerStructure(
         cik=Cik.parse(RECORDED[stem]),
         cutoff=date.fromisoformat(cutoff),

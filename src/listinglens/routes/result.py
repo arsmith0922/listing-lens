@@ -9,6 +9,7 @@ from listinglens.domain.issuer import IssuerRecord
 from listinglens.domain.pathway import Pathway
 from listinglens.routes import events as ev
 from listinglens.routes import forms
+from listinglens.routes import registrations as rg
 from listinglens.routes.models import (
     LOOKED_FOR,
     CandidateSet,
@@ -59,7 +60,7 @@ def ends(filings: Sequence[FilingRef], listing: ev.Listed | None, start: date | 
     """A delisting after the listing took effect, and a deregistration on or after the start."""
     on = None if listing is None else listing.on
     return Ends(
-        None if on is None else ev.since(filings, forms.DELISTINGS, on),
+        None if on is None else ev.delisting_since(filings, on),
         None if start is None else ev.since(filings, forms.DEREGISTRATIONS, start),
     )
 
@@ -93,6 +94,12 @@ def closing(filings: Sequence[FilingRef], listing: ev.Listed | None, end: Ends) 
         pairs += [("exchange_certified", listing.certified)]
     if end.delisted is not None:
         pairs += _relisting(filings, end.delisted.filed_date)
+    # An exchange transfer (D79): the Form 25, the new 8-A12B and its certification.
+    for ref in filings:
+        moved = ev.transfer_of(filings, ref) if ref.form_type in forms.DELISTINGS else None
+        if moved is not None:
+            pairs += [("listing_transferred", ref), ("listing_registered", moved[0])]
+            pairs += [("exchange_certified", moved[1])]
     return [*pairs, ("delisted", end.delisted), ("deregistered", end.deregistered)]
 
 
@@ -146,9 +153,9 @@ def build(
 
 
 def registration_of(
-    filings: Sequence[FilingRef], regs: Sequence[ev.Registration], entry: ev.Registration
+    filings: Sequence[FilingRef], regs: Sequence[rg.Registration], entry: rg.Registration
 ) -> Registration:
-    drafts = ev.drafts_of(filings, regs, entry)
+    drafts = rg.drafts_of(filings, regs, entry)
     return Registration(
         file_number=entry.file_number,
         began=ev.cite(entry.statements[0]),
@@ -159,7 +166,7 @@ def registration_of(
     )
 
 
-def candidate_set(why: Reason, entry: ev.Registration, steps: Sequence[Step]) -> CandidateSet:
+def candidate_set(why: Reason, entry: rg.Registration, steps: Sequence[Step]) -> CandidateSet:
     """The candidates of the reason, the filings they all rest on, and the documents of each role
     the settling phrases are looked for in, each with its primary document."""
     evidence = sorted({ref for _, _, refs in steps for ref in refs}, key=ev.order)

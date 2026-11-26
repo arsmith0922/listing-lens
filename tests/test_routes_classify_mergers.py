@@ -31,7 +31,9 @@ def test_a_header_naming_no_subject_names_no_counterparty(
     first_425 = header_of(repository_factory, A425)
     assert named_counterparty(first_425, LOTUS) == LCAA
     only_itself = FilingHeader(
-        accession_no=A425, filers=(LOTUS,), subjects=(HeaderParty(cik=LOTUS, sic="3711"),)
+        accession_no=A425,
+        filers=(HeaderParty(cik=LOTUS, sic=None),),
+        subjects=(HeaderParty(cik=LOTUS, sic="3711"),),
     )
     assert named_counterparty(only_itself, LOTUS) is None
 
@@ -103,7 +105,9 @@ def test_a_header_for_another_filing_than_the_first_425_gives_no_evidence(
 ) -> None:
     given = counterparty(repository_factory, CUTOFF)
     second = AccessionNumber.parse("0001104659-23-008616")  # Lotus's second 425 (row 182)
-    other = FilingHeader(accession_no=second, filers=(LOTUS,), subjects=given.header.subjects)
+    other = FilingHeader(
+        accession_no=second, filers=given.header.filers, subjects=given.header.subjects
+    )
     result = run(repository_factory, "lotus", CUTOFF, given._replace(header=other))
     assert result.candidates is not None and result.counterparty is None
 

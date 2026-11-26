@@ -358,5 +358,23 @@
     "file": "header_lotus_f4.html",
     "sha256": "6d5cd1a4d928bb51e3506193a99c7eff3018f422a93ca5a79f949826ed3ad7be",
     "url": "https://www.sec.gov/Archives/edgar/data/1962746/000110465923109358/0001104659-23-109358-index-headers.html"
+  },
+  {
+    "fetched_at": "2026-11-26T04:36:08.516649+00:00",
+    "file": "submissions_lucid.json",
+    "sha256": "0058952a9e11c0ed43c8cfdbcc3debf05a274443218a129dd0de50a685d5db87",
+    "url": "https://data.sec.gov/submissions/CIK0001811210.json"
+  },
+  {
+    "fetched_at": "2026-11-26T04:36:08.517646+00:00",
+    "file": "archives_index_lucid_s1.json",
+    "sha256": "5bb39e8c324ea5d2bd101b01be56c10ffafca1ebaa6d921655d28706b45f019d",
+    "url": "https://www.sec.gov/Archives/edgar/data/1811210/000110465920083464/index.json"
+  },
+  {
+    "fetched_at": "2026-11-26T04:36:08.519649+00:00",
+    "file": "header_lucid_s1.html",
+    "sha256": "18cf4dd9a7bc2b61a845c2225e8adda779be9c60eb8caf133c51f8f2700aa9a5",
+    "url": "https://www.sec.gov/Archives/edgar/data/1811210/000110465920083464/0001104659-20-083464-index-headers.html"
   }
 ]

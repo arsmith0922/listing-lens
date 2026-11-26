@@ -153,15 +153,30 @@ def test_a_successor_filing_is_cited_in_the_shell_part() -> None:
 
 
 def test_an_8a12b_on_the_day_of_a_delisting_is_not_a_relisting() -> None:
-    rows = (
-        *IPO,
-        row(5, "25-NSE", "2019-06-03"),
-        row(6, "8-A12B", "2019-06-03", "001-1"),
-        row(7, "CERT", "2019-06-10", "001-1"),
-    )
+    # With no certification of its own, the same-day 8-A12B is no transfer (D79), and no
+    # relisting either: the Form 25 is a delisting, and the 8-A12B is not reported.
+    rows = (*IPO, row(5, "25-NSE", "2019-06-03"), row(6, "8-A12B", "2019-06-03", "001-1"))
     result = classify(hand(*rows), CUTOFF)
     assert result.stage == "delisted"
     assert [e.kind for e in result.events].count("listing_registered") == 1
+
+
+def _registered_merger(filed: str) -> RouteResult:
+    """The SPAC with an S-4 of its own filed on that day, its EFFECT and its 424B3 in 2021."""
+    s4 = (
+        row(20, "S-4", filed, "333-7"),
+        row(21, "EFFECT", "2021-06-01", "333-7", items="S-4,,2021-06-01 16:00:00"),
+        row(22, "424B3", "2021-06-02", "333-7"),
+    )
+    return classify(hand(*SPAC, *s4, sic="6770"), CUTOFF)
+
+
+def test_a_merger_registration_filed_before_the_listing_is_no_merger_prospectus() -> None:
+    early = _registered_merger("2020-09-15")  # before the listing took effect on 2020-10-01
+    assert all(e.kind != "merger_prospectus" for e in early.events)
+    late = _registered_merger("2021-03-01")
+    cited = [e.filing.form_type for e in late.events if e.kind == "merger_prospectus"]
+    assert cited == ["424B3"] and "merger_prospectus" not in {f.stage for f in late.stages}
 
 
 def test_a_blank_check_never_listed_lists_only_its_registration_statement() -> None:
