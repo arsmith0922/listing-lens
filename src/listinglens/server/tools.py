@@ -13,6 +13,7 @@ from listinglens.tools.args import (
     DEFAULT_LIMIT,
     CheckStandardsArgs,
     CikArg,
+    ClassifyPathwayArgs,
     ExtractFinancialsArgs,
     FormsArg,
     GetIssuerStructureArgs,
@@ -28,16 +29,17 @@ from listinglens.tools.args import (
 from listinglens.tools.models_basic import ListFilingsResult, ResolveCompanyResult
 from listinglens.tools.models_check import CheckStandardsResult
 from listinglens.tools.models_financials import ExtractFinancialsResult
+from listinglens.tools.models_route import ClassifyPathwayResult
 from listinglens.tools.models_structure import GetIssuerStructureResult
 
-# The five tools (D47, D77). Each is `async def` and calls the synchronous service directly on the
-# event-loop thread, where the lifespan opened it: a plain `def` would run on the SDK's thread
-# pool, where the cache's SQLite connection and the request throttle must not go. The parameters
-# are the argument models' own annotated aliases, so the SDK validates exactly what the models
-# validate, and the first line of each tool builds the model. The output type under
+# The six tools (D47, D77, D80). Each is `async def` and calls the synchronous service directly
+# on the event-loop thread, where the lifespan opened it: a plain `def` would run on the SDK's
+# thread pool, where the cache's SQLite connection and the request throttle must not go. The
+# parameters are the argument models' own annotated aliases, so the SDK validates exactly what
+# the models validate, and the first line of each tool builds the model. The output type under
 # Annotated[CallToolResult, Result] publishes the result model's schema; see results.py.
 #
-# All five only read public sources and change nothing, so they are read-only and idempotent,
+# All six only read public sources and change nothing, so they are read-only and idempotent,
 # and open-world because the sources are the SEC and Nasdaq.
 READ_ONLY = ToolAnnotations(read_only_hint=True, idempotent_hint=True, open_world_hint=True)
 
@@ -107,3 +109,13 @@ def register_tools(server: MCPServer[None], holder: ServiceHolder) -> None:
         args = GetIssuerStructureArgs(cik=cik, ticker=ticker, name=name)
         with translated():
             return to_result(holder.get().get_issuer_structure(args))
+
+    @server.tool(
+        name="classify_pathway", description=descriptions.CLASSIFY_PATHWAY, annotations=READ_ONLY
+    )
+    async def classify_pathway(
+        *, cik: CikArg = None, ticker: TickerArg = None, name: NameArg = None
+    ) -> Annotated[CallToolResult, ClassifyPathwayResult]:
+        args = ClassifyPathwayArgs(cik=cik, ticker=ticker, name=name)
+        with translated():
+            return to_result(holder.get().classify_pathway(args))

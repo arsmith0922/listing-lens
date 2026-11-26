@@ -43,6 +43,7 @@ TOOLS = [
     "extract_financials",
     "check_standards",
     "get_issuer_structure",
+    "classify_pathway",
 ]
 
 
@@ -97,7 +98,7 @@ async def amain(settings: Settings) -> int:
                 tools = (await client.list_tools()).tools
                 listed_ok = sorted(x.name for x in tools) == sorted(TOOLS)
                 rep.check(
-                    "tools/list: the five tools, each with an output schema",
+                    "tools/list: the six tools, each with an output schema",
                     [] if listed_ok and all(x.output_schema for x in tools) else ["no"],
                 )
                 for target in flows.TARGETS:

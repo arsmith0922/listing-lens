@@ -16,6 +16,7 @@ from listinglens.tools.args import (
     ResolveCompanyArgs,
 )
 from listinglens.tools.models_basic import FilingView
+from tests.server_texts import DESCRIPTIONS
 from tests.test_server_calls import CEILINGS as TEST_CEILINGS
 from tests.test_server_calls import wire_bytes as suite_wire_bytes
 from tests.tools_stack import recorded_service
@@ -232,6 +233,13 @@ def test_the_source_detector_sees_what_f_live_2_is(checks: ModuleType, tmp_path:
         cited = figures[0].citation.model_copy(update=update)
         found = checks.odd_source_figures((figures[0].model_copy(update={"citation": cited}),))
         assert len(found) == 1, update
+
+
+def test_the_smoke_lists_every_published_tool(smoke: ModuleType) -> None:
+    # The live smoke checks tools/list against its own list, so a tool left out would fail it
+    # live; here it is held to the approved tools offline (D80: six).
+    assert sorted(smoke.TOOLS) == sorted(DESCRIPTIONS)
+    assert len(smoke.TOOLS) == len(set(smoke.TOOLS)) == 6
 
 
 def test_the_smoke_covers_the_briefed_companies_once_each(smoke: ModuleType) -> None:

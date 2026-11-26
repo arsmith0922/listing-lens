@@ -3,8 +3,8 @@ listinglens.core, listinglens.domain, listinglens.issuer and itself, reads no cl
 environment, and prints nothing. Its only form and 8-K item literals sit in routes/forms.py,
 matched on the exact path parts; ingestion holds none of them (D14); and outside routes/ only the
 tool projection and the tool service may import it, each matched on its exact path parts with
-sibling self-tests. D80 adds them: the projection with its first commit, the service with its
-second."""
+sibling self-tests. D80 added both: the projection with its first commit (30a1d5c), the
+service with its second."""
 
 from __future__ import annotations
 
@@ -124,8 +124,11 @@ def test_only_the_tool_projection_and_service_may_import_routes() -> None:
         if PurePosixPath(rel).parts[: len(PACKAGE)] != PACKAGE
     ]
     importers = {rel for rel, text in outside if imports_routes(text)}
-    # D80's first commit adds the tool projection; its second adds the tool service.
-    assert importers == {"src/listinglens/tools/project_route.py"}
+    # Exactly the two D80 added: the tool projection and the tool service.
+    assert importers == {
+        "src/listinglens/tools/project_route.py",
+        "src/listinglens/tools/service.py",
+    }
     assert all(may_import_routes(rel) for rel in importers)
     assert all(may_import_routes("/".join(parts)) for parts in IMPORTERS)
     for sibling in (

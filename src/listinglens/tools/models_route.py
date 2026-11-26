@@ -218,3 +218,9 @@ class ClassifyPathwayResult(ResultBase):
     shell: ShellMergerView | None = Field(description=t.SHELL)
     ipo_header_lookup: IpoHeaderLookupView = Field(description=t.IPO_HEADER_LOOKUP)
     counterparty_lookup: CounterpartyLookupView = Field(description=t.COUNTERPARTY_LOOKUP)
+
+    @model_validator(mode="after")
+    def _cutoff_is_evaluated_on(self) -> ClassifyPathwayResult:
+        if self.cutoff != self.evaluated_on:  # no tool takes a date (D46)
+            raise InputValidationError(field="cutoff", value=self.cutoff.isoformat())
+        return self

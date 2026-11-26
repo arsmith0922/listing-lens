@@ -11,13 +11,11 @@ from listinglens.domain.company import CompanyRef, ResolvedCompany
 from listinglens.domain.filing import FilingHeader, FilingRef
 from listinglens.domain.identifiers import AccessionNumber, Cik
 from listinglens.domain.issuer import FormerName, IssuerRecord
-from listinglens.ingestion.endpoints import filing_document_url, filing_index_url
-from listinglens.ingestion.payloads.header import header_document_name
 from listinglens.issuer.build import build_issuer_structure
 from listinglens.routes.classify import CounterpartyRecord, classify_route
 from listinglens.routes.models import RouteResult
 from listinglens.routes.spac import ipo_header_to_check
-from tests.conftest import EDGAR_FIXTURES_DIR, RepositoryFactory, Route
+from tests.conftest import RepositoryFactory
 from tests.issuer_support import RECORDED, record_of, record_with
 from tests.routes_support import HAND
 from tests.tools_stack import recorded_routes
@@ -83,26 +81,10 @@ def run(
     return classify(record_of(factory, stem), cutoff, counterparty)
 
 
-def header_routes() -> dict[str, Route]:
-    """Lotus's 425 and F-4, and Lucid's IPO S-1 (D79): each filing's index and its SEC header, as
-    Austin recorded them."""
-    routes: dict[str, Route] = {}
-    for cik, accession, stem in (
-        (LOTUS, A425, "lotus_425"),
-        (LOTUS, AF4, "lotus_f4"),
-        (LUCID, S1, "lucid_s1"),
-    ):
-        index = (EDGAR_FIXTURES_DIR / f"archives_index_{stem}.json").read_bytes()
-        routes[filing_index_url(cik, accession)] = index
-        page = (EDGAR_FIXTURES_DIR / f"header_{stem}.html").read_bytes()
-        routes[filing_document_url(cik, accession, header_document_name(accession))] = page
-    return routes
-
-
 def header_of(
     factory: RepositoryFactory, accession: AccessionNumber, cik: Cik = LOTUS
 ) -> FilingHeader:
-    repository, _ = factory({**recorded_routes(), **header_routes()})
+    repository, _ = factory(recorded_routes())  # the headers are recorded routes (D80)
     company = ResolvedCompany(cik=cik, issuer_name="recorded", ref=CompanyRef(cik=cik))
     return repository.filing_header(company, accession)
 

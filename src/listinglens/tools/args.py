@@ -72,6 +72,10 @@ class GetIssuerStructureArgs(CompanySelector):
     pass
 
 
+class ClassifyPathwayArgs(CompanySelector):
+    pass
+
+
 class ListFilingsArgs(CompanySelector):
     forms: FormsArg = ()
     limit: LimitArg = DEFAULT_LIMIT

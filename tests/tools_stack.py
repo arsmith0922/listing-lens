@@ -6,13 +6,16 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
-from listinglens.domain.identifiers import Cik
+from listinglens.domain.identifiers import AccessionNumber, Cik
 from listinglens.ingestion.endpoints import (
     company_facts_url,
+    filing_document_url,
+    filing_index_url,
     nasdaq_listed_url,
     submissions_overflow_url,
     submissions_url,
 )
+from listinglens.ingestion.payloads.header import header_document_name
 from listinglens.tools.config import ToolSettings
 from listinglens.tools.service import ToolService
 from listinglens.tools.wiring import open_tool_service
@@ -47,6 +50,14 @@ ROUTE_CIKS = {
     "lucid": 1811210,  # D79: a SPAC that survived its merger; one page, no overflow
 }
 COINBASE_OVERFLOW = ("CIK0001679788-submissions-001.json",)
+# The three filings whose index and SEC header Austin recorded (D78, D79): Lotus's first 425
+# and its F-4, and Lucid's IPO S-1, each under the CIK of the record that lists it. They are
+# recorded routes like the rest, so classify_pathway's lookups (D80) find them.
+HEADER_FILINGS = (
+    ("lotus", "0001104659-23-008580", "lotus_425"),
+    ("lotus", "0001104659-23-109358", "lotus_f4"),
+    ("lucid", "0001104659-20-083464", "lucid_s1"),
+)
 
 
 def _bytes(name: str) -> bytes:
@@ -79,6 +90,16 @@ def recorded_routes() -> dict[str, Route]:
     coinbase = Cik.parse(ROUTE_CIKS["coinbase"])
     for name in COINBASE_OVERFLOW:
         routes[submissions_overflow_url(coinbase, name)] = _bytes(name)
+    return routes | header_routes()
+
+
+def header_routes() -> dict[str, Route]:
+    routes: dict[str, Route] = {}
+    for stem, number, name in HEADER_FILINGS:
+        cik, accession = Cik.parse(ROUTE_CIKS[stem]), AccessionNumber.parse(number)
+        routes[filing_index_url(cik, accession)] = _bytes(f"archives_index_{name}.json")
+        page = filing_document_url(cik, accession, header_document_name(accession))
+        routes[page] = _bytes(f"header_{name}.html")
     return routes
 
 

@@ -11,6 +11,7 @@ from pydantic import BaseModel, TypeAdapter
 
 from listinglens.tools.args import (
     CheckStandardsArgs,
+    ClassifyPathwayArgs,
     ExtractFinancialsArgs,
     GetIssuerStructureArgs,
     ListFilingsArgs,
@@ -19,13 +20,15 @@ from listinglens.tools.args import (
 from listinglens.tools.models_basic import ListFilingsResult, ResolveCompanyResult
 from listinglens.tools.models_check import CheckStandardsResult
 from listinglens.tools.models_financials import ExtractFinancialsResult
+from listinglens.tools.models_route import ClassifyPathwayResult
 from listinglens.tools.models_structure import GetIssuerStructureResult
 from tests.server_support import Stack, recorded_opener, recorded_server
-from tests.tools_stack import CIKS
+from tests.tools_stack import CIKS, ROUTE_CIKS
 
 # A successful call through the protocol (D47): both payloads carry the same data, the structured
 # one validates against the published model, and what the service returned is what arrives.
 COMPANIES = [str(cik) for cik in CIKS.values()]
+TWELVE = [str(cik) for cik in (CIKS | ROUTE_CIKS).values()]  # classify_pathway's (D80)
 ISO_TODAY = date(2026, 10, 31).isoformat()
 
 # The wire size ceilings, per tool: content text plus structuredContent plus isError, compact
@@ -44,7 +47,14 @@ CEILINGS = {
 # get_issuer_structure's own ceiling (D77), kept out of CEILINGS, which the live smoke script
 # shares for the four tools it calls. The eleven recorded companies measure at most 6,518.
 STRUCTURE_WIRE_CEILING = 14_000
-LIMITS = {**CEILINGS, "get_issuer_structure": STRUCTURE_WIRE_CEILING}
+# classify_pathway's own ceiling (D80), kept out of CEILINGS for the same reason. Over the twelve
+# recorded companies it measures 2,174 (GE) to 18,330 bytes (Luckin).
+ROUTE_WIRE_CEILING = 28_000
+LIMITS = {
+    **CEILINGS,
+    "get_issuer_structure": STRUCTURE_WIRE_CEILING,
+    "classify_pathway": ROUTE_WIRE_CEILING,
+}
 
 
 def wire_bytes(text: str, structured: dict[str, object]) -> int:
@@ -97,6 +107,16 @@ async def test_get_issuer_structure_arrives_as_the_service_returned_it(
     assert structured == await expected(
         tmp_path, "get_issuer_structure", GetIssuerStructureArgs(cik=cik)
     )
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("cik", TWELVE)
+async def test_classify_pathway_arrives_as_the_service_returned_it(
+    tmp_path: Path, cik: str
+) -> None:
+    async with Client(recorded_server(tmp_path / "s")) as client:
+        _, structured = await call(client, "classify_pathway", {"cik": cik}, ClassifyPathwayResult)
+    assert structured == await expected(tmp_path, "classify_pathway", ClassifyPathwayArgs(cik=cik))
 
 
 @pytest.mark.anyio
@@ -248,4 +268,9 @@ async def test_no_result_exceeds_its_wire_ceiling(tmp_path: Path) -> None:
             for label, (tool, arguments, model) in calls.items():
                 text, structured = await call(client, tool, arguments, model)
                 sizes[label] = max(sizes[label], wire_bytes(text, structured))
+        for cik in TWELVE:
+            text, structured = await call(
+                client, "classify_pathway", {"cik": cik}, ClassifyPathwayResult
+            )
+            sizes["classify_pathway"] = max(sizes["classify_pathway"], wire_bytes(text, structured))
     assert {name: size for name, size in sizes.items() if size > LIMITS[name]} == {}, sizes
