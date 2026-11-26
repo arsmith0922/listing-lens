@@ -132,54 +132,58 @@ def _filer_without_company_data() -> str:
     return HEADER_425[:start] + tail.replace("</COMPANY-DATA>\n", "", 1)
 
 
+MALFORMED = [
+    _swap("</COMPANY-DATA>\n", ""),
+    _swap("</SUBJECT-COMPANY>\n", ""),
+    _filer_without_company_data(),
+    _swap("<CIK>0001841024", "<CIK>00018410AB"),
+    _swap("<CIK>0001841024", "<CIK>001841024"),
+    _swap("<CIK>0001841024", "<CIK>0000000000"),
+    _swap("<CIK>0001841024\n", "<CIK>0001841024\n<CIK>0001841025\n"),
+    _swap("<ASSIGNED-SIC>6770", "<ASSIGNED-SIC>677"),
+    _swap("<ACCESSION-NUMBER>0001104659-23-008580", "<ACCESSION-NUMBER>0001104659-23-008581"),
+    _swap("<FILED-BY>", "<FILED-FOR>").replace("</FILED-BY>", "</FILED-FOR>"),
+    _swap("<TYPE>425\n", "<TYPE>425\nnot a tag\n"),
+    HEADER_425[: _end(HEADER_425)] + "\n<!--\n</SEC-HEADER>\n-->" + HEADER_425[_end(HEADER_425) :],
+    _swap("<ASSIGNED-SIC>6770\n", "<ASSIGNED-SIC>6770\n<ASSIGNED-SIC>6770\n"),
+    _swap("<COMPANY-DATA>\n", "<COMPANY-DATA>x\n"),
+    _swap("</COMPANY-DATA>\n", "</COMPANY-DATA>x\n"),
+    _swap(
+        "<ACCESSION-NUMBER>0001104659-23-008580\n",
+        "<ACCESSION-NUMBER>0001104659-23-008580\n<ACCESSION-NUMBER>0001104659-23-008580\n",
+    ),
+]
+# Why each is refused, in the same order.
+REFUSALS = {
+    "unbalanced": "an unbalanced </SUBJECT-COMPANY>",
+    "unclosed_subject": "an unclosed <SUBJECT-COMPANY>",
+    "filer_without_company_data": "FILED-BY must hold one COMPANY-DATA",
+    "cik_not_digits": "SUBJECT-COMPANY must hold one ten-digit CIK",
+    "cik_nine_digits": "SUBJECT-COMPANY must hold one ten-digit CIK",
+    "cik_zero": "Invalid value for 'cik': '0'",
+    "two_ciks": "SUBJECT-COMPANY must hold one ten-digit CIK",
+    "sic_three_digits": "SUBJECT-COMPANY has an ASSIGNED-SIC that is not one of four digits",
+    "another_accession": "the header does not name 0001104659-23-008580 alone",
+    "no_filer": "the header names no filer",
+    "a_line_not_a_tag": "a header line that is not a tag",
+    "a_second_comment_with_only_a_close": "a comment must hold exactly one SEC-HEADER block",
+    "two_sics": "SUBJECT-COMPANY holds more than one ASSIGNED-SIC",
+    "an_opener_with_a_value": "an unbalanced </COMPANY-DATA>",
+    "a_closer_with_a_value": "an unbalanced </COMPANY-DATA>",
+    "the_accession_twice": "the header does not name 0001104659-23-008580 alone",
+}
+
+
 @pytest.mark.parametrize(
-    "page",
-    [
-        _swap("</COMPANY-DATA>\n", ""),
-        _swap("</SUBJECT-COMPANY>\n", ""),
-        _filer_without_company_data(),
-        _swap("<CIK>0001841024", "<CIK>00018410AB"),
-        _swap("<CIK>0001841024", "<CIK>001841024"),
-        _swap("<CIK>0001841024", "<CIK>0000000000"),
-        _swap("<CIK>0001841024\n", "<CIK>0001841024\n<CIK>0001841025\n"),
-        _swap("<ASSIGNED-SIC>6770", "<ASSIGNED-SIC>677"),
-        _swap("<ACCESSION-NUMBER>0001104659-23-008580", "<ACCESSION-NUMBER>0001104659-23-008581"),
-        _swap("<FILED-BY>", "<FILED-FOR>").replace("</FILED-BY>", "</FILED-FOR>"),
-        _swap("<TYPE>425\n", "<TYPE>425\nnot a tag\n"),
-        HEADER_425[: _end(HEADER_425)]
-        + "\n<!--\n</SEC-HEADER>\n-->"
-        + HEADER_425[_end(HEADER_425) :],
-        _swap("<ASSIGNED-SIC>6770\n", "<ASSIGNED-SIC>6770\n<ASSIGNED-SIC>6770\n"),
-        _swap("<COMPANY-DATA>\n", "<COMPANY-DATA>x\n"),
-        _swap("</COMPANY-DATA>\n", "</COMPANY-DATA>x\n"),
-        _swap(
-            "<ACCESSION-NUMBER>0001104659-23-008580\n",
-            "<ACCESSION-NUMBER>0001104659-23-008580\n<ACCESSION-NUMBER>0001104659-23-008580\n",
-        ),
-    ],
-    ids=[
-        "unbalanced",
-        "unclosed_subject",
-        "filer_without_company_data",
-        "cik_not_digits",
-        "cik_nine_digits",
-        "cik_zero",
-        "two_ciks",
-        "sic_three_digits",
-        "another_accession",
-        "no_filer",
-        "a_line_not_a_tag",
-        "a_second_comment_with_only_a_close",
-        "two_sics",
-        "an_opener_with_a_value",
-        "a_closer_with_a_value",
-        "the_accession_twice",
-    ],
+    ("page", "detail"),
+    list(zip(MALFORMED, REFUSALS.values(), strict=True)),
+    ids=list(REFUSALS),
 )
-def test_a_malformed_header_is_refused(page: str) -> None:
+def test_a_malformed_header_is_refused(page: str, detail: str) -> None:
     with pytest.raises(MalformedPayload) as caught:
         _parse(page)
-    assert caught.value.field == "sec_header" and caught.value.url == URL
+    assert (caught.value.field, caught.value.url) == ("sec_header", URL)
+    assert caught.value.detail == detail
 
 
 RAW_425 = (EDGAR_FIXTURES_DIR / "header_lotus_425.html").read_bytes()

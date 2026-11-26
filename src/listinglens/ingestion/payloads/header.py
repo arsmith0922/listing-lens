@@ -96,7 +96,9 @@ def _party(section: _Section, url: str, *, with_sic: bool) -> HeaderParty:
     sics = data[0].only("ASSIGNED-SIC") if with_sic else []
     if len(ciks) != 1 or not _CIK.fullmatch(ciks[0]):
         raise _malformed(url, f"{section.tag} must hold one ten-digit CIK")
-    if len(sics) > 1 or not all(_SIC.fullmatch(sic) for sic in sics):
+    if len(sics) > 1:
+        raise _malformed(url, f"{section.tag} holds more than one ASSIGNED-SIC")
+    if not all(_SIC.fullmatch(sic) for sic in sics):
         raise _malformed(url, f"{section.tag} has an ASSIGNED-SIC that is not one of four digits")
     try:
         cik = Cik.parse(ciks[0])
