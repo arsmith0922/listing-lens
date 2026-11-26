@@ -39,3 +39,25 @@ class FilingDocument(BaseModel):
     accession_no: AccessionNumber
     document_name: str
     content: SourceText
+
+
+class HeaderParty(BaseModel):
+    """A company a filing's SEC header names as its subject: its CIK and the SIC the header
+    assigns it, never its name."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    cik: Cik
+    sic: str | None
+
+
+class FilingHeader(BaseModel):
+    """What a filing's SEC header says about who filed it and which companies it concerns (D78):
+    CIKs and SICs only, each in the header's order. A filing appears in the record of every
+    company it names."""
+
+    model_config = ConfigDict(frozen=True, strict=True, extra="forbid")
+
+    accession_no: AccessionNumber
+    filers: tuple[Cik, ...]
+    subjects: tuple[HeaderParty, ...]

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 
 from listinglens.domain.company import CompanyRef, ResolvedCompany
-from listinglens.domain.filing import FilingDocument, FilingRef
+from listinglens.domain.filing import FilingDocument, FilingHeader, FilingRef
 from listinglens.domain.identifiers import AccessionNumber
 from listinglens.domain.issuer import IssuerRecord
 from listinglens.domain.profile import CompanyProfile
@@ -36,6 +36,9 @@ class IngestionService:
         self, company: ResolvedCompany, accession: AccessionNumber, document_name: str
     ) -> FilingDocument:
         return self._repository.fetch_document(company, accession, document_name)
+
+    def filing_header(self, company: ResolvedCompany, accession: AccessionNumber) -> FilingHeader:
+        return self._repository.filing_header(company, accession)
 
     def search(
         self,

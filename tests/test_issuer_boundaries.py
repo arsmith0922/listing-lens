@@ -1,8 +1,9 @@
 """The boundary of issuer/ (D77). It is pure: it imports the standard library, pydantic,
 listinglens.core, listinglens.domain and itself, reads no clock, randomness or environment, and
 prints nothing. Its only form literals sit in issuer/forms.py, matched on the exact path parts.
-Ingestion holds none of the deciding forms (D14), and outside issuer/ only the tool projection and
-the tool service import it, each matched on its exact path parts with sibling self-tests."""
+Ingestion holds none of the deciding forms (D14), and outside issuer/ only the tool projection,
+the tool service and the route layer (D78) import it, each matched on its exact path parts with
+sibling self-tests."""
 
 from __future__ import annotations
 
@@ -30,6 +31,7 @@ IMPORTERS = (
     ("src", "listinglens", "tools", "project_structure.py"),
     ("src", "listinglens", "tools", "service.py"),
 )
+ROUTES_PACKAGE = ("src", "listinglens", "routes")  # every module in it, and no other package
 
 
 def _imported(text: str) -> set[str]:
@@ -61,8 +63,13 @@ def may_hold_forms(rel: str) -> bool:
     return PurePosixPath(rel).parts == FORMS_FILE
 
 
+def in_routes(rel: str) -> bool:
+    parts = PurePosixPath(rel).parts
+    return len(parts) > len(ROUTES_PACKAGE) and parts[: len(ROUTES_PACKAGE)] == ROUTES_PACKAGE
+
+
 def may_import_issuer(rel: str) -> bool:
-    return PurePosixPath(rel).parts in IMPORTERS
+    return PurePosixPath(rel).parts in IMPORTERS or in_routes(rel)
 
 
 def imports_issuer(text: str) -> bool:
@@ -131,20 +138,24 @@ def test_ingestion_holds_none_of_the_deciding_forms() -> None:
     assert {rel: forms for rel, forms in held.items() if forms} == {}
 
 
-def test_only_the_tool_projection_and_service_import_issuer() -> None:
+def test_only_the_tool_projection_service_and_routes_import_issuer() -> None:
     outside = [
         (rel, text)
         for rel, text in _sources("src")
         if not rel.startswith("src/listinglens/issuer/")
     ]
     importers = {rel for rel, text in outside if imports_issuer(text)}
-    assert importers == {"/".join(parts) for parts in IMPORTERS}
+    assert {rel for rel in importers if not in_routes(rel)} == {"/".join(p) for p in IMPORTERS}
     assert all(may_import_issuer(rel) for rel in importers)
+    assert may_import_issuer("src/listinglens/routes/classify.py")
     for sibling in (
         "src/listinglens/tools/project_structure2.py",
         "src/listinglens/tools/models_structure.py",
         "src/listinglens/memo/service.py",
         "src/listinglens/tools/sub/service.py",
+        "src/listinglens/routes2/classify.py",
+        "src/listinglens/routes_x.py",
+        "src/listinglens/routes",
     ):
         assert not may_import_issuer(sibling), sibling
     assert imports_issuer("from listinglens.issuer.build import x\n")

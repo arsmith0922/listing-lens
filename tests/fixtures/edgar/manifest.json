@@ -334,5 +334,29 @@
     "file": "CIK0001679788-submissions-001.json",
     "sha256": "653dd80a1c544e45c4f80f067888f05652f30497c5d0cf78280113e072e3b118",
     "url": "https://data.sec.gov/submissions/CIK0001679788-submissions-001.json"
+  },
+  {
+    "fetched_at": "2026-11-26T00:09:48.282040+00:00",
+    "file": "archives_index_lotus_425.json",
+    "sha256": "2af58f4330d83ae9aec2f0b78f8870453ae61e6be34361cd8a3ede827841d771",
+    "url": "https://www.sec.gov/Archives/edgar/data/1962746/000110465923008580/index.json"
+  },
+  {
+    "fetched_at": "2026-11-26T00:09:48.283038+00:00",
+    "file": "header_lotus_425.html",
+    "sha256": "512fd1636ede26c6b1cc631e1d7193e533fa917fe0045418cfe35a0b436b527e",
+    "url": "https://www.sec.gov/Archives/edgar/data/1962746/000110465923008580/0001104659-23-008580-index-headers.html"
+  },
+  {
+    "fetched_at": "2026-11-26T00:09:48.284039+00:00",
+    "file": "archives_index_lotus_f4.json",
+    "sha256": "0258d2eeb785f906640464f6801eaed76b08de5924e08353286af15200e2da63",
+    "url": "https://www.sec.gov/Archives/edgar/data/1962746/000110465923109358/index.json"
+  },
+  {
+    "fetched_at": "2026-11-26T00:09:48.285040+00:00",
+    "file": "header_lotus_f4.html",
+    "sha256": "6d5cd1a4d928bb51e3506193a99c7eff3018f422a93ca5a79f949826ed3ad7be",
+    "url": "https://www.sec.gov/Archives/edgar/data/1962746/000110465923109358/0001104659-23-109358-index-headers.html"
   }
 ]

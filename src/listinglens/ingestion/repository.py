@@ -11,7 +11,7 @@ from listinglens.core.errors import (
     UndecodableDocument,
 )
 from listinglens.domain.company import CompanyRef, ResolvedCompany
-from listinglens.domain.filing import FilingDocument, FilingRef, SourceText
+from listinglens.domain.filing import FilingDocument, FilingHeader, FilingRef, SourceText
 from listinglens.domain.identifiers import AccessionNumber, Cik
 from listinglens.domain.issuer import IssuerRecord
 from listinglens.domain.profile import CompanyProfile
@@ -21,6 +21,7 @@ from listinglens.ingestion.company_index import CompanyIndex
 from listinglens.ingestion.filing_rows import page_to_filing_refs
 from listinglens.ingestion.issuer_rows import issuer_record_of
 from listinglens.ingestion.payloads.archives import ArchivesIndex
+from listinglens.ingestion.payloads.header import header_document_name, parse_filing_header
 from listinglens.ingestion.payloads.submissions import FilingIndexPage, SubmissionsDocument
 from listinglens.ingestion.payloads.tickers import CompanyTickersMap
 from listinglens.ingestion.responses import decode_json, ensure_success
@@ -100,6 +101,24 @@ class EdgarRepository:
         return FilingDocument(
             accession_no=accession, document_name=document_name, content=SourceText(text=text)
         )
+
+    def filing_header(self, company: ResolvedCompany, accession: AccessionNumber) -> FilingHeader:
+        """The filing's SEC header (D78): the one {accession}-index-headers.html its index lists,
+        read strictly for CIKs and SICs, never a name."""
+        index_url = endpoints.filing_index_url(company.cik, accession)
+        no_filing = FilingNotFound(identifier=accession.dashed, identifier_kind="accession_no")
+        index_response = self._get_ok(index_url, not_found=no_filing)
+        index = ArchivesIndex.parse(decode_json(index_response, index_url), index_url)
+        name = header_document_name(accession)
+        listed = sum(1 for item in index.directory.item if item.name == name)
+        if listed == 0:
+            raise FilingNotFound(identifier=name, identifier_kind="document")
+        if listed > 1:
+            detail = f"{name} is listed {listed} times"
+            raise MalformedPayload(url=index_url, field="directory.item.name", detail=detail)
+        url = endpoints.filing_document_url(company.cik, accession, name)
+        no_header = FilingNotFound(identifier=name, identifier_kind="document")
+        return parse_filing_header(self._get_ok(url, not_found=no_header).content, url, accession)
 
     def _cik_for(self, ref: CompanyRef) -> Cik:
         if ref.cik is not None:

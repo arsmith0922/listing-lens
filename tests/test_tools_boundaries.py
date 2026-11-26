@@ -14,7 +14,16 @@ from tests.test_repo_constraints import (
 # server: nothing underneath may import it, it imports no MCP code, nothing in the product
 # imports the second HTTP stack that arrives with the SDK, and nothing under tools/ prints
 # (stdout is the protocol wire once the server exists).
-LOWER_LAYERS = ("core", "domain", "ingestion", "extraction", "standards", "margin", "issuer")
+LOWER_LAYERS = (
+    "core",
+    "domain",
+    "ingestion",
+    "extraction",
+    "standards",
+    "margin",
+    "issuer",
+    "routes",
+)
 UPWARD = ("listinglens.tools", "listinglens.server")
 SECOND_HTTP_STACK = ("httpx2", "httpcore2")
 
